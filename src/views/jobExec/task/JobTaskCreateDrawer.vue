@@ -27,13 +27,15 @@
       <div class="flex-1 min-w-0 pl-2">
         <BasicForm @register="registerRightForm">
           <template #scriptContentSlot="{ model, field }">
-            <CodeEditor
-              :key="model.lang"
-              v-model:value="model[field]"
-              :mode="getCodeMirrorMode(model.lang)"
-              style="height: 580px;"
-              class="border border-gray-300 dark:border-gray-600 rounded"
-            />
+            <div class="border border-gray-300 dark:border-gray-600 rounded overflow-hidden">
+              <Codemirror
+                :key="model.lang"
+                v-model="model[field]"
+                placeholder="请输入脚本内容..."
+                :style="{ height: '580px' }"
+                :extensions="getEditorExtensions(model.lang)"
+              />
+            </div>
           </template>
         </BasicForm>
       </div>
@@ -48,13 +50,15 @@
   import { BasicDrawer, useDrawerInner } from '@/components/Drawer';
   import { useMessage } from '@/hooks/web/useMessage';
   import { createJobExecTask, updateJobExecTask } from '@/api/demo/system';
-  import { CodeEditor } from '@/components/CodeEditor';
+  import { Codemirror } from 'vue-codemirror';
+  import { oneDark } from '@codemirror/theme-one-dark';
+  import { javascript } from '@codemirror/lang-javascript';
+  import { python } from '@codemirror/lang-python';
+  import { yaml } from '@codemirror/lang-yaml';
+  import { StreamLanguage } from '@codemirror/language';
+  import { shell } from '@codemirror/legacy-modes/mode/shell';
   import { Transfer } from 'ant-design-vue';
-  import 'codemirror/mode/shell/shell.js';
-  import 'codemirror/mode/python/python.js';
-  import 'codemirror/mode/javascript/javascript.js';
-  import 'codemirror/mode/dockerfile/dockerfile.js';
-  import 'codemirror/mode/yaml/yaml.js';
+
   const emit = defineEmits(['success', 'register']);
   const { createMessage } = useMessage();
 
@@ -71,17 +75,19 @@
     showActionButtonGroup: false,
   });
 
-  // 统一转换器
-  const getCodeMirrorMode = (lang: string) => {
-    const map: Record<string, string> = {
-      'shell': 'shell',
-      'python': 'python',
-      'yaml': 'yaml',          // Ansible 对应
-      'ansible': 'yaml',
-      'json': 'application/json',
-      'javascript': 'application/json'
-    };
-    return map[lang] || 'shell';
+  // 获取编辑器拓展插件
+  const getEditorExtensions = (lang: string) => {
+    const ext = [oneDark];
+    if (lang === 'shell') {
+      ext.push(StreamLanguage.define(shell));
+    } else if (lang === 'javascript' || lang === 'json') {
+      ext.push(javascript());
+    } else if (lang === 'python') {
+      ext.push(python());
+    } else if (lang === 'yaml' || lang === 'ansible') {
+      ext.push(yaml());
+    }
+    return ext;
   };
 
   const [registerRightForm, { resetFields: resetRight, setFieldsValue: setRight, validate: validateRight }] = useForm({

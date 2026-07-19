@@ -4,7 +4,7 @@
     @register="register"
     :title="getTitle"
     @ok="handleSubmit"
-    width="20%"
+    width="520px"
   >
     <div class="pt-3px pr-3px">
       <BasicForm @register="registerForm" />

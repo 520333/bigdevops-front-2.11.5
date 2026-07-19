@@ -71,9 +71,6 @@ export default defineComponent({
         title: '操作',
         dataIndex: 'action',
       },
-      rowClassName: (record: any) => {
-        return record.type === '0' ? 'tree-parent-row' : 'tree-child-row';
-      }
     });
 
     function handleCreate() {
@@ -122,32 +119,3 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped lang="less">
-:deep(.ant-table-tbody > tr.tree-parent-row > td) {
-  background-color: #fafafa !important;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-}
-
-:deep(.ant-table-tbody > tr.tree-parent-row > td:first-child) {
-  position: relative;
-}
-
-:deep(.ant-table-tbody > tr.tree-parent-row > td:first-child::before) {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 3px;
-  background-color: #1890ff;
-}
-
-:deep(.ant-table-tbody > tr.tree-child-row > td) {
-  background-color: #ffffff !important;
-}
-
-:deep(.ant-table-tbody > tr.tree-parent-row:hover > td) {
-  background-color: #f0f7ff !important;
-}
-</style>

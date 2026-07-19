@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4 bg-gray-50 h-full flex flex-col">
-    <div class="mb-4 bg-white p-3 rounded shadow-sm">
+  <div class="p-4 bg-gray-50 dark:bg-zinc-950 h-full flex flex-col">
+    <div class="mb-4 bg-white dark:bg-[#151515] p-3 rounded shadow-sm border border-gray-100 dark:border-zinc-800">
       <a-radio-group v-model:value="currentQueryModel" @change="handleModeChange" button-style="solid">
         <a-radio-button value="mine">我发起的</a-radio-button>
         <a-radio-button value="all">全部工单</a-radio-button>
@@ -74,7 +74,7 @@
       :confirmLoading="actionLoading"
       destroyOnClose
     >
-      <div class="mb-4 text-gray-600">
+      <div class="mb-4 text-gray-600 dark:text-gray-400">
         请填写执行过程的输出或备注信息（必填）：
       </div>
       <a-textarea 
@@ -91,7 +91,7 @@
       :confirmLoading="rejectLoading"
       destroyOnClose
     >
-      <div class="mb-4 text-gray-600">
+      <div class="mb-4 text-gray-600 dark:text-gray-400">
         请填写驳回原因（选填）：
       </div>
       <a-textarea 

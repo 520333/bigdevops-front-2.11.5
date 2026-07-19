@@ -1,18 +1,18 @@
 <template>
-  <div class="p-4 bg-white h-full flex flex-col overflow-hidden">
-    <div class="flex justify-between items-center pb-3 border-b mb-4">
-      <span class="text-lg font-bold text-gray-800">填写工单详情</span>
+  <div class="p-4 bg-white dark:bg-zinc-950 h-full flex flex-col overflow-hidden">
+    <div class="flex justify-between items-center pb-3 border-b dark:border-zinc-800 mb-4">
+      <span class="text-lg font-bold text-gray-800 dark:text-gray-200">填写工单详情</span>
       <a-button @click="goBack">返回模板选择</a-button>
     </div>
 
     <div class="flex-1 overflow-y-auto px-2" v-loading="loading">
-      <div class="max-w-3xl mx-auto w-full py-4 p-6 rounded-lg border shadow-sm">
-        <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
+      <div class="max-w-3xl mx-auto w-full py-4 p-6 rounded-lg border dark:border-zinc-800 shadow-sm bg-white dark:bg-[#151515]">
+        <div class="mb-6 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded text-blue-700 dark:text-blue-400 text-sm">
           您正在基于模板 <strong>【{{ templateDetail?.name }}】</strong> 发起审批流转。
         </div>
 
-        <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-md" v-if="flowNodes.length > 0">
-          <div class="text-sm font-bold text-gray-700 mb-4">审批流转预览</div>
+        <div class="mb-6 p-4 bg-gray-50 dark:bg-zinc-900/40 border border-gray-200 dark:border-zinc-800 rounded-md" v-if="flowNodes.length > 0">
+          <div class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">审批流转预览</div>
           <a-steps :current="-1" size="small">
             <a-step 
               v-for="(node, index) in flowNodes" 
@@ -24,7 +24,7 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <span class="text-red-500 mr-1">*</span>工单申请标题
           </label>
           <a-input 
@@ -35,7 +35,7 @@
         </div>
         
         <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">期望完成时间</label>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">期望完成时间</label>
           <a-date-picker 
             v-model:value="desireFinishTime" 
             show-time 
@@ -45,7 +45,7 @@
           />
         </div>
 
-        <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
           <VFormCreate 
             v-if="dynamicFormConfig && dynamicFormConfig.schemas"
             :form-config="dynamicFormConfig"

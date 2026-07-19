@@ -1,5 +1,5 @@
 <template>
-  <BasicDrawer v-bind="$attrs" @register="registerDrawer" showFooter :title="getTitle" width="30%" @ok="handleSubmit">
+  <BasicDrawer v-bind="$attrs" @register="registerDrawer" showFooter :title="getTitle" width="500px" @ok="handleSubmit">
     <BasicForm @register="registerForm" />
   </BasicDrawer>
 </template>
@@ -19,10 +19,10 @@ export default defineComponent({
   setup(_, { emit }) {
 
     const [registerForm, { resetFields, getFieldsValue  }] = useForm({
-      labelWidth: 100,
+      labelWidth: 120,
       schemas: formSchema,
       showActionButtonGroup: false,
-      baseColProps: { lg: 12, md: 24 },
+      baseColProps: { span: 24 },
     });
 
     const level = ref("");

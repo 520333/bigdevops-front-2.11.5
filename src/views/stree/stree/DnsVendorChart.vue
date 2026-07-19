@@ -1,15 +1,14 @@
 <template>
   <div class="dns-summary-wrapper w-full h-full flex flex-col">
     <div class="flex gap-4 mb-4">
-      <div class="flex-1 bg-cyan-50 p-4 rounded-md border border-cyan-100">
-        <div class="text-gray-500 text-sm mb-1">DNS 记录总数 (条)</div>
-        <div class="text-2xl font-bold text-cyan-600">{{ totalDnsNum }}</div>
+      <div class="flex-1 bg-cyan-50/50 dark:bg-cyan-950/20 p-4 rounded-md border border-cyan-100 dark:border-cyan-900/30">
+        <div class="text-gray-500 dark:text-gray-400 text-sm mb-1">DNS 记录总数 (条)</div>
+        <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{{ totalDnsNum }}</div>
       </div>
-      <div class="flex-1 bg-gray-50 p-4 rounded-md border border-gray-100">
-        </div>
+      <div class="flex-1"></div>
     </div>
     <div class="echarts-box flex-1 w-full relative">
-      <div ref="chartRef" style="width: 100%; height: 350px;"></div>
+      <div ref="chartRef" style="width: 100%; height: 300px;"></div>
     </div>
   </div>
 </template>
@@ -17,10 +16,19 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import * as echarts from 'echarts';
+import { useAppStore } from '@/store/modules/app';
 
 const props = defineProps({
   node: { type: Object, default: () => ({}) }
 });
+
+const appStore = useAppStore();
+const isDark = computed(() => appStore.getDarkMode === 'dark');
+
+const titleColor = computed(() => isDark.value ? '#c9d1d9' : '#333');
+const labelColor = computed(() => isDark.value ? '#8b949e' : '#666');
+const splitLineColor = computed(() => isDark.value ? '#30363d' : '#eee');
+const axisLineColor = computed(() => isDark.value ? '#30363d' : '#999');
 
 const totalDnsNum = computed(() => props.node?.dnsNum || 0);
 
@@ -50,18 +58,21 @@ const renderEcharts = () => {
 
   const option = {
     title: [
-      { text: 'DNS 提供商占比', left: '10%', top: '2%', textStyle: { color: '#333', fontSize: 15 } },
-      { text: '解析记录类型分布', left: '60%', top: '2%', textStyle: { color: '#333', fontSize: 15 } },
+      { text: 'DNS 提供商占比', left: '10%', top: '2%', textStyle: { color: titleColor.value, fontSize: 15 } },
+      { text: '解析记录类型分布', left: '60%', top: '2%', textStyle: { color: titleColor.value, fontSize: 15 } },
     ],
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} 条' },
     grid: [{ left: '60%', top: '15%', width: '35%', height: '70%', containLabel: true }],
-    xAxis: [{ type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }, axisLabel: { show: false } }],
+    xAxis: [{ type: 'value', splitLine: { lineStyle: { type: 'dashed', color: splitLineColor.value } }, axisLabel: { show: false } }],
     yAxis: [
       {
         type: 'category',
         data: typeKeys,
+        axisLabel: {
+          color: labelColor.value
+        },
         axisTick: { show: false },
-        axisLine: { lineStyle: { color: '#999' } },
+        axisLine: { lineStyle: { color: axisLineColor.value } },
       }
     ],
     color: ['#13c2c2', '#eb2f96', '#faad14', '#1890ff'],
@@ -72,7 +83,7 @@ const renderEcharts = () => {
         radius: ['35%', '55%'],
         center: ['22%', '50%'], 
         data: vendorData,
-        label: { formatter: '{b}\n{c}条', color: '#666' },
+        label: { formatter: '{b}\n{c}条', color: labelColor.value },
       },
       {
         name: '记录类型',
@@ -82,7 +93,7 @@ const renderEcharts = () => {
           borderRadius: [0, 4, 4, 0],
           color: (params: any) => ['#13c2c2', '#eb2f96', '#faad14'][params.dataIndex % 3]
         },
-        label: { show: true, position: 'right', color: '#666' },
+        label: { show: true, position: 'right', color: labelColor.value },
         data: typeVals,
       }
     ]
@@ -93,6 +104,10 @@ const renderEcharts = () => {
 const resizeChart = () => myChart?.resize();
 
 watch(() => props.node, () => nextTick(() => renderEcharts()), { deep: true });
+
+watch(isDark, () => {
+  renderEcharts();
+});
 
 onMounted(async () => {
   await nextTick();

@@ -4,157 +4,285 @@
       <Row :gutter="16" type="flex" class="align-stretch">
         <!-- 服务树列表 -->
         <Col :span="isTreeCollapsed ? 0 : 6" v-show="!isTreeCollapsed" class="flex flex-col">
-          <div class="bg-white p-4 rounded-md shadow-sm h-full flex flex-col">
-            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <span class="text-base font-medium">节点树</span>
-              <a-button type="primary" size="small" preIcon="ant-design:plus-outlined" @click="addTopNode()" v-auth="'POST:/api/stree/createStreeNode'">添加顶级节点</a-button>
-            </div>
-
-            <a-directory-tree 
-              :tree-data="treeData" multiple block-node :load-data="onLoadData"
-              @select="onSelect" v-if="isShow" v-model:expandedKeys="expandedKeys" 
-              :field-names="{ title: 'title', key: 'id' }"
-            >
-              <template #title="{ key: treeKey, title, id, level, children, isLeaf }">
-                <a-dropdown :trigger="['contextmenu']">
-                  <span class="block w-full select-none truncate">{{ title }}</span>
-                  <template #overlay>
-                    <a-menu @click="({ key: menuKey }) => onContextMenuClick(title, menuKey, id, level, children, isLeaf)">
-                      <a-menu-item key="1" v-if="!isLeaf&&hasPermission('POST:/api/stree/createStreeNode')" ><Icon icon="ant-design:plus-outlined" class="mr-2" color="#55D187" />新增节点</a-menu-item>
-                      <a-menu-item key="2" v-if="hasPermission('DELETE:/api/stree/deleteStreeNode/:id')"><Icon icon="ant-design:delete-outlined" class="mr-2" color="#F56C6C" />删除节点</a-menu-item>
-                      <a-menu-item key="3" v-if="hasPermission('POST:/api/stree/updateStreeNode')"><Icon icon="clarity:note-edit-line" class="mr-2" color="#E6A23C" />编辑节点</a-menu-item>
-                    </a-menu>
-                  </template>
-                </a-dropdown>
-              </template>
-            </a-directory-tree>
-            <a-empty v-if="isShow && treeData.length === 0" description="暂无节点数据" class="mt-10" />
+        <div
+          class="bg-white dark:bg-[#151515] p-4 rounded-md border border-gray-100 dark:border-zinc-800 h-full flex flex-col">
+          <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-100 dark:border-zinc-800">
+            <span class="text-base font-medium text-gray-800 dark:text-gray-200">节点树</span>
+            <a-button type="primary" size="small" preIcon="ant-design:plus-outlined" @click="addTopNode()"
+              v-auth="'POST:/api/stree/createStreeNode'">添加顶级节点</a-button>
           </div>
+
+          <a-directory-tree :tree-data="treeData" multiple block-node :load-data="onLoadData" @select="onSelect"
+            v-if="isShow" v-model:expandedKeys="expandedKeys" :field-names="{ title: 'title', key: 'id' }">
+            <template #title="{ key: treeKey, title, id, level, children, isLeaf }">
+              <a-dropdown :trigger="['contextmenu']">
+                <span class="block w-full select-none truncate">{{ title }}</span>
+                <template #overlay>
+                  <a-menu
+                    @click="({ key: menuKey }) => onContextMenuClick(title, menuKey, id, level, children, isLeaf)">
+                    <a-menu-item key="1" v-if="!isLeaf && hasPermission('POST:/api/stree/createStreeNode')">
+                      <Icon icon="ant-design:plus-outlined" class="mr-2" color="#55D187" />新增节点
+                    </a-menu-item>
+                    <a-menu-item key="2" v-if="hasPermission('DELETE:/api/stree/deleteStreeNode/:id')">
+                      <Icon icon="ant-design:delete-outlined" class="mr-2" color="#F56C6C" />删除节点
+                    </a-menu-item>
+                    <a-menu-item key="3" v-if="hasPermission('POST:/api/stree/updateStreeNode')">
+                      <Icon icon="clarity:note-edit-line" class="mr-2" color="#E6A23C" />编辑节点
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </template>
+          </a-directory-tree>
+          <a-empty v-if="isShow && treeData.length === 0" description="暂无节点数据" class="mt-10" />
+        </div>
         </Col>
         <!-- 资源列表 -->
         <Col :span="isTreeCollapsed ? 24 : 18" class="flex flex-col">
-          <Card title="服务树和关联资源详情展示" :bordered="false" class="h-full flex flex-col">
-            
-            <template #extra>
-              <a-button type="link" @click="isTreeCollapsed = !isTreeCollapsed" class="flex items-center gap-1">
-                <Icon :icon="isTreeCollapsed ? 'ant-design:menu-unfold-outlined' : 'ant-design:menu-fold-outlined'" />
-                {{ isTreeCollapsed ? '展开服务树' : '收起服务树' }}
-              </a-button>
-            </template>
+        <Card title="服务树和关联资源详情展示" :bordered="false" class="h-full flex flex-col">
 
-            <a-tabs v-model:activeKey="activeKey" >
-              <a-tab-pane key="1">
-                <template #tab><span><info-circle-outlined />节点详情</span></template>
-                <div class="mt-4" v-if="currentNode.id && activeKey === '1'">
+          <template #extra>
+            <a-button type="link" @click="isTreeCollapsed = !isTreeCollapsed" class="flex items-center gap-1">
+              <Icon :icon="isTreeCollapsed ? 'ant-design:menu-unfold-outlined' : 'ant-design:menu-fold-outlined'" />
+              {{ isTreeCollapsed ? '展开服务树' : '收起服务树' }}
+            </a-button>
+          </template>
+
+          <a-tabs v-model:activeKey="activeKey">
+            <a-tab-pane key="1">
+              <template #tab><span><info-circle-outlined />节点详情</span></template>
+              <div class="mt-4" v-if="currentNode.id && activeKey === '1'">
+                <div class="flex justify-between items-center mb-4">
+                  <span class="text-base font-semibold text-gray-800 dark:text-gray-200">详细信息</span>
                   <a-button type="primary" @click="showNodeModal">修改节点属性</a-button>
-                  <a-descriptions title="详细信息" bordered :column="1" :labelStyle="{ width: '120px', textAlign: 'right' }" :contentStyle="{ background: '#fff' }">
-                    <a-descriptions-item label="节点名称">{{ currentNode.title }}</a-descriptions-item>
-                    <a-descriptions-item label="节点等级">{{ currentNode.level }}</a-descriptions-item>
-                    <a-descriptions-item label="运维负责人">
-                      <Tag v-for="(user, index) in currentNode.ops_admin_users" :key="index" color="orange">{{ user }}</Tag>
-                    </a-descriptions-item>
-                    <a-descriptions-item label="节点描述"><span class="text-gray-600">{{ currentNode.desc || '暂无描述' }}</span></a-descriptions-item>
-                    <a-descriptions-item label="资源统计">
-                      <div class="flex items-center gap-6">
-                        <div><span class="text-gray-500 mr-2">ECS:</span><Tag color="cyan" v-if="currentNode.ecsNum > 0">{{ currentNode.ecsNum }} 台</Tag><span v-else class="text-gray-400">0 台</span></div>
-                        <div><span class="text-gray-500 mr-2">ELB:</span><Tag color="orange" v-if="currentNode.elbNum > 0">{{ currentNode.elbNum }} 个</Tag><span v-else class="text-gray-400">0 个</span></div>
-                        <div><span class="text-gray-500 mr-2">RDS:</span><Tag color="green" v-if="currentNode.rdsNum > 0">{{ currentNode.rdsNum }} 个</Tag><span v-else class="text-gray-400">0 个</span></div>
-                        <div><span class="text-gray-500 mr-2">DNS:</span><Tag color="cyan" v-if="currentNode.dnsNum > 0">{{ currentNode.dnsNum }} 条</Tag><span v-else class="text-gray-400">0 条</span></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                  <!-- 左侧：关联资源统计 Card -->
+                  <Card title="关联资源统计" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40 flex flex-col h-full">
+                    <div class="grid grid-cols-2 gap-4 py-2 flex-1 align-middle">
+                      <!-- ECS Card -->
+                      <div class="bg-blue-50/50 dark:bg-blue-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-blue-100 dark:border-blue-900/30">
+                        <span class="text-blue-500 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-1">ECS 实例</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ currentNode.ecsNum || 0 }}</span>
+                          <span class="text-xs text-blue-400 dark:text-blue-500">台</span>
+                        </div>
                       </div>
-                    </a-descriptions-item>
-                  </a-descriptions>
-                  <div class="mt-4" v-if="currentNode.id"> 
-                    <div class="text-base font-medium mb-4">资源分布统计</div>
-                    <EcsVendorChart :node="currentNode" />
-                    <a-divider />
-                    <ElbVendorChart :node="currentNode" />
-                    <RdsVendorChart :node="currentNode" />
-                    <DnsVendorChart :node="currentNode" />
-                    
+
+                      <!-- ELB Card -->
+                      <div class="bg-orange-50/50 dark:bg-orange-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-orange-100 dark:border-orange-900/30">
+                        <span class="text-orange-500 dark:text-orange-400 text-xs font-semibold uppercase tracking-wider mb-1">ELB 负载均衡</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ currentNode.elbNum || 0 }}</span>
+                          <span class="text-xs text-orange-400 dark:text-orange-500">个</span>
+                        </div>
+                      </div>
+
+                      <!-- RDS Card -->
+                      <div class="bg-green-50/50 dark:bg-green-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-green-100 dark:border-green-900/30">
+                        <span class="text-green-500 dark:text-green-400 text-xs font-semibold uppercase tracking-wider mb-1">RDS 数据库</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ currentNode.rdsNum || 0 }}</span>
+                          <span class="text-xs text-green-400 dark:text-green-500">个</span>
+                        </div>
+                      </div>
+
+                      <!-- DNS Card -->
+                      <div class="bg-cyan-50/50 dark:bg-cyan-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-cyan-100 dark:border-cyan-900/30">
+                        <span class="text-cyan-500 dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">DNS 域名</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{{ currentNode.dnsNum || 0 }}</span>
+                          <span class="text-xs text-cyan-400 dark:text-cyan-500">条</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <!-- 右侧：基本属性 Card -->
+                  <Card title="基本属性" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40 flex flex-col h-full">
+                    <div class="flex flex-col gap-3 py-1 flex-1">
+                      <div class="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
+                        <span class="text-gray-500 dark:text-gray-400">节点名称:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ currentNode.title }}</span>
+                      </div>
+                      <div class="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
+                        <span class="text-gray-500 dark:text-gray-400">节点等级:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ currentNode.level }}</span>
+                      </div>
+                      <div class="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
+                        <span class="text-gray-500 dark:text-gray-400">运维负责人:</span>
+                        <div class="flex flex-wrap gap-1 justify-end">
+                          <Tag v-for="(user, index) in currentNode.ops_admin_users" :key="index" color="orange" class="text-sm px-2 py-0.5 m-0">
+                            {{ user }}
+                          </Tag>
+                          <span v-if="!currentNode.ops_admin_users || currentNode.ops_admin_users.length === 0" class="text-gray-400 dark:text-gray-500 text-xs">
+                            暂无配置
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        <span class="text-gray-500 dark:text-gray-400">节点描述:</span>
+                        <span class="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/60 p-2 rounded text-xs min-h-[40px] mt-1 whitespace-pre-wrap">
+                          {{ currentNode.desc || '暂无描述' }}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+                <div class="mt-4" v-if="currentNode.id">
+                  <div class="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 border-l-4 border-blue-500 pl-2">资源分布统计</div>
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- ECS 资源分布 Card -->
+                    <Card title="ECS 资源分布" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40">
+                      <div class="p-2">
+                        <EcsVendorChart :node="currentNode" />
+                      </div>
+                    </Card>
+
+                    <!-- ELB 资源分布 Card -->
+                    <Card title="ELB 资源分布" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40">
+                      <div class="p-2">
+                        <ElbVendorChart :node="currentNode" />
+                      </div>
+                    </Card>
+
+                    <!-- RDS 资源分布 Card -->
+                    <Card title="RDS 资源分布" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40">
+                      <div class="p-2">
+                        <RdsVendorChart :node="currentNode" />
+                      </div>
+                    </Card>
+
+                    <!-- DNS 资源分布 Card -->
+                    <Card title="DNS 资源分布" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40">
+                      <div class="p-2">
+                        <DnsVendorChart :node="currentNode" />
+                      </div>
+                    </Card>
                   </div>
                 </div>
-              </a-tab-pane>
+              </div>
+            </a-tab-pane>
 
-              <a-tab-pane key="2">
-                <template #tab><span><cloud-server-outlined /> ECS列表</span></template>
-                <div class="p-4 overflow-hidden">
-                  <a-space v-if="isLeaf && !showEcsBindTranferIf && !showEcsUnBindTranferIf">
-                    <a-button type="primary" @click="showEcsBindTranfer" v-auth="'POST:/api/stree/bindEcsToStreeNode'">打开 ECS 资源绑定</a-button>
-                    <a-button type="primary" danger @click="showEcsUnBindTranfer" v-auth="'POST:/api/stree/unBindEcsToStreeNode'">打开 ECS 资源解绑</a-button>
-                  </a-space>
-                  <div v-else-if="!isLeaf && !showEcsBindTranferIf && !showEcsUnBindTranferIf" class="text-gray-400 p-4">
-                    <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
-                  </div>
-                  
-                  <a-transfer v-if="showEcsBindTranferIf" :titles="['待绑定','选中绑定']" :data-source="ecsListData" :render="record => record.title" show-search :filter-option="filterOption" :target-keys="ecsBindTargetKeys" @change="ecsBindHandleChange" @search="ecsBindHandleSelectChange" :list-style="{ width: '550px',height: '450px' }" />
-                  <a-transfer v-if="showEcsUnBindTranferIf" :titles="['当前已绑定','选中解绑']" :data-source="ecsUnBindListData" :render="record => record.title" show-search :filter-option="filterOption" :target-keys="ecsUnBindTargetKeys" @change="ecsUnBindHandleChange" @search="ecsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                  <a-divider v-if="showEcsBindTranferIf || showEcsUnBindTranferIf"/>
-                  <a-space v-if="showEcsBindTranferIf"><a-button type="primary" @click="sendEcsBind">确认绑定</a-button><a-button @click="closeEcsBindTranfer">取消</a-button></a-space>
-                  <a-space v-if="showEcsUnBindTranferIf"><a-button type="primary" danger @click="sendEcsUnBind">确认解绑</a-button><a-button @click="closeEcsUnBindTranfer">取消</a-button></a-space>
-                  <div class="mt-4" v-if="currentNode.id && activeKey === '2'"><EcsTable :nodeId="currentNode.id" :refreshKey="ecsTableRefreshKey" /></div>
+            <a-tab-pane key="2">
+              <template #tab><span><cloud-server-outlined /> ECS列表</span></template>
+              <div class="p-4 overflow-hidden">
+                <a-space v-if="isLeaf && !showEcsBindTranferIf && !showEcsUnBindTranferIf">
+                  <a-button type="primary" @click="showEcsBindTranfer" v-auth="'POST:/api/stree/bindEcsToStreeNode'">打开
+                    ECS
+                    资源绑定</a-button>
+                  <a-button type="primary" danger @click="showEcsUnBindTranfer"
+                    v-auth="'POST:/api/stree/unBindEcsToStreeNode'">打开 ECS 资源解绑</a-button>
+                </a-space>
+                <div v-else-if="!isLeaf && !showEcsBindTranferIf && !showEcsUnBindTranferIf" class="text-gray-400 p-4">
+                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
                 </div>
-              </a-tab-pane>
 
-              <a-tab-pane key="3">
-                <template #tab><span><database-outlined /> ELB列表</span></template>
-                <div class="p-4 overflow-hidden">
-                  <a-space v-if="isLeaf && !showElbBindTranferIf && !showElbUnBindTranferIf">
-                    <a-button type="primary" @click="showElbBindTranfer" v-auth="'POST:/api/stree/bindElbToStreeNode'">打开 ELB 资源绑定</a-button>
-                    <a-button type="primary" danger @click="showElbUnBindTranfer" v-auth="'POST:/api/stree/unBindElbToStreeNode'">打开 ELB 资源解绑</a-button>
-
-                  </a-space>
-                  <div v-else-if="!isLeaf && !showElbBindTranferIf && !showElbUnBindTranferIf" class="text-gray-400 p-4">
-                    <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
-                  </div>
-
-                  <a-transfer v-if="showElbBindTranferIf" :titles="['待绑定','选中绑定']" :data-source="elbListData" :render="record => record.title" show-search :filter-option="filterOption" :target-keys="elbBindTargetKeys" @change="elbBindHandleChange" @search="elbBindHandleSelectChange" :list-style="{ width: '550px',height: '450px' }" />
-                  <a-transfer v-if="showElbUnBindTranferIf" :titles="['当前已绑定','选中解绑']" :data-source="elbUnBindListData" :render="record => record.title" show-search :filter-option="filterOption" :target-keys="elbUnBindTargetKeys" @change="elbUnBindHandleChange" @search="elbUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                  <a-divider v-if="showElbBindTranferIf || showElbUnBindTranferIf"/>
-                  <a-space v-if="showElbBindTranferIf"><a-button type="primary" @click="sendElbBind">确认绑定</a-button><a-button @click="closeElbBindTranfer">取消</a-button></a-space>
-                  <a-space v-if="showElbUnBindTranferIf"><a-button type="primary" danger @click="sendElbUnBind">确认解绑</a-button><a-button @click="closeElbUnBindTranfer">取消</a-button></a-space>
-                  <div class="mt-4" v-if="currentNode.id && activeKey === '3'"><ElbTable :nodeId="currentNode.id" :refreshKey="elbTableRefreshKey" /></div>
+                <a-transfer v-if="showEcsBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="ecsListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="ecsBindTargetKeys" @change="ecsBindHandleChange" @search="ecsBindHandleSelectChange"
+                  :list-style="{ width: '550px', height: '450px' }" />
+                <a-transfer v-if="showEcsUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="ecsUnBindListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="ecsUnBindTargetKeys" @change="ecsUnBindHandleChange"
+                  @search="ecsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
+                <a-divider v-if="showEcsBindTranferIf || showEcsUnBindTranferIf" />
+                <a-space v-if="showEcsBindTranferIf"><a-button type="primary"
+                    @click="sendEcsBind">确认绑定</a-button><a-button @click="closeEcsBindTranfer">取消</a-button></a-space>
+                <a-space v-if="showEcsUnBindTranferIf"><a-button type="primary" danger
+                    @click="sendEcsUnBind">确认解绑</a-button><a-button
+                    @click="closeEcsUnBindTranfer">取消</a-button></a-space>
+                <div class="mt-4" v-if="currentNode.id && activeKey === '2'">
+                  <EcsTable :nodeId="currentNode.id" :refreshKey="ecsTableRefreshKey" />
                 </div>
-              </a-tab-pane>
+              </div>
+            </a-tab-pane>
 
-              <a-tab-pane key="4">
-                <template #tab><span><global-outlined /> DNS列表</span></template>
-                <div class="p-4 overflow-hidden" v-if="currentNode.id && activeKey === '4'">
-                  <DnsTable :nodeId="currentNode.id" :refreshKey="dnsTableRefreshKey" />
+            <a-tab-pane key="3">
+              <template #tab><span><database-outlined /> ELB列表</span></template>
+              <div class="p-4 overflow-hidden">
+                <a-space v-if="isLeaf && !showElbBindTranferIf && !showElbUnBindTranferIf">
+                  <a-button type="primary" @click="showElbBindTranfer" v-auth="'POST:/api/stree/bindElbToStreeNode'">打开
+                    ELB
+                    资源绑定</a-button>
+                  <a-button type="primary" danger @click="showElbUnBindTranfer"
+                    v-auth="'POST:/api/stree/unBindElbToStreeNode'">打开 ELB 资源解绑</a-button>
+
+                </a-space>
+                <div v-else-if="!isLeaf && !showElbBindTranferIf && !showElbUnBindTranferIf" class="text-gray-400 p-4">
+                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
                 </div>
-              </a-tab-pane>
 
-              <a-tab-pane key="5">
-                <template #tab><span><database-outlined /> RDS列表</span></template>
-                <div class="p-4 overflow-hidden">
-                  <a-space v-if="isLeaf && !showRdsBindTranferIf && !showRdsUnBindTranferIf">
-                    <a-button type="primary" @click="showRdsBindTranfer" v-auth="'POST:/api/stree/bindRdsToStreeNode'">打开 RDS 资源绑定</a-button>
-                    <a-button type="primary" danger @click="showRdsUnBindTranfer" v-auth="'POST:/api/stree/unBindRdsToStreeNode'">打开 RDS 资源解绑</a-button>
-                  </a-space>
-                  <div v-else-if="!isLeaf && !showRdsBindTranferIf && !showRdsUnBindTranferIf" class="text-gray-400 p-4">
-                    <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
-                  </div>
-
-                  <a-transfer v-if="showRdsBindTranferIf" :titles="['待绑定','选中绑定']" :data-source="rdsListData" :render="record => record.title" show-search :filter-option="filterOption" :target-keys="rdsBindTargetKeys" @change="rdsBindHandleChange" @search="rdsBindHandleSelectChange" :list-style="{ width: '550px',height: '450px' }" />
-                  <a-transfer v-if="showRdsUnBindTranferIf" :titles="['当前已绑定','选中解绑']" :data-source="rdsUnBindListData" :render="record => record.title" show-search :filter-option="filterOption" :target-keys="rdsUnBindTargetKeys" @change="rdsUnBindHandleChange" @search="rdsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                  <a-divider v-if="showRdsBindTranferIf || showRdsUnBindTranferIf"/>
-                  
-                  <a-space v-if="showRdsBindTranferIf">
-                    <a-button type="primary" @click="sendRdsBind" auth="POST:/api/stree/bindRdsToStreeNode">确认绑定</a-button>
-                    <a-button @click="closeRdsBindTranfer">取消</a-button>
-                  </a-space>
-                  <a-space v-if="showRdsUnBindTranferIf">
-                    <a-button type="primary" danger @click="sendRdsUnBind">确认解绑</a-button>
-                    <a-button @click="closeRdsUnBindTranfer">取消</a-button>
-                  </a-space>
-
-                  <div class="mt-4" v-if="currentNode.id && activeKey === '5'">
-                    <RdsTable :nodeId="currentNode.id" :refreshKey="rdsTableRefreshKey" />
-                  </div>
+                <a-transfer v-if="showElbBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="elbListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="elbBindTargetKeys" @change="elbBindHandleChange" @search="elbBindHandleSelectChange"
+                  :list-style="{ width: '550px', height: '450px' }" />
+                <a-transfer v-if="showElbUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="elbUnBindListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="elbUnBindTargetKeys" @change="elbUnBindHandleChange"
+                  @search="elbUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
+                <a-divider v-if="showElbBindTranferIf || showElbUnBindTranferIf" />
+                <a-space v-if="showElbBindTranferIf"><a-button type="primary"
+                    @click="sendElbBind">确认绑定</a-button><a-button @click="closeElbBindTranfer">取消</a-button></a-space>
+                <a-space v-if="showElbUnBindTranferIf"><a-button type="primary" danger
+                    @click="sendElbUnBind">确认解绑</a-button><a-button
+                    @click="closeElbUnBindTranfer">取消</a-button></a-space>
+                <div class="mt-4" v-if="currentNode.id && activeKey === '3'">
+                  <ElbTable :nodeId="currentNode.id" :refreshKey="elbTableRefreshKey" />
                 </div>
-              </a-tab-pane>
+              </div>
+            </a-tab-pane>
 
-            </a-tabs>
-          </Card>
+            <a-tab-pane key="4">
+              <template #tab><span><global-outlined /> DNS列表</span></template>
+              <div class="p-4 overflow-hidden" v-if="currentNode.id && activeKey === '4'">
+                <DnsTable :nodeId="currentNode.id" :refreshKey="dnsTableRefreshKey" />
+              </div>
+            </a-tab-pane>
+
+            <a-tab-pane key="5">
+              <template #tab><span><database-outlined /> RDS列表</span></template>
+              <div class="p-4 overflow-hidden">
+                <a-space v-if="isLeaf && !showRdsBindTranferIf && !showRdsUnBindTranferIf">
+                  <a-button type="primary" @click="showRdsBindTranfer" v-auth="'POST:/api/stree/bindRdsToStreeNode'">打开
+                    RDS
+                    资源绑定</a-button>
+                  <a-button type="primary" danger @click="showRdsUnBindTranfer"
+                    v-auth="'POST:/api/stree/unBindRdsToStreeNode'">打开 RDS 资源解绑</a-button>
+                </a-space>
+                <div v-else-if="!isLeaf && !showRdsBindTranferIf && !showRdsUnBindTranferIf" class="text-gray-400 p-4">
+                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
+                </div>
+
+                <a-transfer v-if="showRdsBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="rdsListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="rdsBindTargetKeys" @change="rdsBindHandleChange" @search="rdsBindHandleSelectChange"
+                  :list-style="{ width: '550px', height: '450px' }" />
+                <a-transfer v-if="showRdsUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="rdsUnBindListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="rdsUnBindTargetKeys" @change="rdsUnBindHandleChange"
+                  @search="rdsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
+                <a-divider v-if="showRdsBindTranferIf || showRdsUnBindTranferIf" />
+
+                <a-space v-if="showRdsBindTranferIf">
+                  <a-button type="primary" @click="sendRdsBind"
+                    auth="POST:/api/stree/bindRdsToStreeNode">确认绑定</a-button>
+                  <a-button @click="closeRdsBindTranfer">取消</a-button>
+                </a-space>
+                <a-space v-if="showRdsUnBindTranferIf">
+                  <a-button type="primary" danger @click="sendRdsUnBind">确认解绑</a-button>
+                  <a-button @click="closeRdsUnBindTranfer">取消</a-button>
+                </a-space>
+
+                <div class="mt-4" v-if="currentNode.id && activeKey === '5'">
+                  <RdsTable :nodeId="currentNode.id" :refreshKey="rdsTableRefreshKey" />
+                </div>
+              </div>
+            </a-tab-pane>
+
+          </a-tabs>
+        </Card>
         </Col>
       </Row>
     </PageWrapper>
@@ -170,9 +298,9 @@ import { Row, Col, Tree, Dropdown, Menu, Space, Empty, Tabs, Card, Descriptions,
 import { CloudServerOutlined, DatabaseOutlined, InfoCircleOutlined, GlobalOutlined } from '@ant-design/icons-vue';
 import Icon from '@/components/Icon/Icon.vue';
 import { usePermission } from '@/hooks/web/usePermission';
-import { 
-  deleteStreeNode, getTopStreeNodes, getChildrenStreeNodes, 
-  getResourceEcsUnbindList, bindEcsToStreeNode, unBindEcsToStreeNode, 
+import {
+  deleteStreeNode, getTopStreeNodes, getChildrenStreeNodes,
+  getResourceEcsUnbindList, bindEcsToStreeNode, unBindEcsToStreeNode,
   getResourceElbUnbindList, bindElbToStreeNode, unBindElbToStreeNode,
   getResourceRdsUnbindList, bindRdsToStreeNode, unBindRdsToStreeNode
 } from '@/api/demo/system';
@@ -194,9 +322,9 @@ import RdsTable from './RdsTable.vue';
 export default defineComponent({
   name: 'DemoTree',
   components: {
-    ADirectoryTree: Tree.DirectoryTree, ADropdown: Dropdown,Col,Row,
+    ADirectoryTree: Tree.DirectoryTree, ADropdown: Dropdown, Col, Row,
     AMenu: Menu, AMenuItem: Menu.Item, AEmpty: Empty, ATabs: Tabs, ATabPane: Tabs.TabPane,
-    Card, ADescriptions: Descriptions, ADescriptionsItem: Descriptions.Item,Tag,
+    Card, ADescriptions: Descriptions, ADescriptionsItem: Descriptions.Item, Tag,
     ATransfer: Transfer, ADivider: Divider, ASpace: Space, PageWrapper,
     Icon, Space, StreeDrawer, DatabaseOutlined, CloudServerOutlined, InfoCircleOutlined, GlobalOutlined,
     TreeNodeModal, EcsTable, ElbTable, DnsTable, RdsTable, EcsVendorChart, ElbVendorChart, DnsVendorChart, RdsVendorChart
@@ -231,13 +359,13 @@ export default defineComponent({
     const activeKey = ref('1');
     const isShow = ref(false);
     const treeData = ref<TreeItem[]>([]);
-    const expandedKeys = ref<string[]>(['0-0', '0-1','0-2']);
+    const expandedKeys = ref<string[]>(['0-0', '0-1', '0-2']);
     const [registerModal, { openModal }] = useModal();
-    const [registerDrawer,{openDrawer}] = useDrawer();
+    const [registerDrawer, { openDrawer }] = useDrawer();
     const { createMessage } = useMessage();
     const currentNode = ref<any>({});
     const thisNodePath = ref<string>('请选择一个节点');
-    
+
     const isCurrentNodeLeaf = computed(() => { return currentNode.value && currentNode.value.isLeaf === true; });
     const showNodeModal = () => { if (!currentNode.value.id) return createMessage.warning('请先选择一个节点'); openModal(true, { ...currentNode.value }); };
     const filterOption = (inputValue: string, option: any) => option.title.indexOf(inputValue) > -1;
@@ -285,7 +413,7 @@ export default defineComponent({
 
     const showRdsUnBindTranfer = () => {
       // 获取当前节点关联的 RDS 数据
-      const rawData = currentNode.value.bind_rdss || []; 
+      const rawData = currentNode.value.bind_rdss || [];
       rdsUnBindListData.value = rawData.map(item => ({
         ...item,
         key: String(item.id),
@@ -305,7 +433,7 @@ export default defineComponent({
         closeRdsBindTranfer();
         await refreshCurrentNode();
         rdsTableRefreshKey.value += 1;
-      } catch (error) {}
+      } catch (error) { }
     };
 
     const sendRdsUnBind = async () => {
@@ -316,7 +444,7 @@ export default defineComponent({
         closeRdsUnBindTranfer();
         await refreshCurrentNode();
         rdsTableRefreshKey.value += 1;
-      } catch (error) {}
+      } catch (error) { }
     };
 
     // ================== 树节点控制逻辑 ==================
@@ -331,10 +459,10 @@ export default defineComponent({
     const refreshCurrentNode = async () => {
       if (!currentNode.value.id) return;
       const pid = currentNode.value.pId || 0;
-      let res = pid === 0 ? await getTopStreeNodes() : await getChildrenStreeNodes(pid); 
+      let res = pid === 0 ? await getTopStreeNodes() : await getChildrenStreeNodes(pid);
       const list = Array.isArray(res) ? res : (res.data || []);
       const updatedNode = list.find((item: any) => item.id === currentNode.value.id);
-      
+
       if (updatedNode) {
         Object.assign(currentNode.value, updatedNode);
         thisNodePath.value = updatedNode.nodePath || updatedNode.title;
@@ -354,10 +482,10 @@ export default defineComponent({
     getTopStreeNodes().then((res) => { treeData.value = res.data || res; isShow.value = true; });
 
     async function handlerSuccess() {
-      await reload(); 
+      await reload();
       if (currentNode.value.id) {
         const pid = currentNode.value.pId || 0;
-        const res = await getChildrenStreeNodes(pid); 
+        const res = await getChildrenStreeNodes(pid);
         const updatedNode = res.find(item => item.id === currentNode.value.id);
         if (updatedNode) { currentNode.value = updatedNode; thisNodePath.value = updatedNode.nodePath || updatedNode.title; }
       }
@@ -381,14 +509,14 @@ export default defineComponent({
       return new Promise<void>((resolve) => {
         if (treeNode.dataRef.children) return resolve();
         getChildrenStreeNodes(treeNode.dataRef.id).then((res) => {
-            treeNode.dataRef.children = res; treeData.value = [...treeData.value]; resolve();
+          treeNode.dataRef.children = res; treeData.value = [...treeData.value]; resolve();
         }).catch(() => resolve());
       });
     };
 
     const onContextMenuClick = (treeKey, menuKey, id, level, children, isLeaf) => {
-      if (menuKey=="1"){ if (isLeaf) return createMessage.warning("不允许新增"); openDrawer(true, { level: level + 1, pid: id, title: treeKey }); }
-      if (menuKey=="2"){
+      if (menuKey == "1") { if (isLeaf) return createMessage.warning("不允许新增"); openDrawer(true, { level: level + 1, pid: id, title: treeKey }); }
+      if (menuKey == "2") {
         if (children && children.length > 0) return createMessage.error("请先删除子节点");
         deleteStreeNode(id).then(() => {
           createMessage.success(`删除成功`);
@@ -421,7 +549,20 @@ export default defineComponent({
 </script>
 
 <style scoped>
-:deep(.ant-tree-switcher), :deep(.ant-tree-node-content-wrapper) { line-height: 38px !important; min-height: 38px !important; }
-:deep(.ant-tree-node-content-wrapper) { display: inline-flex !important; align-items: center; width: calc(100% - 24px) !important; }
-:deep(.ant-tree-title) { flex: 1; width: 0; }
+:deep(.ant-tree-switcher),
+:deep(.ant-tree-node-content-wrapper) {
+  line-height: 38px !important;
+  min-height: 38px !important;
+}
+
+:deep(.ant-tree-node-content-wrapper) {
+  display: inline-flex !important;
+  align-items: center;
+  width: calc(100% - 24px) !important;
+}
+
+:deep(.ant-tree-title) {
+  flex: 1;
+  width: 0;
+}
 </style>

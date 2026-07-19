@@ -2,18 +2,18 @@
   <div class="rds-summary-wrapper w-full h-full flex flex-col mt-4">
     
     <div class="flex gap-4 mb-4">
-      <div class="flex-1 bg-green-50 p-4 rounded-md border border-green-100">
-        <div class="text-gray-500 text-sm mb-1">RDS 总数 (个)</div>
-        <div class="text-2xl font-bold text-green-600">{{ totalRdsNum }}</div>
+      <div class="flex-1 bg-green-50/50 dark:bg-green-950/20 p-4 rounded-md border border-green-100 dark:border-green-900/30">
+        <div class="text-gray-500 dark:text-gray-400 text-sm mb-1">RDS 总数 (个)</div>
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ totalRdsNum }}</div>
       </div>
-      <div class="flex-1 bg-teal-50 p-4 rounded-md border border-teal-100">
-        <div class="text-gray-500 text-sm mb-1">数据库引擎种类</div>
-        <div class="text-2xl font-bold text-teal-600">{{ engineTypeCount }}</div>
+      <div class="flex-1 bg-teal-50/50 dark:bg-teal-950/20 p-4 rounded-md border border-teal-100 dark:border-teal-900/30">
+        <div class="text-gray-500 dark:text-gray-400 text-sm mb-1">数据库引擎种类</div>
+        <div class="text-2xl font-bold text-teal-600 dark:text-teal-400">{{ engineTypeCount }}</div>
       </div>
     </div>
 
     <div class="echarts-box flex-1 w-full relative">
-      <div ref="chartRef" style="width: 100%; height: 400px;"></div>
+      <div ref="chartRef" style="width: 100%; height: 300px;"></div>
     </div>
     
   </div>
@@ -22,6 +22,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import * as echarts from 'echarts';
+import { useAppStore } from '@/store/modules/app';
 
 const props = defineProps({
   node: {
@@ -29,6 +30,14 @@ const props = defineProps({
     default: () => ({})
   }
 });
+
+const appStore = useAppStore();
+const isDark = computed(() => appStore.getDarkMode === 'dark');
+
+const titleColor = computed(() => isDark.value ? '#c9d1d9' : '#333');
+const labelColor = computed(() => isDark.value ? '#8b949e' : '#666');
+const splitLineColor = computed(() => isDark.value ? '#30363d' : '#eee');
+const axisLineColor = computed(() => isDark.value ? '#30363d' : '#999');
 
 // 计算属性提取后端数据
 const totalRdsNum = computed(() => props.node?.rdsNum || 0);
@@ -64,22 +73,23 @@ const renderEcharts = () => {
 
   const option = {
     title: [
-      { text: 'RDS 厂商占比', left: '10%', top: '2%', textStyle: { color: '#333', fontSize: 15 } },
-      { text: '数据库引擎分布', left: '60%', top: '2%', textStyle: { color: '#333', fontSize: 15 } },
+      { text: 'RDS 厂商占比', left: '10%', top: '2%', textStyle: { color: titleColor.value, fontSize: 15 } },
+      { text: '数据库引擎分布', left: '60%', top: '2%', textStyle: { color: titleColor.value, fontSize: 15 } },
     ],
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} 个' },
     // 右侧柱状图的布局
     grid: [{ left: '60%', top: '15%', width: '35%', height: '70%', containLabel: true }],
-    xAxis: [{ type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }, axisLabel: { show: false } }],
+    xAxis: [{ type: 'value', splitLine: { lineStyle: { type: 'dashed', color: splitLineColor.value } }, axisLabel: { show: false } }],
     yAxis: [
       {
         type: 'category',
         data: engineKeys,
         axisLabel: {
+          color: labelColor.value,
           formatter: (value: string) => value.toUpperCase()
         },
         axisTick: { show: false },
-        axisLine: { lineStyle: { color: '#999' } },
+        axisLine: { lineStyle: { color: axisLineColor.value } },
       }
     ],
     color: ['#52c41a', '#1890ff', '#fadb14', '#eb2f96', '#722ed1'],
@@ -90,7 +100,7 @@ const renderEcharts = () => {
         radius: ['35%', '55%'], 
         center: ['22%', '50%'], 
         data: vendorData,
-        label: { formatter: '{b}\n{c}个', color: '#666' },
+        label: { formatter: '{b}\n{c}个', color: labelColor.value },
       },
       {
         name: '引擎类型',
@@ -103,7 +113,7 @@ const renderEcharts = () => {
             return colorList[params.dataIndex % colorList.length];
           }
         },
-        label: { show: true, position: 'right', color: '#666' },
+        label: { show: true, position: 'right', color: labelColor.value },
         data: engineVals,
       }
     ]
@@ -119,6 +129,10 @@ watch(() => props.node, () => {
     renderEcharts();
   });
 }, { deep: true });
+
+watch(isDark, () => {
+  renderEcharts();
+});
 
 onMounted(async () => {
   await nextTick();

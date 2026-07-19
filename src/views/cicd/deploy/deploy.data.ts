@@ -1,208 +1,112 @@
-import dayjs from 'dayjs';
-import { getAllRoleList, isAccountExist, setAccountStatus } from '@/api/demo/system';
 import { BasicColumn, FormSchema } from '@/components/Table';
-import { h } from 'vue';
-import { Switch } from 'ant-design-vue';
-import { useMessage } from '@/hooks/web/useMessage';
 
 export const columns: BasicColumn[] = [
-
   {
-    title: '用户名',
-    dataIndex: 'userName',
-    width: 200,
-  },
-
-  {
-    title: '昵称',
-    dataIndex: 'realName',
-    width: 200,
+    title: '发布单号',
+    dataIndex: 'deployNo',
+    width: 150,
   },
   {
-    title: '飞书userId',
-    dataIndex: 'feiShuUserId',
-    width: 200,
+    title: '关联工单',
+    dataIndex: 'orderNo',
+    width: 150,
   },
   {
-    title: '角色列表',
-    dataIndex: 'roles',
-    width: 200,
+    title: '应用名称',
+    dataIndex: 'appName',
+    width: 150,
   },
   {
-    title: '备注',
-    dataIndex: 'desc',
-    width: 200
-  },
-  {
-    title: '状态',
-    dataIndex: 'enable',
+    title: '部署环境',
+    dataIndex: 'envName',
     width: 120,
-    customRender: ({ record }) => {
-      if (!Reflect.has(record, 'pendingStatus')) {
-        record.pendingStatus = false;
-      }
-      return h(Switch, {
-        checked: record.enable === 1, 
-        
-        checkedChildren: '启用',
-        unCheckedChildren: '禁用',
-        
-        loading: record.pendingStatus,
-        onChange(checked: boolean) {
-          record.pendingStatus = true;
-          
-          // 💡 修改 4：根据开关状态获取新的 enable 值 (1=开启，2=禁用)
-          const newEnable = checked ? 1 : 2; 
-          const { createMessage } = useMessage();
-          
-          // 💡 修改 5：这里调用你更新采集任务状态的 API
-          setAccountStatus(record.id, newEnable) 
-            .then(() => {
-              // 💡 修改 6：更新本地数据，使页面状态刷新
-              record.enable = newEnable;
-              createMessage.success(`状态修改成功`);
-            })
-            .catch(() => {
-              createMessage.error('状态修改失败');
-            })
-            .finally(() => {
-              record.pendingStatus = false;
-            });
-        },
-      });
-    },
   },
   {
-    title: '创建时间',
-    dataIndex: 'CreatedAt',
-    width: 180,
-    format: (text) => {
-      return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss.SSS') : '';
-    },
+    title: '发布版本',
+    dataIndex: 'version',
+    width: 150,
   },
-
+  {
+    title: '发布状态',
+    dataIndex: 'statusText',
+    width: 120,
+  },
+  {
+    title: '发布进度',
+    dataIndex: 'progress',
+    width: 250,
+  },
+  {
+    title: '耗时',
+    dataIndex: 'duration',
+    width: 100,
+  },
+  {
+    title: '执行人',
+    dataIndex: 'operator',
+    width: 120,
+  },
+  {
+    title: '发布时间',
+    dataIndex: 'createdAt',
+    width: 180,
+  },
 ];
 
 export const searchFormSchema: FormSchema[] = [
   {
-    field: 'userName',
-    label: '用户名',
+    field: 'appName',
+    label: '应用名称',
     component: 'Input',
     colProps: { span: 8 },
   },
-
   {
-    field: 'realName',
-    label: '昵称',
-    component: 'Input',
+    field: 'envKey',
+    label: '部署环境',
+    component: 'Select',
+    componentProps: {
+      options: [
+        { label: '开发环境', value: 'dev' },
+        { label: '测试环境', value: 'test' },
+        { label: '预生产环境', value: 'pre' },
+        { label: '生产环境', value: 'prod' },
+      ],
+    },
     colProps: { span: 8 },
   },
 ];
 
 export const accountFormSchema: FormSchema[] = [
   {
-    field: 'userName',
-    label: '用户名',
+    field: 'appName',
+    label: '应用名称',
     component: 'Input',
-    helpMessage: [''],
-      componentProps: {
-      autocomplete: 'username', 
-    },
-    rules: [
-      {
-        required: true,
-        message: '请输入用户名',
-      },
-
-      {
-        trigger: 'blur',
-        validator(_, value) {
-          return new Promise((resolve, reject) => {
-            isAccountExist(value)
-              .then(() => resolve())
-              .catch((err) => reject(err.message || '验证失败'));
-          });
-        },
-      },
-    ],
-  },
-  {
-    field: 'password',
-    label: '密码',
-    component: 'InputPassword',
     required: true,
-    ifShow: true,
-    componentProps: {
-      autocomplete: 'current-password', 
-      placeholder: '请输入密码',
-    },
   },
   {
-    field: 'homePath',
-    label: 'homePath',
+    field: 'orderNo',
+    label: '关联工单',
     component: 'Input',
-    ifShow: false
+    required: true,
   },
   {
-    label: '角色',
-    field: 'roles',
-    component: 'ApiSelect',
+    field: 'envKey',
+    label: '部署环境',
+    component: 'Select',
     required: true,
     componentProps: {
-      api: getAllRoleList,
-      mode: "multiple",
-      labelField: 'roleName',
-      valueField: 'roleValue',
-      showSearch: true,
-      filterOption: (input: string, option: any) => {
-        const keyword = input.toLowerCase();
-        const label = String(option.label || '').toLowerCase();
-        const value = String(option.value || '').toLowerCase();
-        return label.includes(keyword) || value.includes(keyword);
-      },
+      options: [
+        { label: '开发环境', value: 'dev' },
+        { label: '测试环境', value: 'test' },
+        { label: '预生产环境', value: 'pre' },
+        { label: '生产环境', value: 'prod' },
+      ],
     },
-    rules: [
-      {
-        required: true,
-        validator: async (_, value) => {
-          if (!value || (Array.isArray(value) && value.length === 0)) {
-            return Promise.reject('请选择至少一个角色');
-          }
-          return Promise.resolve();
-        },
-        trigger: 'blur'
-      }
-    ],
   },
-
   {
-    field: 'realName',
-    label: '昵称',
+    field: 'version',
+    label: '发布版本',
     component: 'Input',
     required: true,
   },
-  {
-    field: 'feiShuUserId',
-    label: '飞书用户id',
-    component: 'Input',
-    required: true,
-  },
-
-  {
-    label: '备注',
-    field: 'desc',
-    component: 'InputTextArea',
-  },
-  {
-    label: 'enable',
-    field: 'enable',
-    component: 'Input',
-    ifShow: false
-  },
-  {
-    field: 'id',
-    label: 'id',
-    component: 'InputNumber',
-    ifShow: false,
-  }
 ];

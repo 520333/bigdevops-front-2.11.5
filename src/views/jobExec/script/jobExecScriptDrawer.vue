@@ -12,15 +12,15 @@
     <div class="mt-4 p-4 bg-white dark:bg-dark-900 rounded-md">
       <div class="mb-2 font-bold text-gray-700 dark:text-gray-300">脚本内容：</div>
       
-      <CodeEditor
-        v-if="renderEditor"
-        v-model:value="scriptContent"
-        :mode="editorMode"
-        class="border border-gray-300 dark:border-gray-600 rounded"
-        
-        style="height: 400px;"
-      />
-              
+      <div class="border border-gray-300 dark:border-gray-600 rounded overflow-hidden">
+        <Codemirror
+          v-if="renderEditor"
+          v-model="scriptContent"
+          placeholder="请输入脚本内容..."
+          :style="{ height: '400px' }"
+          :extensions="editorExtensions"
+        />
+      </div>
     </div>
   </BasicDrawer>
 </template>
@@ -33,14 +33,14 @@
   import { useMessage } from '@/hooks/web/useMessage';
   import { createJobExecScript, updateJobExecScript } from '@/api/demo/system'; 
   
-  // 引入 Vben 官方编辑器
-  import { CodeEditor } from '@/components/CodeEditor';
+  import { Codemirror } from 'vue-codemirror';
+  import { oneDark } from '@codemirror/theme-one-dark';
+  import { javascript } from '@codemirror/lang-javascript';
+  import { python } from '@codemirror/lang-python';
+  import { yaml } from '@codemirror/lang-yaml';
+  import { StreamLanguage } from '@codemirror/language';
+  import { shell } from '@codemirror/legacy-modes/mode/shell';
 
-  // 必须引入对应的语法包，否则编辑器无法显示色彩
-  import 'codemirror/mode/shell/shell.js';
-  import 'codemirror/mode/python/python.js';
-  import 'codemirror/mode/javascript/javascript.js';
-  import 'codemirror/mode/yaml/yaml.js';
   const emit = defineEmits(['success', 'register']);
   const { createMessage } = useMessage();
 
@@ -53,11 +53,20 @@
 
   const getTitle = computed(() => (!unref(isUpdate) ? '新增脚本模板' : '编辑脚本模板'));
 
-  // Ansible 映射为 YAML 高亮
-  const editorMode = computed(() => {
-    if (currentScriptType.value === 'ansible') return 'yaml';
-    if (currentScriptType.value === 'json') return 'application/json';
-    return currentScriptType.value || 'shell';
+  // 计算编辑器的拓展插件
+  const editorExtensions = computed(() => {
+    const ext = [oneDark];
+    const lang = currentScriptType.value || 'shell';
+    if (lang === 'shell') {
+      ext.push(StreamLanguage.define(shell));
+    } else if (lang === 'javascript' || lang === 'json') {
+      ext.push(javascript());
+    } else if (lang === 'python') {
+      ext.push(python());
+    } else if (lang === 'yaml' || lang === 'ansible') {
+      ext.push(yaml());
+    }
+    return ext;
   });
 
   const [registerForm, { resetFields, setFieldsValue, validate }] = useForm({

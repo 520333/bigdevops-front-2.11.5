@@ -37,13 +37,15 @@
 
                 <div>
                   <div class="font-bold text-sm mb-3 border-l-4 border-blue-500 pl-2 text-gray-700">脚本内容</div>
-                  <CodeEditor 
-                    :key="detailData.lang"
-                    v-model:value="detailData.scriptContent"
-                    :mode="getCodeMirrorMode(detailData.lang)"
-                    readonly style="height: 300px;"
-                    class="border border-gray-300 dark:border-gray-600 rounded"
-                  />
+                  <div class="border border-gray-300 dark:border-gray-600 rounded overflow-hidden">
+                    <Codemirror 
+                      :key="detailData.lang"
+                      v-model="detailData.scriptContent"
+                      :disabled="true"
+                      :style="{ height: '300px' }"
+                      :extensions="getEditorExtensions(detailData.lang)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -108,12 +110,13 @@
   import { Drawer as ADrawer, Spin as ASpin, Timeline as ATimeline, TimelineItem as ATimelineItem, Tabs as ATabs, TabPane as ATabPane, Tag as ATag, Modal as AModal, Button as AButton, Descriptions as ADescriptions, DescriptionsItem as ADescriptionsItem } from 'ant-design-vue';
   import { BasicTable, useTable } from '@/components/Table';
   import { getJobExecTaskOne, getJobExecResultByJobId } from '@/api/demo/system';
-  import { CodeEditor } from '@/components/CodeEditor';
-  import 'codemirror/mode/shell/shell.js';
-  import 'codemirror/mode/python/python.js';
-  import 'codemirror/mode/javascript/javascript.js';
-  import 'codemirror/mode/dockerfile/dockerfile.js';
-  import 'codemirror/mode/yaml/yaml.js';
+  import { Codemirror } from 'vue-codemirror';
+  import { oneDark } from '@codemirror/theme-one-dark';
+  import { javascript } from '@codemirror/lang-javascript';
+  import { python } from '@codemirror/lang-python';
+  import { yaml } from '@codemirror/lang-yaml';
+  import { StreamLanguage } from '@codemirror/language';
+  import { shell } from '@codemirror/legacy-modes/mode/shell';
   const visible = ref(false);
   const loading = ref(false);
   const detailData = ref<any>(null);
@@ -145,16 +148,18 @@
     ],
     bordered: true,
   });
-  const getCodeMirrorMode = (lang: string) => {
-    const map: Record<string, string> = {
-      'shell': 'shell',
-      'python': 'python',
-      'yaml': 'yaml',          // Ansible 对应
-      'ansible': 'yaml',
-      'json': 'application/json',
-      'javascript': 'application/json'
-    };
-    return map[lang] || 'shell';
+  const getEditorExtensions = (lang: string) => {
+    const ext = [oneDark];
+    if (lang === 'shell') {
+      ext.push(StreamLanguage.define(shell));
+    } else if (lang === 'javascript' || lang === 'json') {
+      ext.push(javascript());
+    } else if (lang === 'python') {
+      ext.push(python());
+    } else if (lang === 'yaml' || lang === 'ansible') {
+      ext.push(yaml());
+    }
+    return ext;
   };
   const getResultStatusColor = (status: string) => {
     const map: any = { success: 'success', failed: 'error', running: 'processing', pending: 'default' };

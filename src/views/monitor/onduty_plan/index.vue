@@ -21,17 +21,17 @@
         </div>
 
       </div>
-      <div class="bg-white p-4 mb-4 rounded shadow-sm border">
+      <div class="bg-white dark:bg-[#151515] p-4 mb-4 rounded shadow-sm border border-gray-100 dark:border-zinc-800">
 
 
-        <div class="text-sm font-bold text-gray-700 mb-3 border-b pb-2">本月个人值班统计</div>
+        <div class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 border-b dark:border-zinc-800 pb-2">本月个人值班统计</div>
         <div class="flex flex-wrap gap-4">
           <div v-for="(dates, name) in monthlyDutyStats" :key="name" class="text-sm">
-            <span class="font-bold text-blue-600">{{ name }}:</span>
-            <span class="text-gray-600 ml-1">{{ dates.length }} 天</span>
-            <div class="text-xs text-gray-400 mt-1">{{ dates.join(', ') }}</div>
+            <span class="font-bold text-blue-600 dark:text-blue-400">{{ name }}:</span>
+            <span class="text-gray-600 dark:text-gray-300 ml-1">{{ dates.length }} 天</span>
+            <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ dates.join(', ') }}</div>
           </div>
-          <div v-if="Object.keys(monthlyDutyStats).length === 0" class="text-gray-400 text-sm">
+          <div v-if="Object.keys(monthlyDutyStats).length === 0" class="text-gray-400 dark:text-gray-500 text-sm">
             本月暂无排班数据
           </div>
         </div>
@@ -41,35 +41,35 @@
         <template #dateCellRender="{ current }">
           <ul class="events">
             <li v-for="item in getListData(current)" :key="item.content" @click.stop="openChangeModal(current, item)"
-              class="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors">
+              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 p-1 rounded transition-colors">
               <a-popover placement="right" trigger="hover">
 
                 <template #title>
-                  <div class="font-bold text-gray-800 pb-1 border-b border-gray-100">
+                  <div class="font-bold text-gray-800 dark:text-gray-200 pb-1 border-b border-gray-100 dark:border-zinc-800">
                     📅 排班详情
                   </div>
                 </template>
 
                 <template #content>
-                  <div class="w-48 text-sm">
+                  <div class="w-48 text-sm text-gray-800 dark:text-gray-300">
                     <div class="flex justify-between py-1">
-                      <span class="text-gray-500">当前值班：</span>
-                      <span class="font-medium text-blue-600">{{ item.realName }}</span>
+                      <span class="text-gray-500 dark:text-gray-400">当前值班：</span>
+                      <span class="font-medium text-blue-600 dark:text-blue-400">{{ item.realName }}</span>
                     </div>
 
                     <template v-if="item.originUser">
                       <div class="flex justify-between py-1">
-                        <span class="text-gray-500">原定值班：</span>
-                        <span class="line-through text-gray-400">{{ item.originUser }}</span>
+                        <span class="text-gray-500 dark:text-gray-400">原定值班：</span>
+                        <span class="line-through text-gray-400 dark:text-gray-500">{{ item.originUser }}</span>
                       </div>
-                      <div class="mt-2 pt-2 border-t border-gray-100" v-if="item.remark">
-                        <div class="text-gray-500 mb-1">换班原因：</div>
-                        <div class="bg-gray-50 p-2 rounded text-gray-700 whitespace-pre-wrap">{{ item.remark }}</div>
+                      <div class="mt-2 pt-2 border-t border-gray-100 dark:border-zinc-800" v-if="item.remark">
+                        <div class="text-gray-500 dark:text-gray-400 mb-1">换班原因：</div>
+                        <div class="bg-gray-50 dark:bg-zinc-800 p-2 rounded text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ item.remark }}</div>
                       </div>
                     </template>
 
                     <template v-else>
-                      <div class="text-gray-400 mt-1 text-xs">按计划正常轮值，无换班变动。</div>
+                      <div class="text-gray-400 dark:text-gray-500 mt-1 text-xs">按计划正常轮值，无换班变动。</div>
                     </template>
                   </div>
                 </template>
@@ -294,11 +294,18 @@ export default defineComponent({
   background: #fff;
   border-radius: 4px;
 }
+html[data-theme='dark'] .calendar-card {
+  background: #151515;
+}
 
 .member-list-bar {
   background-color: #fafafa;
   border: 1px solid #f0f0f0;
   border-radius: 6px;
+}
+html[data-theme='dark'] .member-list-bar {
+  background-color: #1f1f1f;
+  border-color: #303030;
 }
 
 .active-member {
