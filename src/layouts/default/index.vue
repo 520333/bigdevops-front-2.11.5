@@ -61,12 +61,23 @@
   import { onMounted } from 'vue';
   import { useWatermark } from '@/hooks/web/useWatermark.js';
   import { useUserStore } from '@/store/modules/user';
-  const { setWatermark } = useWatermark();
+  import { getSystemSetting } from '@/api/system/setting';
+  const { setWatermark, clear } = useWatermark();
   const userStore = useUserStore();
   const userName = userStore.getUserInfo?.realName || '内部员工';
-  onMounted(() => {
-    // 设置水印内容
-    setWatermark(`${userName} - ${new Date().toLocaleDateString()}`,  );
+  onMounted(async () => {
+    try {
+      const setting = await getSystemSetting();
+      if (setting.watermarkEnabled) {
+        const defaultText = `${userName} - ${new Date().toLocaleDateString()}`;
+        const text = setting.watermarkText ? `${defaultText} ${setting.watermarkText}` : defaultText;
+        setWatermark(text);
+      } else {
+        clear();
+      }
+    } catch (e) {
+      console.warn('Failed to load watermark settings', e);
+    }
   });
 
 </script>

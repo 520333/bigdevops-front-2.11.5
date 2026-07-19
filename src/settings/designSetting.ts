@@ -55,3 +55,4 @@ export const SIDE_BAR_BG_COLOR_LIST: string[] = [
   '#344058',
   '#383f45',
 ];
+

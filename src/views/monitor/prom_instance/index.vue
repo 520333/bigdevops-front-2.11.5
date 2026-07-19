@@ -54,7 +54,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorPromScrapePool'
+              auth: 'DELETE:/api/monitor/deleteMonitorPromScrapePool/:id'
             },
           ]" />
         </template>

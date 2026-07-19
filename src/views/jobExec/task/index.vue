@@ -2,7 +2,7 @@
   <div>
     <BasicTable @register="registerTable">
       <template #toolbar>
-        <a-button type="primary" @click="handleCreate"> 新增任务 </a-button>
+        <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/jobexec/createJobExecTask'"> 新增任务 </a-button>
       </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'action'">
@@ -11,8 +11,8 @@
               {
                 icon: 'clarity:info-standard-line',
                 tooltip: '查看详情',
-                // 💡 修复：去掉 bind，改用箭头函数
                 onClick: () => handleViewDetail(record),
+                auth: 'GET:/api/jobexec/getJobExecTaskOne/:id'
               },
               {
                 icon: 'ant-design:play-circle-outlined',
@@ -22,9 +22,9 @@
                 popConfirm: {
                   title: '确定要开始下发执行该任务吗？',
                   placement: 'left',
-                  // 💡 修复：去掉 bind，改用箭头函数
                   confirm: () => handleTaskAction(record, 'start', '启动'),
                 },
+                auth: 'GET:/api/jobexec/actionJobExecTaskOne/:id'
               },
               {
                 icon: 'ant-design:pause-circle-outlined',
@@ -34,9 +34,9 @@
                 popConfirm: {
                   title: '确定要暂停当前正在运行的任务吗？',
                   placement: 'left',
-                  // 💡 修复：去掉 bind，改用箭头函数
                   confirm: () => handleTaskAction(record, 'pause', '暂停'),
                 },
+                auth: 'POST:/api/jobexec/actionJobExecTaskOne/:id'
               },
               {
                 icon: 'ant-design:caret-right-outlined',
@@ -46,9 +46,9 @@
                 popConfirm: {
                   title: '确定要恢复执行该任务吗？',
                   placement: 'left',
-                  // 💡 修复：去掉 bind，改用箭头函数
                   confirm: () => handleTaskAction(record, 'resume', '恢复'),
                 },
+                auth: 'POST:/api/jobexec/actionJobExecTaskOne/:id'
               },
             ]"
             :dropDownActions="[
@@ -59,9 +59,9 @@
                 popConfirm: {
                   title: '确定要将此任务标记为手动停止完工吗？',
                   placement: 'left',
-                  // 💡 修复：去掉 bind，改用箭头函数
                   confirm: () => handleTaskAction(record, 'stop', '停止'),
                 },
+                auth: 'POST:/api/jobexec/actionJobExecTaskOne/:id'
               },
               {
                 icon: 'ant-design:close-circle-outlined',
@@ -71,9 +71,9 @@
                 popConfirm: {
                   title: '【危险操作】确定要强行强杀该异步任务的所有集群节点进程吗？',
                   placement: 'left',
-                  // 💡 修复：去掉 bind，改用箭头函数
                   confirm: () => handleTaskAction(record, 'kill', '终止'),
                 },
+                auth: 'POST:/api/jobexec/actionJobExecTaskOne/:id'
               },
               {
                 icon: 'ant-design:delete-outlined',
@@ -83,9 +83,10 @@
                 popConfirm: {
                   title: '是否确认永久删除该任务流历史？',
                   placement: 'left',
-                  // 💡 修复：去掉 bind，改用箭头函数
                   confirm: () => handleDelete(record),
                 },
+                auth: 'DELETE:/api/jobexec/deleteJobExecTask/:id'
+
               },
             ]"
           />

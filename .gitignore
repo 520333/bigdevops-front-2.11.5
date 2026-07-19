@@ -3,6 +3,8 @@ node_modules
 dist
 .cache
 .turbo
+.vscode
+.gitignore
 
 tests/server/static
 tests/server/static/upload

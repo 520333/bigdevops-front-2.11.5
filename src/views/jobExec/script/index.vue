@@ -14,7 +14,8 @@
               {
                 icon: 'clarity:note-edit-line',
                 onClick: handleEdit.bind(null, record),
-                tooltip: '编辑模板'
+                tooltip: '编辑模板',
+                auth:'POST:/api/jobexec/updateJobExecScript'
               },
               {
                 icon: 'ant-design:delete-outlined',
@@ -25,6 +26,7 @@
                   placement: 'left',
                   confirm: handleDelete.bind(null, record),
                 },
+                auth:'DELETE:/api/jobexec/deleteJobExecScript/:id'
               },
             ]"
           />

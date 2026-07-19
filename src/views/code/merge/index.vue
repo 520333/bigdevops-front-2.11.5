@@ -30,9 +30,18 @@
               label: '审查与合并', 
               icon: 'ant-design:merge-cells-outlined', 
               type: 'primary',
-              // 仅当状态为 pending (待合并) 时显示此按钮
               ifShow: record.status === 'pending',
               onClick: () => handleMerge(record) 
+            },
+            {
+              label: '拒绝',
+              icon: 'ant-design:close-circle-outlined',
+              color: 'error',
+              ifShow: record.status === 'pending',
+              popConfirm: {
+                title: '确定要拒绝并关闭此合并请求吗？',
+                confirm: () => handleFastReject(record),
+              },
             },
             { 
               label: '查看', 
@@ -46,43 +55,52 @@
     </BasicTable>
 
     <MergeDrawer @register="registerDrawer" @success="reload" />
+    <CreateMRModal @register="registerModal" @success="reload" />
   </PageWrapper>
 </template>
 
 <script setup lang="ts">
-  import { Tag } from 'ant-design-vue';
+  import { Tag, message } from 'ant-design-vue';
   import { PageWrapper } from '@/components/Page';
   import { BasicTable, useTable, TableAction } from '@/components/Table';
   import { useDrawer } from '@/components/Drawer';
+  import { useModal } from '@/components/Modal';
   import Icon from '@/components/Icon/Icon.vue';
   import MergeDrawer from './MergeDrawer.vue';
+  import CreateMRModal from './CreateMRModal.vue';
+  import { columns, searchFormSchema } from './merge.data';
+  import { getMergeRequests, closeMergeRequest } from '@/api/code/repo';
 
   const [registerDrawer, { openDrawer }] = useDrawer();
+  const [registerModal, { openModal }] = useModal();
 
-  const [registerTable, { reload }] = useTable({
-    title: '待处理的 Merge Request',
-    dataSource: [
-      { id: 1, title: 'feat: 新增支付网关路由', repo: 'devops-backend', sourceBranch: 'feature/payment', targetBranch: 'main', author: '张三', status: 'pending', time: '10分钟前' },
-      { id: 2, title: 'fix: 修复表格列错位问题', repo: 'vben-admin-ui', sourceBranch: 'hotfix/table-bug', targetBranch: 'main', author: '李四', status: 'merged', time: '2小时前' },
-    ],
-    columns: [
-      { title: 'MR 标题', dataIndex: 'title', width: 220, align: 'left' },
-      { title: '所属仓库', dataIndex: 'repo', width: 150 },
-      { title: '分支流向 (Source -> Target)', key: 'branches', width: 250 },
-      { title: '提交人', dataIndex: 'author', width: 100 },
-      { title: '状态', key: 'status', width: 100 },
-      { title: '更新时间', dataIndex: 'time', width: 120 },
-      { title: '操作', key: 'action', width: 150 }
-    ],
+  const [registerTable, { reload, getForm }] = useTable({
+    title: '合并请求列表',
+    api: getMergeRequests,
+    beforeFetch: (params) => {
+      if (!params.serverId || !params.repoInfo) {
+        return false;
+      }
+      try {
+        const repoData = JSON.parse(params.repoInfo);
+        params.repoId = repoData.repoId;
+        params.fullName = repoData.fullName;
+        delete params.repoInfo;
+      } catch(e) {
+        // Fallback
+      }
+      return params;
+    },
+    columns,
     useSearchForm: true,
     formConfig: {
-      labelWidth: 80,
-      schemas: [
-        { field: 'repo', label: '仓库', component: 'Input', colProps: { span: 6 } },
-        { field: 'status', label: '状态', component: 'Select', componentProps: { options: [{label: '待处理', value: 'pending'}, {label: '已合并', value: 'merged'}] }, colProps: { span: 6 } },
-      ]
+      labelWidth: 100,
+      schemas: searchFormSchema,
+      autoSubmitOnEnter: true,
     },
     bordered: true,
+    // prevent auto fetch on mount since it needs required params
+    immediate: false, 
   });
 
   // 状态颜色映射
@@ -96,14 +114,54 @@
   };
 
   function handleCreateMR() {
-    // 路由跳转到新建 MR 页面
+    const searchParams = getSearchParams();
+    if (!searchParams.serverId || !searchParams.repoId && !searchParams.fullName) {
+      message.warning('请先在搜索栏选择“所属Git实例”和“所属仓库”再新建合并请求！');
+      return;
+    }
+    openModal(true, { searchParams });
+  }
+
+  function getSearchParams() {
+    const params = getForm().getFieldsValue();
+    let repoId = null, fullName = null;
+    try {
+      const repoData = JSON.parse(params.repoInfo);
+      repoId = repoData.repoId;
+      fullName = repoData.fullName;
+    } catch(e) {}
+    return {
+      serverId: params.serverId,
+      repoId,
+      fullName
+    };
+  }
+
+  async function handleFastReject(record: Recordable) {
+    try {
+      const searchParams = getSearchParams();
+      const payload = {
+        serverId: searchParams.serverId,
+        repoId: searchParams.repoId,
+        fullName: searchParams.fullName,
+        mrId: record.iid || record.id,
+      };
+
+      await closeMergeRequest(payload);
+      message.success('已拒绝/关闭合并请求');
+      reload();
+    } catch (error) {
+      console.error('快捷关闭请求失败', error);
+    }
   }
 
   function handleMerge(record: Recordable) {
-    openDrawer(true, { isUpdate: true, record });
+    const searchParams = getSearchParams();
+    openDrawer(true, { isUpdate: true, record: { ...record, searchParams } });
   }
 
   function handleView(record: Recordable) {
-    // 查看已合并的详情
+    const searchParams = getSearchParams();
+    openDrawer(true, { isUpdate: false, record: { ...record, searchParams } });
   }
 </script>

@@ -9,7 +9,7 @@
   >
     <Description @register="registerDesc" class="mb-4" />
 
-    <div class="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
+    <div v-if="isUpdate" class="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
       <div class="flex items-center text-lg font-bold mb-2">
         <Icon icon="ant-design:info-circle-outlined" class="text-blue-500 mr-2" />
         准备合并
@@ -21,13 +21,14 @@
       </div>
     </div>
 
-    <BasicForm @register="registerForm" />
+    <BasicForm @register="registerForm" v-if="isUpdate" />
 
     <template #footer>
       <Space>
         <a-button @click="closeDrawer">取消</a-button>
-        <a-button type="primary" danger @click="handleReject">拒绝 (Close MR)</a-button>
+        <a-button v-if="isUpdate" type="primary" danger @click="handleReject">拒绝 (Close MR)</a-button>
         <a-button 
+          v-if="isUpdate"
           type="primary" 
           style="background-color: #52c41a; border-color: #52c41a;" 
           :loading="submitLoading" 
@@ -47,7 +48,8 @@
   import { Description, useDescription } from '@/components/Description';
   import { BasicForm, useForm } from '@/components/Form';
   import Icon from '@/components/Icon/Icon.vue';
-
+  import { mergeMergeRequest, closeMergeRequest } from '@/api/code/repo';
+  
   const emit = defineEmits(['success', 'register']);
   const submitLoading = ref(false);
   const recordData = ref<Recordable | null>(null);
@@ -58,7 +60,7 @@
     schema: [
       { field: 'title', label: 'MR 标题', span: 2 },
       { field: 'author', label: '提交人' },
-      { field: 'time', label: '提交时间' },
+      { field: 'time', label: '更新时间' },
       { field: 'repo', label: '代码仓库', span: 2 },
     ],
   });
@@ -98,13 +100,20 @@
     showActionButtonGroup: false, // 隐藏默认按钮，使用 Drawer 的 footer
   });
 
+  const isUpdate = ref(true);
+
   // 3. 抽屉数据初始化
   const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (data) => {
     resetFields();
     setDrawerProps({ confirmLoading: false });
     
+    isUpdate.value = !!data?.isUpdate;
+
     if (data?.record) {
       recordData.value = data.record;
+      // 附加代码仓库名称
+      data.record.repo = data.record.searchParams?.fullName;
+      
       // 将列表传过来的数据注入 Description 组件
       setDescProps({ data: data.record });
     }
@@ -116,33 +125,55 @@
       const values = await validate();
       submitLoading.value = true;
 
-      // 组装传给后端的 Payload
+      const { serverId, repoId, fullName } = recordData.value?.searchParams || {};
+
       const payload = {
-        mrId: recordData.value?.id,
+        serverId,
+        repoId,
+        fullName,
+        mrId: recordData.value?.iid || recordData.value?.id,
         strategy: values.mergeStrategy,
         deleteSourceBranch: values.deleteSource,
         message: values.message
       };
 
-      console.log('触发合并API，参数:', payload);
+      await mergeMergeRequest(payload);
       
-      // 模拟接口耗时
-      setTimeout(() => {
-        message.success(`分支 ${recordData.value?.sourceBranch} 已成功合并！`);
-        submitLoading.value = false;
-        closeDrawer();
-        emit('success'); // 通知列表刷新
-      }, 1000);
+      message.success(`分支 ${recordData.value?.sourceBranch} 已成功合并！`);
+      closeDrawer();
+      emit('success'); // 通知列表刷新
 
-    } catch (error) {
-      console.error('合并表单校验失败', error);
+    } catch (error: any) {
+      // Form validation error or API error
+      console.error('合并操作失败', error);
+      if (error?.message) {
+        // Axios error intercepted by vben usually shows message, but just in case
+      }
+    } finally {
+      submitLoading.value = false;
     }
   }
 
   // 5. 拒绝/关闭 MR
-  function handleReject() {
-    message.warning('已拒绝该合并请求');
-    closeDrawer();
-    emit('success');
+  async function handleReject() {
+    try {
+      submitLoading.value = true;
+      const { serverId, repoId, fullName } = recordData.value?.searchParams || {};
+      const payload = {
+        serverId,
+        repoId,
+        fullName,
+        mrId: recordData.value?.iid || recordData.value?.id,
+      };
+
+      await closeMergeRequest(payload);
+      message.warning('已拒绝/关闭该合并请求');
+      closeDrawer();
+      emit('success');
+    } catch (error) {
+      console.error('关闭请求失败', error);
+    } finally {
+      submitLoading.value = false;
+    }
   }
 </script>
