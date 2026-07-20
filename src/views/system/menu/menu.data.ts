@@ -129,7 +129,6 @@ export const formSchema: FormSchema[] = [
     componentProps: {
       fieldNames: {
         label: 'name',
-        key: 'id',
         value: 'id',
       },
       getPopupContainer: () => document.body,
@@ -150,12 +149,6 @@ export const formSchema: FormSchema[] = [
     component: 'InputNumber',
     ifShow: false,
   },
-  // {
-  //   field: 'dbId',
-  //   label: 'dbId',
-  //   component: 'InputNumber',
-  //   ifShow: false,
-  // },
   {
     field: 'ID',
     label: 'ID',

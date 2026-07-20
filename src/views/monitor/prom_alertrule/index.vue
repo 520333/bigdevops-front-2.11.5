@@ -169,10 +169,10 @@ export default defineComponent({
       });
     }
     function handleGoPrometheus() {
-      go("/monitor/pool");
+      go("/monitor/prom_instance");
     }
     function handleGoSendGroup() {
-      go("/monitor/sendgroup");
+      go("/monitor/alert_sendgroup");
     }
 
     function handleCreate() {

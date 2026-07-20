@@ -111,7 +111,7 @@ export default defineComponent({
     const hasSelected = computed(() => unref(getSelectRows()).length > 0);
 
     function handleGoSendGroupName() {
-      go('/monitor/sendgroup');
+      go('/monitor/alert_sendgroup');
     }
 
     function handleSilence(record: Recordable) {

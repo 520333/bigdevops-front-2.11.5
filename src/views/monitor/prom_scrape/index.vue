@@ -76,7 +76,7 @@ export default defineComponent({
     });
 
     function handleGoPrometheus() {
-      go("/monitor/pool");
+      go("/monitor/prom_instance");
     }
     function handleCreate() {
       openDrawer(true, {

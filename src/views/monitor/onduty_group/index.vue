@@ -108,7 +108,7 @@ export default defineComponent({
       },
     });
     function handleGoPlan(id: number) {
-      go(`/monitor/plan?id=${id}`);
+      go(`/monitor/onduty_plan?id=${id}`);
     }
 
     function handleCreate() {

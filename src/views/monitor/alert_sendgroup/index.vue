@@ -119,11 +119,11 @@ export default defineComponent({
       },
     });
     function handleGoPlan() {
-      go("/monitor/alertmanager");
+      go("/monitor/alert_manager");
     }
 
     function handleGoDutyGroupName(id: number) {
-      go(`/monitor/plan?id=${id}`);
+      go(`/monitor/onduty_plan?id=${id}`);
     }
     function openYamlPreview(member: string) {
       // 打开弹窗，并把成员姓名传给弹窗去请求后端
