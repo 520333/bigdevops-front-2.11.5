@@ -24,7 +24,7 @@
                   placement: 'left',
                   confirm: () => handleTaskAction(record, 'start', '启动'),
                 },
-                auth: 'GET:/api/jobexec/actionJobExecTaskOne/:id'
+                auth: 'POST:/api/jobexec/actionJobExecTaskOne/:id'
               },
               {
                 icon: 'ant-design:pause-circle-outlined',

@@ -59,7 +59,7 @@ export const columns: BasicColumn[] = [
         },
       });
     },
-    auth: 'POST:/api/monitor/setOnDutyStatus'
+    auth: 'POST:/api/monitor/setMonitorOndutyStatus'
   },
   {
     title: '创建人',

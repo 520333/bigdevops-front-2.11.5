@@ -4,7 +4,7 @@
     <div v-if="showTableIf" class="flex-1 overflow-auto h-full p-4">
       <BasicTable @register="registerTable">
         <template #toolbar>
-          <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/workorder/createWorkOrderTemplate'">
+          <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/workorder/createFormDesign'">
             新增表单设计
           </a-button>
         </template>
@@ -16,7 +16,7 @@
                 icon: 'clarity:note-edit-line',
                 tooltip: '设计表单',
                 onClick: handleEdit.bind(null, record),
-                auth: 'POST:/api/workorder/updateWorkOrderTemplate'
+                auth: 'POST:/api/workorder/updateFormDesign'
               },
               {
                 icon: 'ant-design:delete-outlined',
@@ -27,7 +27,7 @@
                   placement: 'left',
                   confirm: handleDelete.bind(null, record),
                 },
-                auth: 'DELETE:/api/workorder/deleteWorkOrderTemplate/:id'
+                auth: 'DELETE:/api/workorder/deleteFormDesign/:id'
               },
             ]" />
           </template>

@@ -48,7 +48,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorPromRecordRule'
+              auth: 'DELETE:/api/monitor/deleteMonitorPromRecordRule/:id'
             },
           ]" />
         </template>

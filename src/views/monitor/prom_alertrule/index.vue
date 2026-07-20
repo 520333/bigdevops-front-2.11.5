@@ -63,7 +63,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorPromAlertRule'
+              auth: 'DELETE:/api/monitor/deleteMonitorPromAlertRule/:id'
             },
           ]" />
         </template>

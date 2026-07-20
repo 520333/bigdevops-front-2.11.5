@@ -59,7 +59,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorOndutyGroup'
+              auth: 'DELETE:/api/monitor/deleteMonitorOndutyGroup/:id'
             },
           ]" />
         </template>

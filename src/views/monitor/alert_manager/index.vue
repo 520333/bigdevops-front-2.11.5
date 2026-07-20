@@ -34,7 +34,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorAlertManagerPool'
+              auth: 'DELETE:/api/monitor/deleteMonitorAlertManagerPool/:id'
             },
           ]" />
         </template>

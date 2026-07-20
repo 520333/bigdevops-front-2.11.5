@@ -30,7 +30,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorPromScrapeJob'
+              auth: 'DELETE:/api/monitor/deleteMonitorPromScrapeJob/:id'
             },
           ]" />
         </template>

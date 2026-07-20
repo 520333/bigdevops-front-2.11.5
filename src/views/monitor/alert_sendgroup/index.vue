@@ -68,7 +68,7 @@
                 placement: 'left',
                 confirm: handleDelete.bind(null, record),
               },
-              auth: 'DELETE:/api/monitor/deleteMonitorAlertManagerSendGroup'
+              auth: 'DELETE:/api/monitor/deleteMonitorAlertManagerSendGroup/:id'
             },
           ]" />
         </template>

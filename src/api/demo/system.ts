@@ -181,6 +181,13 @@ enum Api {
   alertManagerEventBatchSilence = '/api/monitor/alertManagerEventBatchSilence',
   alertManagerEventBatchUnSilence = '/api/monitor/alertManagerEventBatchUnSilence',
   alertManagerEventReLing= "/api/monitor/alertManagerEventReLing",
+
+  // k8s集群
+  getK8sClusterList = "/api/k8s/getK8sClusterList",
+  createK8sCluster = "/api/k8s/createK8sCluster",
+  updateK8sCluster = "/api/k8s/updateK8sCluster",
+  deleteK8sCluster = "/api/k8s/deleteK8sCluster",
+  deleteK8sClusterBatch = "/api/k8s/deleteK8sClusterBatch",
 }
 
 export const getAccountList = (params: AccountParams) =>
@@ -622,4 +629,21 @@ export const alertManagerEventBatchSilence = (params: any) =>
 
 export const alertManagerEventBatchUnSilence = (params: any) =>
   defHttp.post({ url: Api.alertManagerEventBatchUnSilence, params });
+
+// k8s集群
+export const getK8sClusterList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sClusterList, params });
+
+export const createK8sCluster = (data?: any) =>
+  defHttp.post({ url: Api.createK8sCluster, data });
+
+export const updateK8sCluster = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sCluster, data });
+
+export const deleteK8sCluster = (id: number | string) =>
+  defHttp.delete({ url: `${Api.deleteK8sCluster}/${id}` });
+
+export const deleteK8sClusterBatch = (data?: any) =>
+  defHttp.delete({ url: Api.deleteK8sClusterBatch, data });
+
 
