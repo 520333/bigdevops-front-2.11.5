@@ -142,7 +142,7 @@ export interface ComponentProps {
   ApiSelect: CustomComponents['ApiSelect'] & ComponentProps['Select'];
   TreeSelect: ExtractPropTypes<(typeof import('ant-design-vue/es/tree-select'))['default']>;
   ApiTree: CustomComponents['ApiTree'] &
-    ExtractPropTypes<(typeof import('ant-design-vue/es/tree'))['default']>;
+  ExtractPropTypes<(typeof import('ant-design-vue/es/tree'))['default']>;
   ApiTreeSelect: CustomComponents['ApiTreeSelect'] & ComponentProps['TreeSelect'];
   ApiRadioGroup: CustomComponents['ApiRadioGroup'] & ComponentProps['RadioGroup'];
   RadioButtonGroup: CustomComponents['RadioButtonGroup'] & ComponentProps['RadioGroup'];

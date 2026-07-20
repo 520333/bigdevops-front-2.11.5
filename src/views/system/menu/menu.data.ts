@@ -107,9 +107,12 @@ export const formSchema: FormSchema[] = [
         { label: '菜单', value: '1' },
         { label: '按钮', value: '2' },
       ],
+
     },
     colProps: { lg: 24, md: 24 },
+
   },
+
   {
     field: 'name',
     label: '英文name',
@@ -178,6 +181,12 @@ export const formSchema: FormSchema[] = [
     ifShow: ({ values }) => isMenu(values.type),
   },
   {
+    field: 'redirect',
+    label: '重定向',
+    component: 'Input',
+    ifShow: ({ values }) => isDir(values.type),
+  },
+  {
     field: 'permission',
     label: '权限标识',
     component: 'Input',
@@ -207,6 +216,7 @@ export const formSchema: FormSchema[] = [
       ],
     },
     ifShow: ({ values }) => !isButton(values.type),
+
   },
 
   {
@@ -221,6 +231,7 @@ export const formSchema: FormSchema[] = [
       ],
     },
     ifShow: ({ values }) => isMenu(values.type),
+
   },
 
   {
@@ -235,5 +246,6 @@ export const formSchema: FormSchema[] = [
       ],
     },
     ifShow: ({ values }) => !isButton(values.type),
+
   },
 ];

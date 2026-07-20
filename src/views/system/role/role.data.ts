@@ -38,7 +38,7 @@ export const columns: BasicColumn[] = [
         checkedChildren: '停用',
         unCheckedChildren: '启用',
         loading: record.pendingStatus,
-        onChange(checked: boolean) {
+        onChange(checked: boolean | string | number) {
           record.pendingStatus = true;
           const newStatus = checked ? '1' : '0';
           const { createMessage } = useMessage();
@@ -63,8 +63,8 @@ export const columns: BasicColumn[] = [
     title: '创建时间',
     dataIndex: 'CreatedAt',
     format: (text) => {
-        return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss.SSS') : '';
-        },
+      return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss.SSS') : '';
+    },
     width: 180,
   },
   {
@@ -127,22 +127,19 @@ export const formSchema: FormSchema[] = [
   {
     label: 'id',
     field: 'id',
-    component:'InputNumber',
+    component: 'InputNumber',
     ifShow: false,
   },
   {
     label: '',
     field: 'menus',
     slot: 'menus',
-    component: 'Input',
     defaultValue: [],
-
   },
   {
     label: '',
     field: 'apis',
     slot: 'apis',
-    component: 'Input',
     defaultValue: [],
   },
 ];
