@@ -5,7 +5,8 @@
         <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/k8s/createK8sCluster'">
           新增集群
         </a-button>
-        <a-button danger @click="handleBatchDelete" :disabled="!hasSelected" v-auth="'DELETE:/api/k8s/deleteK8sClusterBatch'">
+        <a-button danger @click="handleBatchDelete" :disabled="!hasSelected"
+          v-auth="'DELETE:/api/k8s/deleteK8sClusterBatch'">
           批量删除
         </a-button>
       </template>

@@ -4,7 +4,7 @@
 // 工单列表 Mock
 export const mockWorkorderList = [
   {
-    id: 1, orderNo: 'WO-2025031001', title: '【预生产版黑名单查询改造】',
+    id: 1, orderNo: 'WO-2025031001', title: '【预生产惩戒黑名单查询改造】',
     env: '预生产环境', envKey: 'pre', type: '版本发布', status: 'releasing', statusText: '持续发布',
     creator: '任岩', createdAt: '2025-03-10 09:37:55', planAt: '2025-03-10 18:00:00',
     updatedAt: '2025-03-10 14:20:00',
@@ -37,7 +37,7 @@ export const mockWorkorderList = [
 
 // 工单详情 Mock
 export const mockWorkorderDetail = {
-  id: 1, orderNo: 'WO-2025031001', title: '【预生产版黑名单查询改造】',
+  id: 1, orderNo: 'WO-2025031001', title: '【预生产惩戒黑名单查询改造】',
   env: '预生产环境', envKey: 'pre', type: '版本发布', status: 'releasing', statusText: '持续发布',
   creator: '任岩', createdAt: '2025-03-10 09:37:55', planAt: '2025-03-10 18:00:00',
   // 1. 发布方案描述

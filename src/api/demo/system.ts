@@ -188,6 +188,13 @@ enum Api {
   updateK8sCluster = "/api/k8s/updateK8sCluster",
   deleteK8sCluster = "/api/k8s/deleteK8sCluster",
   deleteK8sClusterBatch = "/api/k8s/deleteK8sClusterBatch",
+  getK8sNodeList = "/api/k8s/getK8sNodeList",
+  getClusterForSelect = "/api/k8s/getClusterForSelect",
+  scheduleEnableSwitchK8sNodesOne = "/api/k8s/scheduleEnableSwitchK8sNodesOne",
+  labelK8sNodes = "/api/k8s/labelK8sNodes",
+  taintK8sNodes = "/api/k8s/taintK8sNodes",
+  drainK8sNodes = "/api/k8s/drainK8sNodes",
+  getPodListByNodeName = "/api/k8s/getPodListByNodeName",
 }
 
 export const getAccountList = (params: AccountParams) =>
@@ -645,5 +652,36 @@ export const deleteK8sCluster = (id: number | string) =>
 
 export const deleteK8sClusterBatch = (data?: any) =>
   defHttp.delete({ url: Api.deleteK8sClusterBatch, data });
+
+export const getK8sNodeList = (params: any) =>
+  defHttp.get({ url: Api.getK8sNodeList, params }, { joinTime: true });
+
+export const getClusterForSelect = () =>
+  defHttp.get({ url: Api.getClusterForSelect });
+
+export const scheduleEnableSwitchK8sNodesOne = (data: { clusterName: string; nodeNames: string[]; targetEnable?: boolean }) =>
+  defHttp.post({ url: Api.scheduleEnableSwitchK8sNodesOne, data });
+
+export const labelK8sNodes = (data: { clusterName: string; nodeNames: string[]; labels: string[] }) =>
+  defHttp.post({ url: Api.labelK8sNodes, data });
+
+export const taintK8sNodes = (data: {
+  clusterName: string;
+  nodeNames: string[];
+  taints: Array<{ key: string; value?: string; effect: string }>;
+  deletedKeys?: string[];
+}) => defHttp.post({ url: Api.taintK8sNodes, data });
+
+export const drainK8sNodes = (data: { clusterName: string; nodeNames: string[] }) =>
+  defHttp.post({ url: Api.drainK8sNodes, data });
+
+export const getPodListByNodeName = (params: { cluster: string; node: string }) =>
+  defHttp.get({ url: Api.getPodListByNodeName, params });
+
+
+
+
+
+
 
 
