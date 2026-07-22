@@ -119,6 +119,19 @@
               </div>
             </template>
 
+            <!-- 🚀 可调度列使用 Switch 开关控制 -->
+            <template v-else-if="column.key === 'scheduleEnable'">
+              <div @click.stop>
+                <a-switch
+                  :checked="record.scheduleEnable"
+                  :loading="record.pendingSchedule"
+                  checked-children="允许"
+                  un-checked-children="停止"
+                  @change="(checked) => handleToggleSchedule(record, checked)"
+                />
+              </div>
+            </template>
+
             <template v-else-if="column.key === 'action'">
               <div @click.stop>
                 <TableAction
@@ -173,8 +186,9 @@
 </template>
 
 <script lang="ts">
-  import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
-  import { Menu as AMenu, MenuItem as AMenuItem, Spin as ASpin, Empty as AEmpty, Button as AButton, Tag as ATag } from 'ant-design-vue';
+  import { defineComponent, ref, reactive, computed, onMounted, watch } from 'vue';
+  import { useRoute } from 'vue-router';
+  import { Menu as AMenu, MenuItem as AMenuItem, Spin as ASpin, Empty as AEmpty, Button as AButton, Tag as ATag, Switch as ASwitch } from 'ant-design-vue';
   import {
     ClusterOutlined,
     CloudServerOutlined,
@@ -225,8 +239,10 @@
       AEmpty,
       AButton,
       ATag,
+      ASwitch,
     },
     setup() {
+      const route = useRoute();
       const showSidebar = ref<boolean>(true);
       const loading = ref<boolean>(false);
       const clusterList = ref<Array<{ label: string; value: string }>>([]);
@@ -272,6 +288,18 @@
 
       const hasSelected = computed(() => checkedKeys.value.length > 0);
 
+      // 监听路由参数变化
+      watch(
+        () => route.query.cluster,
+        (newCluster) => {
+          if (newCluster && typeof newCluster === 'string') {
+            selectedKeys.value = [newCluster];
+            searchInfo.cluster = newCluster;
+            reload();
+          }
+        },
+      );
+
       // 拉取集群菜单列表
       async function fetchClusters() {
         loading.value = true;
@@ -283,7 +311,12 @@
             value: item.value || item.name,
           }));
 
-          if (clusterList.value.length > 0 && (!selectedKeys.value.length || !selectedKeys.value[0])) {
+          const targetCluster = (route.query.cluster || route.query.clusterName) as string;
+          if (targetCluster && clusterList.value.some((item) => item.value === targetCluster)) {
+            selectedKeys.value = [targetCluster];
+            searchInfo.cluster = targetCluster;
+            reload();
+          } else if (clusterList.value.length > 0 && (!selectedKeys.value.length || !selectedKeys.value[0])) {
             const firstValue = clusterList.value[0].value;
             selectedKeys.value = [firstValue];
             searchInfo.cluster = firstValue;
@@ -432,6 +465,25 @@
         });
       }
 
+      // Switch 开关开启/关闭调度
+      async function handleToggleSchedule(record: Recordable, checked: boolean | string | number) {
+        const targetEnable = Boolean(checked);
+        record.pendingSchedule = true;
+        try {
+          await scheduleEnableSwitchK8sNodesOne({
+            clusterName: searchInfo.cluster,
+            nodeNames: [record.name],
+            targetEnable,
+          });
+          createMessage.success(`节点 [${record.name}] 调度状态已切换为: ${targetEnable ? '允许调度' : '停止调度'}`);
+          handleReload();
+        } catch (e: any) {
+          console.error('修改节点调度状态失败:', e);
+        } finally {
+          record.pendingSchedule = false;
+        }
+      }
+
       // 单节点调度状态切换
       async function handleSingleSchedule(record: Recordable) {
         try {
@@ -516,6 +568,7 @@
         handleBatchDrain,
         handleOpenPodModal,
         handleSingleSchedule,
+        handleToggleSchedule,
         handleBatchSchedule,
         handleReload,
         handleDetail,

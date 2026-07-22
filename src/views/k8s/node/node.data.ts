@@ -31,11 +31,9 @@ export const columns: BasicColumn[] = [
   {
     title: '可调度',
     dataIndex: 'scheduleEnable',
-    width: 90,
-    customRender: ({ record }) => {
-      const enable = record.scheduleEnable;
-      return h(Tag, { color: enable ? 'blue' : 'red' }, () => (enable ? '是' : '否'));
-    },
+    key: 'scheduleEnable',
+    width: 100,
+    align: 'center',
   },
   {
     title: '节点角色',

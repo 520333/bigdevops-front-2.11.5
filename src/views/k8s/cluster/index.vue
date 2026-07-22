@@ -12,6 +12,12 @@
       </template>
 
       <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'name' || column.key === 'nameZh'">
+          <a class="cursor-pointer text-primary hover:underline" @click.stop="handleGoNode(record)">
+            {{ record[column.key] }}
+          </a>
+        </template>
+
         <template v-if="column.key === 'env'">
           <Tag :color="envColorMap[record.env] || 'default'">
             {{ record.env }}
@@ -19,25 +25,30 @@
         </template>
 
         <template v-if="column.key === 'action'">
-          <TableAction :actions="[
-            {
-              icon: 'clarity:note-edit-line',
-              onClick: handleEdit.bind(null, record),
-              tooltip: '编辑集群',
-              auth: 'POST:/api/k8s/updateK8sCluster'
-            },
-            {
-              icon: 'ant-design:delete-outlined',
-              color: 'error',
-              tooltip: '删除集群',
-              popConfirm: {
-                title: '是否确认删除该集群及配置？',
-                placement: 'left',
-                confirm: handleDelete.bind(null, record),
-              },
-              auth: 'DELETE:/api/k8s/deleteK8sCluster/:id'
-            },
-          ]" />
+          <div @click.stop>
+            <TableAction
+              stopButtonPropagation
+              :actions="[
+                {
+                  icon: 'clarity:note-edit-line',
+                  onClick: handleEdit.bind(null, record),
+                  tooltip: '编辑集群',
+                  auth: 'POST:/api/k8s/updateK8sCluster',
+                },
+                {
+                  icon: 'ant-design:delete-outlined',
+                  color: 'error',
+                  tooltip: '删除集群',
+                  popConfirm: {
+                    title: '是否确认删除该集群及配置？',
+                    placement: 'left',
+                    confirm: handleDelete.bind(null, record),
+                  },
+                  auth: 'DELETE:/api/k8s/deleteK8sCluster/:id',
+                },
+              ]"
+            />
+          </div>
         </template>
       </template>
     </BasicTable>
@@ -52,6 +63,7 @@ import { Tag } from 'ant-design-vue';
 import { BasicTable, useTable, TableAction } from '@/components/Table';
 import { useDrawer } from '@/components/Drawer';
 import { useMessage } from '@/hooks/web/useMessage';
+import { useGo } from '@/hooks/web/usePage';
 import ClusterDrawer from './ClusterDrawer.vue';
 import { columns, searchFormSchema } from './cluster.data';
 import { getK8sClusterList, deleteK8sCluster, deleteK8sClusterBatch } from '@/api/demo/system';
@@ -60,6 +72,7 @@ export default defineComponent({
   name: 'K8sClusterManagement',
   components: { BasicTable, Tag, TableAction, ClusterDrawer },
   setup() {
+    const go = useGo();
     const [registerDrawer, { openDrawer }] = useDrawer();
     const { createMessage, createConfirm } = useMessage();
 
@@ -95,6 +108,10 @@ export default defineComponent({
     });
 
     const hasSelected = computed(() => getSelectRows().length > 0);
+
+    function handleGoNode(record: Recordable) {
+      go(`/k8s/node?cluster=${record.name}`);
+    }
 
     function handleCreate() {
       openDrawer(true, {
@@ -147,6 +164,7 @@ export default defineComponent({
     return {
       registerTable,
       registerDrawer,
+      handleGoNode,
       handleCreate,
       handleEdit,
       handleDelete,
