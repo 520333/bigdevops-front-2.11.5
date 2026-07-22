@@ -195,6 +195,93 @@ enum Api {
   taintK8sNodes = "/api/k8s/taintK8sNodes",
   drainK8sNodes = "/api/k8s/drainK8sNodes",
   getPodListByNodeName = "/api/k8s/getPodListByNodeName",
+
+  // k8s yaml 模板与任务
+  getK8sYamlTemplateList = "/api/k8s/getK8sYamlTemplateList",
+  createK8sYamlTemplate = "/api/k8s/createK8sYamlTemplate",
+  updateK8sYamlTemplate = "/api/k8s/updateK8sYamlTemplate",
+  deleteK8sYamlTemplate = "/api/k8s/deleteK8sYamlTemplate",
+
+  getK8sYamlTaskList = "/api/k8s/getK8sYamlTaskList",
+  createK8sYamlTask = "/api/k8s/createK8sYamlTask",
+  updateK8sYamlTask = "/api/k8s/updateK8sYamlTask",
+  deleteK8sYamlTask = "/api/k8s/deleteK8sYamlTask",
+  applyK8sYamlTaskOne = "/api/k8s/applyK8sYamlTaskOne",
+  getK8sYamlTaskLogList = "/api/k8s/getK8sYamlTaskLogList",
+  getK8sNamespaceList = "/api/k8s/getK8sNamespaceList",
+  getK8sPodList = "/api/k8s/getK8sPodList",
+  getK8sPodYaml = "/api/k8s/getK8sPodYaml",
+  createK8sPod = "/api/k8s/createK8sPod",
+  updateK8sPod = "/api/k8s/updateK8sPod",
+  deleteK8sPod = "/api/k8s/deleteK8sPod",
+  deleteK8sPodBatch = "/api/k8s/deleteK8sPodBatch",
+  getK8sPodLogs = "/api/k8s/getK8sPodLogs",
+  getK8sPodFileList = "/api/k8s/getK8sPodFileList",
+  uploadK8sPodFile = "/api/k8s/uploadK8sPodFile",
+  deleteK8sPodFile = "/api/k8s/deleteK8sPodFile",
+  readK8sPodFileContent = "/api/k8s/readK8sPodFileContent",
+  saveK8sPodFileContent = "/api/k8s/saveK8sPodFileContent",
+
+  // k8s deployment
+  getK8sDeploymentList = "/api/k8s/getK8sDeploymentList",
+  getK8sDeploymentYaml = "/api/k8s/getK8sDeploymentYaml",
+  createK8sDeployment = "/api/k8s/createK8sDeployment",
+  updateK8sDeployment = "/api/k8s/updateK8sDeployment",
+  scaleK8sDeployment = "/api/k8s/scaleK8sDeployment",
+  restartK8sDeployment = "/api/k8s/restartK8sDeployment",
+  deleteK8sDeployment = "/api/k8s/deleteK8sDeployment",
+  deleteK8sDeploymentBatch = "/api/k8s/deleteK8sDeploymentBatch",
+
+  // k8s statefulset
+  getK8sStatefulSetList = "/api/k8s/getK8sStatefulSetList",
+  getK8sStatefulSetYaml = "/api/k8s/getK8sStatefulSetYaml",
+  createK8sStatefulSet = "/api/k8s/createK8sStatefulSet",
+  updateK8sStatefulSet = "/api/k8s/updateK8sStatefulSet",
+  scaleK8sStatefulSet = "/api/k8s/scaleK8sStatefulSet",
+  restartK8sStatefulSet = "/api/k8s/restartK8sStatefulSet",
+  deleteK8sStatefulSet = "/api/k8s/deleteK8sStatefulSet",
+  deleteK8sStatefulSetBatch = "/api/k8s/deleteK8sStatefulSetBatch",
+
+  // k8s daemonset
+  getK8sDaemonSetList = "/api/k8s/getK8sDaemonSetList",
+  getK8sDaemonSetYaml = "/api/k8s/getK8sDaemonSetYaml",
+  createK8sDaemonSet = "/api/k8s/createK8sDaemonSet",
+  updateK8sDaemonSet = "/api/k8s/updateK8sDaemonSet",
+  restartK8sDaemonSet = "/api/k8s/restartK8sDaemonSet",
+  deleteK8sDaemonSet = "/api/k8s/deleteK8sDaemonSet",
+  deleteK8sDaemonSetBatch = "/api/k8s/deleteK8sDaemonSetBatch",
+
+  // k8s configmap
+  getK8sConfigMapList = "/api/k8s/getK8sConfigMapList",
+  getK8sConfigMapYaml = "/api/k8s/getK8sConfigMapYaml",
+  createK8sConfigMap = "/api/k8s/createK8sConfigMap",
+  updateK8sConfigMap = "/api/k8s/updateK8sConfigMap",
+  deleteK8sConfigMap = "/api/k8s/deleteK8sConfigMap",
+  deleteK8sConfigMapBatch = "/api/k8s/deleteK8sConfigMapBatch",
+
+  // k8s secret
+  getK8sSecretList = "/api/k8s/getK8sSecretList",
+  getK8sSecretYaml = "/api/k8s/getK8sSecretYaml",
+  createK8sSecret = "/api/k8s/createK8sSecret",
+  updateK8sSecret = "/api/k8s/updateK8sSecret",
+  deleteK8sSecret = "/api/k8s/deleteK8sSecret",
+  deleteK8sSecretBatch = "/api/k8s/deleteK8sSecretBatch",
+
+  // k8s service
+  getK8sServiceList = "/api/k8s/getK8sServiceList",
+  getK8sServiceYaml = "/api/k8s/getK8sServiceYaml",
+  createK8sService = "/api/k8s/createK8sService",
+  updateK8sService = "/api/k8s/updateK8sService",
+  deleteK8sService = "/api/k8s/deleteK8sService",
+  deleteK8sServiceBatch = "/api/k8s/deleteK8sServiceBatch",
+
+  // k8s ingress
+  getK8sIngressList = "/api/k8s/getK8sIngressList",
+  getK8sIngressYaml = "/api/k8s/getK8sIngressYaml",
+  createK8sIngress = "/api/k8s/createK8sIngress",
+  updateK8sIngress = "/api/k8s/updateK8sIngress",
+  deleteK8sIngress = "/api/k8s/deleteK8sIngress",
+  deleteK8sIngressBatch = "/api/k8s/deleteK8sIngressBatch",
 }
 
 export const getAccountList = (params: AccountParams) =>
@@ -677,6 +764,190 @@ export const drainK8sNodes = (data: { clusterName: string; nodeNames: string[] }
 
 export const getPodListByNodeName = (params: { cluster: string; node: string }) =>
   defHttp.get({ url: Api.getPodListByNodeName, params });
+
+// K8s YAML Template API
+export const getK8sYamlTemplateList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sYamlTemplateList, params });
+
+export const createK8sYamlTemplate = (data?: any) =>
+  defHttp.post({ url: Api.createK8sYamlTemplate, data });
+
+export const updateK8sYamlTemplate = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sYamlTemplate, data });
+
+export const deleteK8sYamlTemplate = (id: number | string) =>
+  defHttp.delete({ url: `${Api.deleteK8sYamlTemplate}/${id}` });
+
+// K8s YAML Task API
+export const getK8sYamlTaskList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sYamlTaskList, params });
+
+export const createK8sYamlTask = (data?: any) =>
+  defHttp.post({ url: Api.createK8sYamlTask, data });
+
+export const updateK8sYamlTask = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sYamlTask, data });
+
+export const deleteK8sYamlTask = (id: number | string) =>
+  defHttp.delete({ url: `${Api.deleteK8sYamlTask}/${id}` });
+
+export const applyK8sYamlTaskOne = (id: number | string) =>
+  defHttp.post({ url: `${Api.applyK8sYamlTaskOne}/${id}` });
+
+export const getK8sYamlTaskLogList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sYamlTaskLogList, params });
+
+export const getK8sNamespaceList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sNamespaceList, params });
+
+export const getK8sPodList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sPodList, params });
+
+export const getK8sPodYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sPodYaml, params });
+
+export const createK8sPod = (data?: any) =>
+  defHttp.post({ url: Api.createK8sPod, data });
+
+export const updateK8sPod = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sPod, data });
+
+export const deleteK8sPod = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sPod, data });
+
+export const deleteK8sPodBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sPodBatch, data });
+
+export const getK8sPodLogs = (params?: any) =>
+  defHttp.get({ url: Api.getK8sPodLogs, params });
+
+export const getK8sPodFileList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sPodFileList, params }, { errorMessageMode: 'none' });
+
+export const deleteK8sPodFile = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sPodFile, data }, { errorMessageMode: 'none' });
+
+export const readK8sPodFileContent = (params?: any) =>
+  defHttp.get({ url: Api.readK8sPodFileContent, params }, { errorMessageMode: 'none' });
+
+export const saveK8sPodFileContent = (data?: any) =>
+  defHttp.post({ url: Api.saveK8sPodFileContent, data }, { errorMessageMode: 'none' });
+
+export const getK8sDeploymentList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sDeploymentList, params });
+
+export const getK8sDeploymentYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sDeploymentYaml, params });
+
+export const createK8sDeployment = (data?: any) =>
+  defHttp.post({ url: Api.createK8sDeployment, data });
+
+export const updateK8sDeployment = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sDeployment, data });
+
+export const scaleK8sDeployment = (data?: any) =>
+  defHttp.post({ url: Api.scaleK8sDeployment, data });
+
+export const restartK8sDeployment = (data?: any) =>
+  defHttp.post({ url: Api.restartK8sDeployment, data });
+
+export const deleteK8sDeployment = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sDeployment, data });
+
+export const deleteK8sDeploymentBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sDeploymentBatch, data });
+
+// StatefulSet
+export const getK8sStatefulSetList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sStatefulSetList, params });
+export const getK8sStatefulSetYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sStatefulSetYaml, params });
+export const createK8sStatefulSet = (data?: any) =>
+  defHttp.post({ url: Api.createK8sStatefulSet, data });
+export const updateK8sStatefulSet = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sStatefulSet, data });
+export const scaleK8sStatefulSet = (data?: any) =>
+  defHttp.post({ url: Api.scaleK8sStatefulSet, data });
+export const restartK8sStatefulSet = (data?: any) =>
+  defHttp.post({ url: Api.restartK8sStatefulSet, data });
+export const deleteK8sStatefulSet = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sStatefulSet, data });
+export const deleteK8sStatefulSetBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sStatefulSetBatch, data });
+
+// DaemonSet
+export const getK8sDaemonSetList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sDaemonSetList, params });
+export const getK8sDaemonSetYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sDaemonSetYaml, params });
+export const createK8sDaemonSet = (data?: any) =>
+  defHttp.post({ url: Api.createK8sDaemonSet, data });
+export const updateK8sDaemonSet = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sDaemonSet, data });
+export const restartK8sDaemonSet = (data?: any) =>
+  defHttp.post({ url: Api.restartK8sDaemonSet, data });
+export const deleteK8sDaemonSet = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sDaemonSet, data });
+export const deleteK8sDaemonSetBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sDaemonSetBatch, data });
+
+// ConfigMap
+export const getK8sConfigMapList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sConfigMapList, params });
+export const getK8sConfigMapYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sConfigMapYaml, params });
+export const createK8sConfigMap = (data?: any) =>
+  defHttp.post({ url: Api.createK8sConfigMap, data });
+export const updateK8sConfigMap = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sConfigMap, data });
+export const deleteK8sConfigMap = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sConfigMap, data });
+export const deleteK8sConfigMapBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sConfigMapBatch, data });
+
+// Secret
+export const getK8sSecretList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sSecretList, params });
+export const getK8sSecretYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sSecretYaml, params });
+export const createK8sSecret = (data?: any) =>
+  defHttp.post({ url: Api.createK8sSecret, data });
+export const updateK8sSecret = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sSecret, data });
+export const deleteK8sSecret = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sSecret, data });
+export const deleteK8sSecretBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sSecretBatch, data });
+
+// Service
+export const getK8sServiceList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sServiceList, params });
+export const getK8sServiceYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sServiceYaml, params });
+export const createK8sService = (data?: any) =>
+  defHttp.post({ url: Api.createK8sService, data });
+export const updateK8sService = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sService, data });
+export const deleteK8sService = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sService, data });
+export const deleteK8sServiceBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sServiceBatch, data });
+
+// Ingress
+export const getK8sIngressList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sIngressList, params });
+export const getK8sIngressYaml = (params?: any) =>
+  defHttp.get({ url: Api.getK8sIngressYaml, params });
+export const createK8sIngress = (data?: any) =>
+  defHttp.post({ url: Api.createK8sIngress, data });
+export const updateK8sIngress = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sIngress, data });
+export const deleteK8sIngress = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sIngress, data });
+export const deleteK8sIngressBatch = (data?: any) =>
+  defHttp.post({ url: Api.deleteK8sIngressBatch, data });
+
+
 
 
 

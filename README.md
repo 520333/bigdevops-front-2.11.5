@@ -15,3 +15,7 @@ pnpm install --save codemirror/basic-setup --ignore-workspace-root-check
 
 ## 2.10.1 安装
 pnpm install codemirror@5.65.16 @codemirror/theme-one-dark @codemirror/state @codemirror/lang-yaml --save --ignore-workspace-root-check
+
+
+## xterm
+pnpm add -w xterm xterm-addon-fit
