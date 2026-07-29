@@ -13,6 +13,9 @@
       <div class="flex items-center space-x-3">
         <span>容器:</span>
         <a-select
+          id="exec-active-container"
+          input-id="exec-active-container-input"
+          name="activeContainer"
           v-model:value="activeContainer"
           size="small"
           style="width: 150px"
@@ -22,13 +25,15 @@
 
         <span>Shell:</span>
         <a-select
+          id="exec-active-shell"
+          input-id="exec-active-shell-input"
+          name="activeShell"
           v-model:value="activeShell"
           size="small"
           style="width: 150px"
           :options="shellOptions"
           @change="connectTerminal"
         />
-
         <span class="text-green-400">● 状态: {{ isConnected ? '已连接' : '网络已断开' }}</span>
       </div>
       <div class="text-gray-400">

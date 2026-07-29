@@ -8,6 +8,7 @@
         <div class="flex items-center space-x-3 flex-wrap gap-y-2">
           <span class="font-semibold text-gray-700 dark:text-gray-300">目标集群:</span>
           <a-select
+            id="svc-cluster-select"
             v-model:value="selectedCluster"
             style="width: 180px"
             placeholder="请选择 K8s 集群"
@@ -18,6 +19,7 @@
 
           <span class="font-semibold text-gray-700 dark:text-gray-300">命名空间:</span>
           <a-select
+            id="svc-namespace-select"
             v-model:value="selectedNamespace"
             style="width: 180px"
             placeholder="请选择 Namespace"
@@ -27,6 +29,7 @@
           />
 
           <a-input-search
+            id="svc-keyword-search"
             v-model:value="keyword"
             placeholder="搜索 Service 名称"
             style="width: 240px"
@@ -221,6 +224,9 @@ spec:
       }
     },
     columns,
+    pagination: {
+      showQuickJumper: false,
+    },
     bordered: true,
     showIndexColumn: false,
     useSearchForm: false,

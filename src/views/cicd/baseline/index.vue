@@ -1,306 +1,495 @@
 <template>
-  <PageWrapper title="服务基线" content="管理每日构建，触发 Jenkins 构建并实时查看日志">
-    <!-- 搜索栏 -->
-    <div class="bg-white dark:bg-dark-bg rounded-lg p-4 mb-4 flex flex-wrap gap-3 items-center">
-      <Input
-        v-model:value="searchKeyword"
-        placeholder="搜索服务名"
-        style="width: 200px"
-        allow-clear
-        @pressEnter="loadList"
-      />
-      <Select v-model:value="searchLang" placeholder="语言类型" style="width: 130px" allow-clear>
-        <SelectOption value="Java">Java</SelectOption>
-        <SelectOption value="Vue/TS">Vue/TS</SelectOption>
-        <SelectOption value="Go">Go</SelectOption>
-      </Select>
-      <Button type="primary" @click="loadList">查询</Button>
-      <Button @click="() => { searchKeyword = ''; searchLang = undefined; loadList(); }">重置</Button>
-    </div>
-
-    <!-- 基线列表 -->
-    <div class="bg-white dark:bg-dark-bg rounded-lg">
-      <Table
-        :dataSource="list"
-        :columns="columns"
-        :loading="loading"
-        row-key="id"
-        bordered
-        :pagination="{ pageSize: 10, showTotal: (t) => `共 ${t} 条` }"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'latestBuildStatus'">
-            <div class="flex items-center gap-2">
-              <span
-                :class="[
-                  'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium',
-                  record.latestBuildStatus === 'SUCCESS' ? 'bg-green-100 text-green-700' :
-                  record.latestBuildStatus === 'FAILURE' ? 'bg-red-100 text-red-700' :
-                  record.latestBuildStatus === 'BUILDING' ? 'bg-blue-100 text-blue-700' :
-                  'bg-gray-100 text-gray-500'
-                ]"
-              >
-                <span v-if="record.latestBuildStatus === 'BUILDING'" class="animate-pulse">●</span>
-                <span v-else>●</span>
-                {{ record.latestBuildStatus }}
-              </span>
-              <span class="text-xs text-gray-400">#{{ record.latestBuildNo }}</span>
-            </div>
-          </template>
-          <template v-if="column.key === 'latestTag'">
-            <Tooltip :title="record.latestTag">
-              <span class="font-mono text-xs text-blue-500">{{ record.latestTag.slice(0, 28) }}...</span>
-            </Tooltip>
-          </template>
-          <template v-if="column.key === 'action'">
-            <Space>
-              <Button
-                size="small"
-                type="primary"
-                :loading="buildingMap[record.id]"
-                @click="handleBuild(record)"
-              >
-                触发构建
-              </Button>
-              <Button size="small" @click="viewBuildLog(record)">构建日志</Button>
-              <Button size="small" @click="viewStartupLog(record)">启动日志</Button>
-            </Space>
-          </template>
-        </template>
-      </Table>
-    </div>
-
-    <!-- 日志抽屉 -->
-    <Drawer
-      v-model:open="logDrawer.visible"
-      :title="logDrawer.title"
-      placement="right"
-      width="820"
-      :destroyOnClose="true"
-    >
-      <template #extra>
-        <Space>
-          <Switch
-            v-model:checked="logDrawer.autoScroll"
-            checked-children="自动滚动"
-            un-checked-children="已锁定"
-            size="small"
-          />
-          <Button size="small" @click="clearLog">清空</Button>
-          <Button size="small" type="primary" ghost :loading="logDrawer.loading" @click="reloadLog">
-            刷新
-          </Button>
-        </Space>
+  <PageWrapper dense contentFullHeight contentClass="flex">
+    <BasicTable @register="registerTable" class="w-full">
+      <template #toolbar>
+        <Button type="primary" class="bg-blue-600 hover:bg-blue-500 border-0 shadow-md font-semibold"
+          :disabled="!selectedInstanceId" @click="handleCreateJob">
+          新建 Jenkins 作业
+        </Button>
+        <Button :disabled="!selectedInstanceId" @click="reload">
+          刷新状态
+        </Button>
       </template>
 
-      <!-- 日志头部信息 -->
-      <div v-if="logDrawer.app" class="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg grid grid-cols-3 gap-2 text-xs">
-        <div><span class="text-gray-400">服务名：</span><span class="font-medium">{{ logDrawer.app.appName }}</span></div>
-        <div><span class="text-gray-400">Jenkins Job：</span><span class="font-mono">{{ logDrawer.app.jenkinsJob }}</span></div>
-        <div><span class="text-gray-400">构建号：</span><span class="font-medium">#{{ logDrawer.app.latestBuildNo }}</span></div>
-        <div><span class="text-gray-400">分支：</span><span class="font-mono text-blue-500">{{ logDrawer.app.branch }}</span></div>
-        <div><span class="text-gray-400">最后构建：</span><span>{{ logDrawer.app.lastBuildTime }}</span></div>
-        <div>
-          <span class="text-gray-400">状态：</span>
-          <Tag :color="logDrawer.app.latestBuildStatus === 'SUCCESS' ? 'success' : logDrawer.app.latestBuildStatus === 'FAILURE' ? 'error' : 'processing'" class="text-xs">
-            {{ logDrawer.app.latestBuildStatus }}
-          </Tag>
-        </div>
-      </div>
+      <!-- Custom Body Cells -->
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'name'">
+          <span class="font-bold text-gray-800 dark:text-gray-100 font-mono">
+            {{ record.name }}
+          </span>
+        </template>
 
-      <!-- 日志区 -->
-      <div
-        class="bg-gray-900 rounded-lg p-4 font-mono text-xs text-green-400 overflow-auto"
-        :style="{ height: 'calc(100vh - 260px)' }"
-        ref="logContainer"
-        @scroll="handleLogScroll"
-      >
-        <div v-if="logDrawer.loading && !logLines.length" class="flex items-center justify-center h-32 text-gray-500">
-          <Spin tip="加载日志中..." />
+        <template v-else-if="column.key === 'count'">
+          <span v-if="record.count"
+            class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+            #{{ record.count }}
+          </span>
+          <span v-else class="text-gray-400 text-xs italic">暂无构建</span>
+        </template>
+
+        <template v-else-if="column.key === 'status'">
+          <span :class="[
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold select-none border',
+            (record.status === 'SUCCESS') ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-800' :
+              (record.status === 'FAILURE') ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-300 dark:border-red-800' :
+                (record.status === 'BUILDING') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-300 dark:border-blue-800 animate-pulse' :
+                  'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700'
+          ]">
+            <span v-if="record.status === 'BUILDING'" class="w-3.5 h-3.5 rounded-full border-2 border-dashed border-blue-600 animate-spin inline-block"></span>
+            <span v-else-if="record.status === 'SUCCESS'">●</span>
+            <span v-else-if="record.status === 'FAILURE'">●</span>
+            <span v-else>●</span>
+            {{ record.status || 'NOT_BUILT' }}
+          </span>
+        </template>
+
+        <!-- Vben 官方 TableAction 操作列机制 (阻止冒泡防止触发行展开) -->
+        <template v-else-if="column.key === 'action'">
+          <div @click.stop>
+            <TableAction :actions="[
+              {
+                label: '构建部署',
+                icon: 'ant-design:play-circle-outlined',
+                onClick: (e?: any) => { e?.stopPropagation?.(); handleOpenBuildModal(record); },
+              },
+              {
+                label: '构建日志',
+                icon: 'ant-design:code-outlined',
+                onClick: (e?: any) => { e?.stopPropagation?.(); handleOpenLogDrawer(record); },
+              },
+              {
+                label: '编辑',
+                icon: 'ant-design:edit-outlined',
+                onClick: (e?: any) => { e?.stopPropagation?.(); handleEditJob(record); },
+              },
+              {
+                label: '删除',
+                icon: 'ant-design:delete-outlined',
+                color: 'error',
+                disabled: !record.enableDelete || record.status === 'BUILDING',
+                popConfirm: {
+                  title: `确认从 Jenkins 云端永久删除作业 '${record.name}' 吗？`,
+                  confirm: (e?: any) => { e?.stopPropagation?.(); handleDeleteJob(record); },
+                },
+              },
+            ]" />
+          </div>
+        </template>
+      </template>
+
+      <!-- Expandable Detail Row slot -->
+      <template #expandedRowRender="{ record }">
+        <div
+          class="p-4 bg-slate-50 dark:bg-slate-900/90 rounded-lg border border-slate-200 dark:border-slate-800 shadow-inner">
+          <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-2 mb-4">
+            <span class="text-sm font-bold text-blue-900 dark:text-cyan-400 flex items-center gap-2">
+              <Icon icon="ant-design:info-circle-outlined" class="text-blue-500" />
+              <span>持续集成流水线控制面板 (服务: {{ record.name }})</span>
+            </span>
+            <span class="text-xs font-mono text-gray-500">
+              Jenkins URL: <a v-if="record.url" :href="record.url" target="_blank"
+                class="text-cyan-500 hover:underline">{{ record.url }}</a><span v-else>暂无物理配置</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <!-- Left panel: Parameters -->
+            <div
+              class="col-span-1 md:col-span-4 bg-white dark:bg-slate-800 p-3 rounded border border-gray-200 dark:border-slate-700">
+              <div
+                class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 flex items-center gap-1">
+                <Icon icon="ant-design:setting-outlined" class="text-blue-500" />
+                <span>具体构建参数</span>
+              </div>
+              <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                <li class="flex items-center justify-between">
+                  <span>部署类型 (deployType):</span>
+                  <span
+                    class="font-mono bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 truncate max-w-[180px]">
+                    {{ record.deployType || '容器集群' }}
+                  </span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>部署环境 (deployEnv):</span>
+                  <Tag :color="record.deployEnv === 'prod' ? 'red' : record.deployEnv === 'uat' ? 'purple' : 'cyan'">
+                    {{ record.deployEnv || 'dev' }}
+                  </Tag>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>项目空间 (projectName):</span>
+                  <span class="font-mono text-cyan-600 dark:text-cyan-400 font-semibold">
+                    {{ record.projectName || record.folder || '/' }}
+                  </span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>编译分支 (gitBranch):</span>
+                  <span
+                    class="font-mono bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded border border-green-300 font-semibold">
+                    {{ record.gitBranch || 'main' }}
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Right panel: Real Jenkins Stage View (Timeline) -->
+            <div class="col-span-1 md:col-span-8 bg-white dark:bg-slate-800 p-3 rounded border border-gray-200 dark:border-slate-700">
+              <div class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-3 border-b border-gray-100 dark:border-gray-700 pb-1 flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                  <Icon icon="ant-design:clock-circle-outlined" class="text-cyan-500" />
+                  <span>远端 Jenkins Stage View 真实视图 (时间轴)</span>
+                  <Tag v-if="stageViewMap[record.name]?.buildNumber && stageViewMap[record.name]?.buildNumber !== '-'" color="blue" class="ml-1 font-mono">
+                    {{ stageViewMap[record.name].buildNumber }}
+                  </Tag>
+                  <Tag v-if="stageViewMap[record.name]?.status === 'IN_PROGRESS' || stageViewMap[record.name]?.status === 'BUILDING' || record.status === 'BUILDING'" color="processing" class="animate-pulse">
+                    构建中...
+                  </Tag>
+                </span>
+                <Button size="small" type="link" class="text-xs text-blue-500 p-0 h-auto" @click="fetchStageView(record.name, true)">
+                  <template #icon><Icon icon="ant-design:reload-outlined" /></template>
+                  刷新阶段
+                </Button>
+              </div>
+              <div class="py-2 px-1">
+                <div v-if="stageViewMap[record.name]?.loading" class="flex items-center justify-center py-4 text-xs text-gray-400 gap-2">
+                  <Spin size="small" />
+                  <span>连线 Jenkins 抓取真实 Stage View 中...</span>
+                </div>
+                <div v-else-if="stageViewMap[record.name]?.stages && stageViewMap[record.name].stages.length > 0" class="pt-2 px-2 overflow-x-auto">
+                  <a-timeline class="custom-stage-timeline text-xs font-mono">
+                    <a-timeline-item
+                      v-for="stg in stageViewMap[record.name].stages"
+                      :key="stg.id"
+                      :color="getTimelineColor(stg.status)"
+                    >
+                      <template #dot>
+                        <span v-if="stg.status === 'IN_PROGRESS' || stg.status === 'BUILDING'" class="w-3.5 h-3.5 rounded-full border-2 border-dashed border-blue-500 animate-spin inline-block"></span>
+                        <Icon v-else-if="stg.status === 'SUCCESS'" icon="ant-design:check-circle-outlined" class="text-green-500 text-sm" />
+                        <Icon v-else-if="stg.status === 'FAILED' || stg.status === 'FAILURE'" icon="ant-design:close-circle-outlined" class="text-red-500 text-sm" />
+                        <Icon v-else-if="stg.status === 'ABORTED'" icon="ant-design:minus-circle-outlined" class="text-orange-500 text-sm" />
+                        <Icon v-else icon="ant-design:clock-circle-outlined" class="text-gray-400 text-sm" />
+                      </template>
+                      <div class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <span class="font-bold text-gray-800 dark:text-gray-200">{{ stg.name }}</span>
+                        <Tag :color="getStageTagColor(stg.status)" class="text-[11px] font-semibold px-1.5 py-0 border-0 rounded">
+                          {{ stg.status }}
+                        </Tag>
+                        <span class="text-gray-500 text-[11px] font-mono">⏱ {{ formatDuration(stg.durationMillis) }}</span>
+                      </div>
+                    </a-timeline-item>
+                  </a-timeline>
+                </div>
+                <div v-else class="text-xs text-gray-400 py-3 text-center italic">
+                  暂无远端 Stage View 运行记录
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div v-for="(line, i) in logLines" :key="i" :class="['leading-5', getLogLineClass(line)]">
-          {{ line }}
-        </div>
-        <div v-if="logDrawer.loading && logLines.length" class="text-yellow-400 mt-2 flex items-center gap-2">
-          <span class="animate-pulse">▶</span>
-          <span>实时输出中...</span>
-        </div>
-        <div v-if="!logDrawer.loading && !logLines.length" class="text-gray-600 text-center py-8">
-          暂无日志
-        </div>
-      </div>
-    </Drawer>
+      </template>
+    </BasicTable>
+
+    <!-- Create and Edit drawer -->
+    <JobDrawer @register="registerCreateDrawer" @success="reload" />
+
+    <!-- Build parameters modal -->
+    <BuildModal @register="registerBuildModal" @confirm="handleConfirmBuild" />
+
+    <!-- Real-time log drawer -->
+    <JobLogDrawer @register="registerLogDrawer" @close="reload" />
   </PageWrapper>
 </template>
 
-<script setup lang="ts">
-  import { ref, nextTick, onBeforeUnmount } from 'vue';
-  import { message, Table, Input, Select, Button, Space, Tooltip, Tag, Drawer, Switch, Spin } from 'ant-design-vue';
-  import { PageWrapper } from '@/components/Page';
-  import { getBaselineList, triggerJenkinsBuild, generateBuildLog } from '@/api/cicd/cicd.mock';
+<script lang="ts" setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Tag, Timeline as ATimeline, TimelineItem as ATimelineItem, Spin } from 'ant-design-vue';
+import { PageWrapper } from '@/components/Page';
+import { Button } from '@/components/Button';
+import Icon from '@/components/Icon/Icon.vue';
+import { BasicTable, useTable, TableAction } from '@/components/Table';
+import { useDrawer } from '@/components/Drawer';
+import { useModal } from '@/components/Modal';
+import {
+  getJenkinsInstanceList,
+  getJenkinsJobList,
+  deleteJenkinsJob,
+  getJenkinsJobStageView,
+} from '@/api/cicd';
+import { useMessage } from '@/hooks/web/useMessage';
+import { columns, searchFormSchema } from './job.data';
+import JobDrawer from './JobDrawer.vue';
+import BuildModal from './components/BuildModal.vue';
+import JobLogDrawer from './components/JobLogDrawer.vue';
 
-  const SelectOption = Select.Option;
+defineOptions({ name: 'JenkinsJobManagement' });
 
-  // Jenkins 连接配置（对接时使用）
-  // const JENKINS_URL = 'http://192.168.50.100:8081';
-  // const JENKINS_TOKEN = '115c12aeda19134e183500da3f00bcf843';
+const { createMessage } = useMessage();
+const selectedInstanceId = ref<number | undefined>(undefined);
+const instanceOptions = ref<any[]>([]);
+const stageViewMap = ref<Record<string, { loading: boolean; buildNumber?: string; status?: string; stages?: any[] }>>({});
+const timerMap = ref<Record<string, any>>({});
 
-  const searchKeyword = ref('');
-  const searchLang = ref<string | undefined>(undefined);
-  const loading = ref(false);
-  const list = ref<any[]>([]);
-  const buildingMap = ref<Record<number, boolean>>({});
-  const logContainer = ref<HTMLElement | null>(null);
+const [registerCreateDrawer, { openDrawer: openCreateDrawer }] = useDrawer();
+const [registerBuildModal, { openModal: openBuildModal }] = useModal();
+const [registerLogDrawer, { openDrawer: openLogDrawer }] = useDrawer();
 
-  const logDrawer = ref({
-    visible: false,
-    title: '构建日志',
-    loading: false,
-    app: null as any,
-    autoScroll: true,
-    type: 'build' as 'build' | 'startup',
-  });
-
-  const logLines = ref<string[]>([]);
-  let streamTimer: ReturnType<typeof setInterval> | null = null;
-
-  const columns = [
-    { title: '服务名', dataIndex: 'appName', key: 'appName', width: 180 },
-    { title: '语言/类型', dataIndex: 'lang', key: 'lang', width: 100 },
-    { title: '最近构建状态', key: 'latestBuildStatus', width: 160 },
-    { title: '最新 Tag', key: 'latestTag', ellipsis: true },
-    { title: '分支', dataIndex: 'branch', key: 'branch', width: 90 },
-    { title: '最后构建时间', dataIndex: 'lastBuildTime', key: 'lastBuildTime', width: 170 },
-    { title: '操作', key: 'action', width: 250, fixed: 'right' },
-  ];
-
-  async function loadList() {
-    loading.value = true;
-    try {
-      const res = await getBaselineList();
-      let items = res.items;
-      if (searchKeyword.value) items = items.filter((i: any) => i.appName.includes(searchKeyword.value));
-      if (searchLang.value) items = items.filter((i: any) => i.lang === searchLang.value);
-      list.value = items;
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  async function handleBuild(record: any) {
-    buildingMap.value[record.id] = true;
-    try {
-      await triggerJenkinsBuild({ appName: record.appName, jenkinsJob: record.jenkinsJob });
-      message.success(`${record.appName} 构建已触发，Jenkins Job: ${record.jenkinsJob}`);
-      record.latestBuildStatus = 'BUILDING';
-      setTimeout(() => {
-        record.latestBuildStatus = 'SUCCESS';
-        record.latestBuildNo += 1;
-        record.lastBuildTime = new Date().toLocaleString('zh-CN');
-        buildingMap.value[record.id] = false;
-      }, 5000);
-    } catch {
-      buildingMap.value[record.id] = false;
-      message.error('触发构建失败');
-    }
-  }
-
-  function viewBuildLog(record: any) {
-    logDrawer.value = {
-      ...logDrawer.value,
-      visible: true,
-      title: `构建日志 - ${record.appName} #${record.latestBuildNo}`,
-      loading: true,
-      app: record,
-      type: 'build',
-    };
-    logLines.value = [];
-    streamLog(generateBuildLog(record.appName, record.latestBuildNo));
-  }
-
-  function viewStartupLog(record: any) {
-    logDrawer.value = {
-      ...logDrawer.value,
-      visible: true,
-      title: `启动日志 - ${record.appName}`,
-      loading: true,
-      app: record,
-      type: 'startup',
-    };
-    logLines.value = [];
-    const startupLog = `  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \\ \\ \\ \\
-( ( )\\___ | '_ | '_| | '_ \\/ _\` | \\ \\ \\ \\
- \\\\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\\__, | / / / /
- =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::               (v3.2.1)
-
-2025-03-10 14:20:20.001  INFO --- [main] ${record.appName}: Starting ${record.appName}...
-2025-03-10 14:20:20.120  INFO --- [main] Config: Loading config from nacos: pre-env/${record.appName}.yaml
-2025-03-10 14:20:20.350  INFO --- [main] DataSource: Initializing connection pool to 10.0.3.30:3306
-2025-03-10 14:20:20.890  INFO --- [main] Redis: Connected to 10.0.3.20:6379
-2025-03-10 14:20:21.200  INFO --- [main] Nacos: Registered service: ${record.appName} -> 172.21.0.68:8080
-2025-03-10 14:20:21.450  INFO --- [main] Undertow: Started on port(s): 8080 (http)
-2025-03-10 14:20:21.500  INFO --- [main] ${record.appName}: Started in 1.499 seconds (process running for 2.1)
-2025-03-10 14:20:22.000  INFO --- [health] Actuator: GET /actuator/health -> {"status":"UP","components":{"db":{"status":"UP"},"redis":{"status":"UP"}}}`;
-    streamLog(startupLog);
-  }
-
-  function streamLog(fullLog: string) {
-    clearStreamTimer();
-    const lines = fullLog.split('\n');
-    let i = 0;
-    logDrawer.value.loading = true;
-    streamTimer = setInterval(() => {
-      if (i < lines.length) {
-        logLines.value.push(lines[i++]);
-        if (logDrawer.value.autoScroll) {
-          nextTick(() => {
-            if (logContainer.value) logContainer.value.scrollTop = logContainer.value.scrollHeight;
-          });
+const [registerTable, { reload, getForm }] = useTable({
+  title: '服务基线列表',
+  api: async (params) => {
+    if (!params?.instanceId) return [];
+    const res: any = await getJenkinsJobList({
+      instanceId: params.instanceId,
+      name: params.name,
+      projectName: params.projectName,
+      status: params.status,
+      gitRepo: params.gitRepo,
+      deployEnv: params.deployEnv,
+      lang: params.lang,
+      keyword: params.keyword,
+    });
+    return res?.items || res || [];
+  },
+  columns,
+  showIndexColumn: false,
+  formConfig: {
+    labelWidth: 100,
+    schemas: searchFormSchema,
+    autoSubmitOnEnter: true,
+  },
+  useSearchForm: true,
+  showTableSetting: true,
+  bordered: false,
+  expandRowByClick: true,
+  canResize: true,
+  onExpandedRowsChange: (keys: any[]) => {
+    if (Array.isArray(keys) && keys.length > 0) {
+      keys.forEach((key) => {
+        const name = String(key);
+        if (name && !stageViewMap.value[name]?.loading && (!stageViewMap.value[name]?.stages || stageViewMap.value[name]?.stages.length === 0)) {
+          fetchStageView(name, true);
         }
-      } else {
-        clearStreamTimer();
-        logDrawer.value.loading = false;
+      });
+    }
+  },
+  pagination: {
+    current: 1,
+    pageSize: 10,
+    showQuickJumper: true,
+    showSizeChanger: true,
+  },
+  rowKey: 'name',
+  actionColumn: { width: 320, title: '运维与安全防护', dataIndex: 'action', key: 'action', fixed: 'right' },
+});
+
+function getTimelineColor(status: string) {
+  if (status === 'SUCCESS') return 'green';
+  if (status === 'IN_PROGRESS' || status === 'BUILDING') return 'blue';
+  if (status === 'FAILED' || status === 'FAILURE') return 'red';
+  if (status === 'ABORTED') return 'orange';
+  return 'gray';
+}
+
+function getStageTagColor(status: string) {
+  if (status === 'SUCCESS') return 'success';
+  if (status === 'IN_PROGRESS' || status === 'BUILDING') return 'processing';
+  if (status === 'FAILED' || status === 'FAILURE') return 'error';
+  if (status === 'ABORTED') return 'warning';
+  return 'default';
+}
+
+function formatDuration(ms: number) {
+  if (!ms || ms <= 0) return '未执行';
+  if (ms < 1000) return `${ms}ms`;
+  const sec = (ms / 1000).toFixed(1);
+  return `${sec}s`;
+}
+
+async function fetchStageView(jobNameKey: string, manual = false) {
+  if (!jobNameKey || !selectedInstanceId.value) return;
+
+  const shortJobName = jobNameKey.includes('/') ? jobNameKey.split('/').pop()! : jobNameKey;
+  const folder = jobNameKey.includes('/') ? jobNameKey.split('/')[0] : '';
+
+  if (!stageViewMap.value[jobNameKey]) {
+    stageViewMap.value[jobNameKey] = { loading: true, stages: [] };
+  } else if (manual) {
+    stageViewMap.value[jobNameKey].loading = true;
+  }
+
+  try {
+    const res: any = await getJenkinsJobStageView({
+      instanceId: selectedInstanceId.value,
+      jobName: shortJobName,
+      folder: folder,
+      projectName: folder,
+    });
+    const stages = res?.stages || [];
+    const buildStatus = res?.status || 'UNKNOWN';
+    stageViewMap.value[jobNameKey] = {
+      loading: false,
+      buildNumber: res?.buildNumber || '-',
+      status: buildStatus,
+      stages,
+    };
+
+    const isBuilding = buildStatus === 'IN_PROGRESS' || buildStatus === 'BUILDING' || stages.some((s: any) => s.status === 'IN_PROGRESS' || s.status === 'BUILDING');
+    if (isBuilding) {
+      startStagePolling(jobNameKey);
+    } else {
+      stopStagePolling(jobNameKey);
+    }
+  } catch (err) {
+    stageViewMap.value[jobNameKey] = { ...stageViewMap.value[jobNameKey], loading: false };
+    stopStagePolling(jobNameKey);
+  }
+}
+
+function startStagePolling(jobName: string) {
+  if (timerMap.value[jobName]) return;
+  timerMap.value[jobName] = setInterval(() => {
+    fetchStageView(jobName, false);
+  }, 2500);
+}
+
+function stopStagePolling(jobName: string) {
+  if (timerMap.value[jobName]) {
+    clearInterval(timerMap.value[jobName]);
+    delete timerMap.value[jobName];
+  }
+}
+
+function clearAllPolling() {
+  Object.keys(timerMap.value).forEach((jobName) => {
+    stopStagePolling(jobName);
+  });
+}
+
+onUnmounted(() => {
+  clearAllPolling();
+});
+
+async function handleExpandRow(expanded: boolean, record: Recordable) {
+  if (!record?.name) return;
+  if (expanded) {
+    fetchStageView(record.name, true);
+  } else {
+    stopStagePolling(record.name);
+  }
+}
+
+onMounted(async () => {
+  try {
+    const res: any = await getJenkinsInstanceList();
+    const list = res?.items || res || [];
+    instanceOptions.value = list.map((item: any) => ({
+      label: `${item.name} (${item.env})`,
+      value: item.id,
+    }));
+
+    if (instanceOptions.value.length > 0) {
+      const defaultId = instanceOptions.value[0].value;
+      selectedInstanceId.value = defaultId;
+      const form = getForm();
+      if (form) {
+        form.updateSchema({
+          field: 'instanceId',
+          componentProps: {
+            options: instanceOptions.value,
+            onChange: (val: number) => {
+              selectedInstanceId.value = val;
+              reload();
+            },
+          },
+        });
+        form.setFieldsValue({ instanceId: defaultId });
       }
-    }, 80);
-  }
+      reload();
+    }
+  } catch (err) { }
+});
 
-  function clearStreamTimer() {
-    if (streamTimer) { clearInterval(streamTimer); streamTimer = null; }
+function handleCreateJob() {
+  if (!selectedInstanceId.value) {
+    createMessage.warning('请先选择 Jenkins 实例');
+    return;
   }
+  openCreateDrawer(true, {
+    isUpdate: false,
+    instanceId: selectedInstanceId.value,
+  });
+}
 
-  function reloadLog() {
-    const app = logDrawer.value.app;
-    if (!app) return;
-    logLines.value = [];
-    if (logDrawer.value.type === 'build') viewBuildLog(app);
-    else viewStartupLog(app);
+function handleEditJob(record: Recordable) {
+  if (!selectedInstanceId.value) return;
+  openCreateDrawer(true, {
+    isUpdate: true,
+    instanceId: selectedInstanceId.value,
+    record,
+  });
+}
+
+function handleOpenBuildModal(record: Recordable) {
+  if (!selectedInstanceId.value) return;
+  openBuildModal(true, {
+    instanceId: selectedInstanceId.value,
+    record,
+  });
+}
+
+function handleConfirmBuild(data: any) {
+  if (!selectedInstanceId.value) return;
+  const record = data.record;
+  if (record) {
+    record.gitBranch = data.branch;
+    record.deployEnv = data.deployEnv;
+    record.deployType = data.deployType;
+    record.gitRepo = data.gitRepo;
+    record.status = 'BUILDING';
   }
-
-  function clearLog() {
-    clearStreamTimer();
-    logLines.value = [];
-    logDrawer.value.loading = false;
+  if (data.jobName) {
+    setTimeout(() => {
+      fetchStageView(data.jobName, true);
+    }, 1500);
   }
+  openLogDrawer(true, {
+    instanceId: selectedInstanceId.value,
+    jobName: data.jobName,
+    folder: data.folder,
+    projectName: data.projectName || data.folder,
+    branch: data.branch,
+    deployEnv: data.deployEnv,
+    deployType: data.deployType,
+    gitRepo: data.gitRepo,
+    triggerBuild: true,
+  });
+}
 
-  function handleLogScroll() {
-    const el = logContainer.value;
-    if (!el) return;
-    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
-    logDrawer.value.autoScroll = isAtBottom;
-  }
+function handleOpenLogDrawer(record: Recordable) {
+  if (!selectedInstanceId.value) return;
+  openLogDrawer(true, {
+    instanceId: selectedInstanceId.value,
+    jobName: record.name,
+    folder: record.folder || record.projectName,
+    projectName: record.projectName || record.folder,
+    buildNumber: record.count || 0,
+    triggerBuild: false,
+  });
+}
 
-  function getLogLineClass(line: string): string {
-    if (line.includes('ERROR') || line.includes('FAILURE') || line.includes('FAILED')) return 'text-red-400';
-    if (line.includes('WARN')) return 'text-yellow-400';
-    if (line.includes('SUCCESS') || line.includes('✅') || line.includes('Finished: SUCCESS')) return 'text-green-300 font-semibold';
-    if (line.includes('[Pipeline]') || line.includes('stage(')) return 'text-blue-300';
-    if (line.startsWith('  .   ____') || line.startsWith(' /\\')) return 'text-cyan-400 font-bold';
-    return '';
-  }
+async function handleDeleteJob(record: Recordable) {
+  if (!selectedInstanceId.value) return;
+  try {
+    const jobNameKey = record.name || '';
+    const shortJobName = jobNameKey.includes('/') ? jobNameKey.split('/').pop()! : jobNameKey;
+    const folder = record.folder || record.projectName || (jobNameKey.includes('/') ? jobNameKey.split('/')[0] : '');
 
-  onBeforeUnmount(clearStreamTimer);
-  loadList();
+    await deleteJenkinsJob({
+      instanceId: selectedInstanceId.value,
+      jobName: shortJobName,
+      folder: folder,
+      projectName: folder,
+    });
+    createMessage.success(`作业【${jobNameKey}】已成功从远端及系统删除！`);
+    reload();
+  } catch (err) { }
+}
 </script>

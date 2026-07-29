@@ -48,6 +48,9 @@
       <Button type="primary" size="large" block @click="handleLogin" :loading="loading">
         {{ t('sys.login.loginButton') }}
       </Button>
+      <Button type="default" block class="mt-4" @click="handleKeycloakLogin">
+        {{ t('sys.login.loginSSOButton') }}
+      </Button>
       <!-- <Button size="large" class="mt-4 enter-x" block @click="handleRegister">
         {{ t('sys.login.registerButton') }}
       </Button> -->
@@ -83,15 +86,8 @@
 </template>
 <script lang="ts" setup>
   import { reactive, ref, unref, computed } from 'vue';
-
+  import { defHttp } from '@/utils/http/axios';
   import { Checkbox, Form, Input, Row, Col, Button, Divider } from 'ant-design-vue';
-  import {
-    GithubFilled,
-    WechatFilled,
-    AlipayCircleFilled,
-    GoogleCircleFilled,
-    TwitterCircleFilled,
-  } from '@ant-design/icons-vue';
   import LoginFormTitle from './LoginFormTitle.vue';
 
   import { useI18n } from '@/hooks/web/useI18n';
@@ -154,6 +150,13 @@
       });
     } finally {
       loading.value = false;
+    }
+  }
+
+  async function handleKeycloakLogin() {
+    const res = await defHttp.get<{ url: string }>({ url: '/auth/oidc/login' });
+    if (res && res.url) {
+      window.location.href = res.url; // 跳转 Keycloak 统一登录
     }
   }
 </script>

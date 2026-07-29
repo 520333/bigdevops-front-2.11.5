@@ -6,62 +6,32 @@
     >
       <template #toolbar>
         <div class="flex items-center space-x-3 flex-wrap gap-y-2">
-          <!-- 🚀 选择目标 K8s 集群 -->
-          <span class="font-semibold text-gray-700 dark:text-gray-300">目标集群:</span>
-          <a-select
-            v-model:value="selectedCluster"
-            style="width: 180px"
-            placeholder="请选择 K8s 集群"
-            :options="clusterOptions"
-            show-search
-            @change="handleClusterChange"
-          />
-
-          <!-- 🚀 选择 Namespace 命名空间 -->
-          <span class="font-semibold text-gray-700 dark:text-gray-300">命名空间:</span>
-          <a-select
-            v-model:value="selectedNamespace"
-            style="width: 180px"
-            placeholder="请选择 Namespace"
-            :options="namespaceOptions"
-            show-search
-            @change="handleNamespaceChange"
-          />
-
-          <!-- 🚀 搜索与刷新按钮 -->
-          <a-input-search
-            v-model:value="keyword"
-            placeholder="搜索 Pod 名称 / IP / 节点"
-            style="width: 240px"
-            enter-button
-            @search="handleReload"
-          />
-          <a-button type="primary" @click="handleCreatePod">
+          <Button type="primary" @click="handleCreatePod">
             新增 Pod
-          </a-button>
+          </Button>
 
           <!-- 🚀 批量删除按钮 -->
-          <a-popconfirm
+          <Popconfirm
             title="确定要批量删除选中的 Pod 吗？"
             ok-text="确认删除"
             cancel-text="取消"
             :disabled="checkedKeys.length === 0"
             @confirm="handleBatchDelete"
           >
-            <a-button type="primary" danger :disabled="checkedKeys.length === 0">
+            <Button type="primary" danger :disabled="checkedKeys.length === 0">
               批量删除 {{ checkedKeys.length > 0 ? `(${checkedKeys.length})` : '' }}
-            </a-button>
-          </a-popconfirm>
+            </Button>
+          </Popconfirm>
 
-          <a-button @click="handleReload">刷新</a-button>
+          <Button @click="handleReload">刷新</Button>
 
           <!-- 🚀 kubectl -w 实时 Watch 状态提示 -->
-          <a-tag v-if="isWatching" color="success" class="flex items-center px-2 py-1">
+          <Tag v-if="isWatching" color="success" class="flex items-center px-2 py-1">
             <template #icon>
               <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-ping mr-1"></span>
             </template>
             Watch 实时同步中 (kubectl -w)
-          </a-tag>
+          </Tag>
         </div>
       </template>
 
@@ -123,20 +93,19 @@
     </BasicTable>
 
     <!-- 🚀 新增 / 编辑 Pod YAML 弹窗 -->
-    <a-modal
-      v-model:open="modalVisible"
+    <BasicModal
+      @register="registerYamlModal"
       :title="isCreate ? '新增 Pod (YAML 声明)' : `编辑 Pod: ${activePodName}`"
       width="60%"
-      :confirmLoading="modalLoading"
       @ok="handleSavePod"
     >
       <div class="flex items-center justify-between mb-3">
         <div class="text-xs text-gray-500">
           {{ isCreate ? '请编写完整 Pod YAML 声明，保存后将自动提交至对应 K8s 集群并启动应用。' : '修改 YAML 内容后点击确定，系统将更新应用该 Pod 的声明规则。' }}
         </div>
-        <a-button size="small" type="default" @click="downloadCurrentYaml">
+        <Button size="small" type="default" @click="downloadCurrentYaml">
           下载 YAML
-        </a-button>
+        </Button>
       </div>
       <div class="border rounded bg-gray-900 overflow-hidden">
         <Codemirror
@@ -145,7 +114,7 @@
           :extensions="extensions"
         />
       </div>
-    </a-modal>
+    </BasicModal>
 
     <!-- 🚀 Pod 实时日志查看弹窗 -->
     <PodLogsModal
@@ -177,17 +146,17 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, onMounted, onUnmounted } from 'vue';
+  import { ref, onMounted, onUnmounted, nextTick } from 'vue';
   import { useRoute } from 'vue-router';
   import {
-    Select as ASelect,
-    InputSearch as AInputSearch,
-    Button as AButton,
-    Modal as AModal,
-    Popconfirm as APopconfirm,
-    Tag as ATag,
+    Select,
+    InputSearch,
+    Button,
+    Popconfirm,
+    Tag,
   } from 'ant-design-vue';
   import { BasicTable, useTable, TableAction } from '@/components/Table';
+  import { BasicModal, useModal } from '@/components/Modal';
   import {
     getClusterForSelect,
     getK8sNamespaceList,
@@ -198,7 +167,7 @@
     deleteK8sPod,
     deleteK8sPodBatch,
   } from '@/api/demo/system';
-  import { columns } from './pod.data';
+  import { columns, searchFormSchema } from './pod.data';
   import { useMessage } from '@/hooks/web/useMessage';
   import { useGo } from '@/hooks/web/usePage';
   import { useGlobSetting } from '@/hooks/setting';
@@ -231,8 +200,7 @@
   const clusterOptions = ref<Array<{ label: string; value: string }>>([]);
   const namespaceOptions = ref<Array<{ label: string; value: string }>>([]);
 
-  const modalVisible = ref(false);
-  const modalLoading = ref(false);
+  const [registerYamlModal, { openModal: openYamlModal, setModalProps: setYamlModalProps, closeModal: closeYamlModal }] = useModal();
   const isCreate = ref(false);
   const activePodName = ref('');
   const activePodNamespace = ref('');
@@ -295,9 +263,13 @@ spec:
     }
   }
 
-  const [registerTable, { reload, getDataSource, setTableData }] = useTable({
+  const [registerTable, { reload, getDataSource, setTableData, getForm }] = useTable({
     title: 'K8s Pod 列表管理',
-    api: async () => {
+    api: async (params) => {
+      selectedCluster.value = params.clusterName || selectedCluster.value;
+      selectedNamespace.value = params.namespace || selectedNamespace.value;
+      keyword.value = params.keyword || '';
+
       if (!selectedCluster.value) {
         return { items: [], total: 0 };
       }
@@ -321,10 +293,18 @@ spec:
         return { items: [], total: 0 };
       }
     },
+    pagination: {
+      showQuickJumper: false,
+    },
+    immediate: false,
     columns,
+    formConfig: {
+      schemas: searchFormSchema,
+      autoSubmitOnEnter: true,
+    },
     bordered: true,
     showIndexColumn: false,
-    useSearchForm: false,
+    useSearchForm: true,
     showTableSetting: true,
     clickToRowSelect: true,
     actionColumn: {
@@ -351,14 +331,7 @@ spec:
       }));
 
       if (clusterOptions.value.length > 0) {
-        if (route.query.cluster) {
-          selectedCluster.value = String(route.query.cluster);
-        } else {
-          selectedCluster.value = clusterOptions.value[0].value;
-        }
-
-        await loadNamespaceList(selectedCluster.value);
-
+        selectedCluster.value = route.query.cluster ? String(route.query.cluster) : clusterOptions.value[0].value;
         if (route.query.namespace !== undefined) {
           selectedNamespace.value = String(route.query.namespace);
         }
@@ -366,7 +339,32 @@ spec:
           keyword.value = String(route.query.keyword);
         }
 
-        await reload();
+        await getForm().updateSchema([
+          {
+            field: 'clusterName',
+            componentProps: {
+              options: clusterOptions.value,
+              onChange: async (val: string) => {
+                selectedCluster.value = val;
+                selectedNamespace.value = '';
+                checkedKeys.value = [];
+                await loadNamespaceList(val);
+                getForm().setFieldsValue({ namespace: '' });
+                await reload();
+                initPodWatch();
+              },
+            },
+          },
+        ]);
+
+        await loadNamespaceList(selectedCluster.value);
+        await getForm().setFieldsValue({
+          clusterName: selectedCluster.value,
+          namespace: selectedNamespace.value,
+          keyword: keyword.value,
+        });
+
+        reload();
         initPodWatch();
       }
     } catch (e) {
@@ -383,15 +381,29 @@ spec:
         { label: '全部命名空间', value: '' },
         ...nsList.map((ns: string) => ({ label: ns, value: ns })),
       ];
-      if (route.query.namespace !== undefined) {
-        selectedNamespace.value = String(route.query.namespace);
-      } else {
+      if (route.query.namespace === undefined) {
         selectedNamespace.value = '';
       }
+      
+      await getForm().updateSchema([
+        {
+          field: 'namespace',
+          componentProps: {
+            options: namespaceOptions.value,
+            onChange: async (val: string) => {
+              selectedNamespace.value = val;
+              checkedKeys.value = [];
+              await reload();
+              initPodWatch();
+            },
+          },
+        },
+      ]);
     } catch (e) {
       console.error(e);
       namespaceOptions.value = [{ label: '全部命名空间', value: '' }];
       selectedNamespace.value = '';
+      await getForm().updateSchema([{ field: 'namespace', componentProps: { options: namespaceOptions.value } }]);
     }
   }
 
@@ -402,7 +414,12 @@ spec:
       watchWs.onmessage = null;
       watchWs.onerror = null;
       watchWs.onclose = null;
-      watchWs.close();
+      if (watchWs.readyState === WebSocket.OPEN) {
+        watchWs.close();
+      } else if (watchWs.readyState === WebSocket.CONNECTING) {
+        const ws = watchWs;
+        ws.onopen = () => ws.close();
+      }
       watchWs = null;
     }
     isWatching.value = false;
@@ -484,21 +501,6 @@ spec:
     };
   }
 
-  async function handleClusterChange(val: string) {
-    selectedCluster.value = val;
-    checkedKeys.value = [];
-    await loadNamespaceList(val);
-    await reload();
-    initPodWatch();
-  }
-
-  async function handleNamespaceChange(val: string) {
-    selectedNamespace.value = val;
-    checkedKeys.value = [];
-    await reload();
-    initPodWatch();
-  }
-
   async function handleReload() {
     checkedKeys.value = [];
     await reload();
@@ -509,7 +511,7 @@ spec:
     isCreate.value = true;
     activePodName.value = '';
     podYamlContent.value = defaultPodYaml;
-    modalVisible.value = true;
+    openYamlModal(true);
   }
 
   function handleOpenLogs(record: Recordable) {
@@ -546,7 +548,7 @@ spec:
       activePodName.value = record.name;
       activePodNamespace.value = record.namespace;
       podYamlContent.value = typeof yamlStr === 'string' ? yamlStr : JSON.stringify(yamlStr, null, 2);
-      modalVisible.value = true;
+      openYamlModal(true);
     } catch (e: any) {
       console.error(e);
       createMessage.error({ content: '获取 Pod YAML 失败: ' + (e.message || e), key: 'load_pod_yaml' });
@@ -558,9 +560,9 @@ spec:
       createMessage.warning('Pod YAML 内容不能为空');
       return;
     }
-    modalLoading.value = true;
     try {
       if (isCreate.value) {
+        setYamlModalProps({ confirmLoading: true });
         await createK8sPod({
           clusterName: selectedCluster.value,
           namespace: selectedNamespace.value,
@@ -568,6 +570,7 @@ spec:
         });
         createMessage.success('Pod 创建成功');
       } else {
+        setYamlModalProps({ confirmLoading: true });
         await updateK8sPod({
           clusterName: selectedCluster.value,
           namespace: activePodNamespace.value,
@@ -575,14 +578,14 @@ spec:
         });
         createMessage.success('Pod 更新成功');
       }
-      modalVisible.value = false;
+      closeYamlModal();
       await reload();
       initPodWatch();
     } catch (e: any) {
       console.error(e);
       createMessage.error('保存失败: ' + (e.message || e));
     } finally {
-      modalLoading.value = false;
+      setYamlModalProps({ confirmLoading: false });
     }
   }
 

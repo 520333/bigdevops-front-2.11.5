@@ -282,6 +282,26 @@ enum Api {
   updateK8sIngress = "/api/k8s/updateK8sIngress",
   deleteK8sIngress = "/api/k8s/deleteK8sIngress",
   deleteK8sIngressBatch = "/api/k8s/deleteK8sIngressBatch",
+
+  // k8s project, app, instance
+  getK8sProjectList = "/api/k8s/getK8sProjectList",
+  getK8sProjectOne = "/api/k8s/getK8sProjectOne",
+  createK8sProject = "/api/k8s/createK8sProject",
+  updateK8sProject = "/api/k8s/updateK8sProject",
+  deleteK8sProject = "/api/k8s/deleteK8sProject",
+
+  getK8sAppList = "/api/k8s/getK8sAppList",
+  getK8sAppOne = "/api/k8s/getK8sAppOne",
+  createK8sApp = "/api/k8s/createK8sApp",
+  updateK8sApp = "/api/k8s/updateK8sApp",
+  deleteK8sApp = "/api/k8s/deleteK8sApp",
+
+  getK8sInstanceList = "/api/k8s/getK8sInstanceList",
+  getK8sInstanceOne = "/api/k8s/getK8sInstanceOne",
+  createK8sInstance = "/api/k8s/createK8sInstance",
+  updateK8sInstance = "/api/k8s/updateK8sInstance",
+  deleteK8sInstance = "/api/k8s/deleteK8sInstance",
+  deployK8sInstance = "/api/k8s/deployK8sInstance",
 }
 
 export const getAccountList = (params: AccountParams) =>
@@ -946,6 +966,44 @@ export const deleteK8sIngress = (data?: any) =>
   defHttp.post({ url: Api.deleteK8sIngress, data });
 export const deleteK8sIngressBatch = (data?: any) =>
   defHttp.post({ url: Api.deleteK8sIngressBatch, data });
+
+// Project
+export const getK8sProjectList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sProjectList, params });
+export const getK8sProjectOne = (id: number) =>
+  defHttp.get({ url: `${Api.getK8sProjectOne}/${id}` });
+export const createK8sProject = (data?: any) =>
+  defHttp.post({ url: Api.createK8sProject, data });
+export const updateK8sProject = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sProject, data });
+export const deleteK8sProject = (id: number) =>
+  defHttp.delete({ url: `${Api.deleteK8sProject}/${id}` });
+
+// App
+export const getK8sAppList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sAppList, params });
+export const getK8sAppOne = (id: number) =>
+  defHttp.get({ url: `${Api.getK8sAppOne}/${id}` });
+export const createK8sApp = (data?: any) =>
+  defHttp.post({ url: Api.createK8sApp, data });
+export const updateK8sApp = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sApp, data });
+export const deleteK8sApp = (id: number) =>
+  defHttp.delete({ url: `${Api.deleteK8sApp}/${id}` });
+
+// Instance
+export const getK8sInstanceList = (params?: any) =>
+  defHttp.get({ url: Api.getK8sInstanceList, params });
+export const getK8sInstanceOne = (id: number) =>
+  defHttp.get({ url: `${Api.getK8sInstanceOne}/${id}` });
+export const createK8sInstance = (data?: any) =>
+  defHttp.post({ url: Api.createK8sInstance, data });
+export const updateK8sInstance = (data?: any) =>
+  defHttp.post({ url: Api.updateK8sInstance, data });
+export const deleteK8sInstance = (id: number) =>
+  defHttp.delete({ url: `${Api.deleteK8sInstance}/${id}` });
+export const deployK8sInstance = (id: number) =>
+  defHttp.post({ url: `${Api.deployK8sInstance}/${id}` });
 
 
 

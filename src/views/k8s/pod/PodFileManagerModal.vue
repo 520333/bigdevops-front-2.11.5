@@ -94,6 +94,7 @@
           <template v-if="column.key === 'name'">
             <div class="flex items-center space-x-2 cursor-pointer py-1" @click="handleItemClick(record)">
               <span v-if="record.isDir" class="text-yellow-500 text-base">📁</span>
+              <span v-else-if="record.mode && record.mode.startsWith('l')" class="text-purple-500 text-base">🔗</span>
               <span v-else class="text-gray-400 text-base">📄</span>
               <span :class="record.isDir ? 'font-semibold text-blue-600 dark:text-blue-400 hover:underline' : 'text-gray-800 dark:text-gray-200'">
                 {{ record.name }}
@@ -107,8 +108,8 @@
 
           <template v-if="column.key === 'action'">
             <div class="flex items-center space-x-3" @click.stop>
-              <!-- 文件夹进入 -->
-              <a-button v-if="record.isDir" size="small" type="link" @click="loadFileList(record.path)">
+              <!-- 文件夹/软链接进入 -->
+              <a-button v-if="record.isDir || (record.mode && record.mode.startsWith('l'))" size="small" type="link" @click="loadFileList(record.path)">
                 打开
               </a-button>
 
@@ -260,6 +261,13 @@
     try {
       let cleanPath = targetPath.trim() || '/';
       if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+
+      // Ensure directory path ends with '/' so Linux ls dereferences directory symlinks properly
+      let reqPath = cleanPath;
+      if (reqPath !== '/' && !reqPath.endsWith('/')) {
+        reqPath += '/';
+      }
+
       currentPath.value = cleanPath;
       inputPath.value = cleanPath;
 
@@ -268,7 +276,7 @@
         namespace: props.namespace,
         name: props.podName,
         container: selectedContainer.value,
-        path: cleanPath,
+        path: reqPath,
       });
 
       fileList.value = res?.items || [];
@@ -281,7 +289,7 @@
   }
 
   function handleItemClick(record: any) {
-    if (record.isDir) {
+    if (record.isDir || (record.mode && record.mode.startsWith('l'))) {
       loadFileList(record.path);
     } else {
       handleEditFile(record);

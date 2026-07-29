@@ -95,3 +95,12 @@ export const CICD_WORKORDER_DETAIL_ROUTE: AppRouteRecordRaw = {
   ],
 };
 
+export const OAUTH_CALLBACK_ROUTE = {
+  path: '/oauth/callback',
+  name: 'OauthCallback',
+  component: () => import('@/views/sys/login/OauthCallback.vue'),
+  meta: {
+    title: 'SSO 登录回调',
+    ignoreAuth: true, // 必须忽略 Auth 检查
+  },
+};

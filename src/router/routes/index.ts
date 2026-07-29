@@ -1,6 +1,6 @@
 import type { AppRouteRecordRaw, AppRouteModule } from '@/router/types';
 
-import { PAGE_NOT_FOUND_ROUTE, REDIRECT_ROUTE, CICD_WORKORDER_DETAIL_ROUTE } from '@/router/routes/basic';
+import { PAGE_NOT_FOUND_ROUTE, REDIRECT_ROUTE, CICD_WORKORDER_DETAIL_ROUTE, OAUTH_CALLBACK_ROUTE } from '@/router/routes/basic';
 
 import { mainOutRoutes } from './mainOut';
 import { PageEnum } from '@/enums/pageEnum';
@@ -47,4 +47,5 @@ export const basicRoutes = [
   REDIRECT_ROUTE,
   PAGE_NOT_FOUND_ROUTE,
   CICD_WORKORDER_DETAIL_ROUTE,
+  OAUTH_CALLBACK_ROUTE,
 ];

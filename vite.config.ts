@@ -25,6 +25,12 @@ export default defineApplicationConfig({
           changeOrigin: true,
           ws: true,
           rewrite: (path) => path.replace(new RegExp(`^/basic-api`), ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              // 自动移除无用大 Cookie，防止请求头超出 431 限制
+              proxyReq.removeHeader('cookie');
+            });
+          },
           // only https
           // secure: false
         },

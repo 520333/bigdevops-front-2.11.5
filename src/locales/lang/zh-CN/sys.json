@@ -70,6 +70,7 @@
     "policy": "我同意xxx隐私政策",
     "scanSign": "扫码后点击\"确认\"，即可完成登录",
     "loginButton": "登录",
+    "loginSSOButton": "SSO单点登录",
     "registerButton": "注册",
     "rememberMe": "记住我",
     "forgetPassword": "忘记密码?",

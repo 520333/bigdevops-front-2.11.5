@@ -1,6 +1,40 @@
-import { BasicColumn } from '@/components/Table';
+import { BasicColumn, FormSchema } from '@/components/Table';
 import { Tag, Tooltip } from 'ant-design-vue';
 import { h } from 'vue';
+
+export const searchFormSchema: FormSchema[] = [
+  {
+    field: 'clusterName',
+    label: '目标集群',
+    component: 'Select',
+    colProps: { span: 6 },
+    componentProps: {
+      placeholder: '请选择 K8s 集群',
+      showSearch: true,
+      options: [],
+    },
+  },
+  {
+    field: 'namespace',
+    label: '命名空间',
+    component: 'Select',
+    colProps: { span: 6 },
+    componentProps: {
+      placeholder: '请选择 Namespace',
+      showSearch: true,
+      options: [],
+    },
+  },
+  {
+    field: 'keyword',
+    label: '搜索名称',
+    component: 'Input',
+    colProps: { span: 8 },
+    componentProps: {
+      placeholder: '搜索 Pod 名称 / IP / 节点',
+    },
+  },
+];
 
 export const columns: BasicColumn[] = [
   {

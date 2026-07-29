@@ -15,6 +15,7 @@
       <div class="flex items-center space-x-3 mb-2">
         <span class="text-sm font-semibold">目标副本数量 (Replicas):</span>
         <a-input-number
+          id="scale-sts-replicas-input"
           v-model:value="replicas"
           :min="0"
           :max="500"

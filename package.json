@@ -20,7 +20,7 @@
     "build:no-cache": "pnpm store prune && npm run build",
     "build:test": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode test",
     "commit": "czg",
-    "dev": "pnpm vite",
+    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=65536 pnpm vite",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "turbo run stub",
     "lint": "turbo run lint",

@@ -6,62 +6,32 @@
     >
       <template #toolbar>
         <div class="flex items-center space-x-3 flex-wrap gap-y-2">
-          <!-- 🚀 选择目标 K8s 集群 -->
-          <span class="font-semibold text-gray-700 dark:text-gray-300">目标集群:</span>
-          <a-select
-            v-model:value="selectedCluster"
-            style="width: 180px"
-            placeholder="请选择 K8s 集群"
-            :options="clusterOptions"
-            show-search
-            @change="handleClusterChange"
-          />
-
-          <!-- 🚀 选择 Namespace 命名空间 -->
-          <span class="font-semibold text-gray-700 dark:text-gray-300">命名空间:</span>
-          <a-select
-            v-model:value="selectedNamespace"
-            style="width: 180px"
-            placeholder="请选择 Namespace"
-            :options="namespaceOptions"
-            show-search
-            @change="handleNamespaceChange"
-          />
-
-          <!-- 🚀 搜索与刷新按钮 -->
-          <a-input-search
-            v-model:value="keyword"
-            placeholder="搜索 Deployment 名称 / 镜像"
-            style="width: 240px"
-            enter-button
-            @search="handleReload"
-          />
-          <a-button type="primary" @click="handleCreateDeployment">
+          <Button type="primary" @click="handleCreateDeployment">
             新增 Deployment
-          </a-button>
+          </Button>
 
           <!-- 🚀 批量删除按钮 -->
-          <a-popconfirm
+          <Popconfirm
             title="确定要批量删除选中的 Deployment 吗？"
             ok-text="确认删除"
             cancel-text="取消"
             :disabled="checkedKeys.length === 0"
             @confirm="handleBatchDelete"
           >
-            <a-button type="primary" danger :disabled="checkedKeys.length === 0">
+            <Button type="primary" danger :disabled="checkedKeys.length === 0">
               批量删除 {{ checkedKeys.length > 0 ? `(${checkedKeys.length})` : '' }}
-            </a-button>
-          </a-popconfirm>
+            </Button>
+          </Popconfirm>
 
-          <a-button @click="handleReload">刷新</a-button>
+          <Button @click="handleReload">刷新</Button>
 
           <!-- 🚀 kubectl get deploy -w 实时 Watch 状态提示 -->
-          <a-tag v-if="isWatching" color="success" class="flex items-center px-2 py-1">
+          <Tag v-if="isWatching" color="success" class="flex items-center px-2 py-1">
             <template #icon>
               <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-ping mr-1"></span>
             </template>
             Watch 实时同步中 (kubectl -w)
-          </a-tag>
+          </Tag>
         </div>
       </template>
 
@@ -115,20 +85,19 @@
     </BasicTable>
 
     <!-- 🚀 新增 / 编辑 Deployment YAML 弹窗 -->
-    <a-modal
-      v-model:open="modalVisible"
+    <BasicModal
+      @register="registerYamlModal"
       :title="isCreate ? '新增 Deployment (YAML 声明)' : `编辑 Deployment: ${activeName}`"
       width="65%"
-      :confirmLoading="modalLoading"
       @ok="handleSaveDeployment"
     >
       <div class="flex items-center justify-between mb-3">
         <div class="text-xs text-gray-500">
           {{ isCreate ? '请编写完整 Deployment YAML 声明，保存后将自动提交至对应 K8s 集群进行应用部署。' : '修改 YAML 内容后点击确定，系统将在线滚动更新该 Deployment 配置。' }}
         </div>
-        <a-button size="small" type="default" @click="downloadCurrentYaml">
+        <Button size="small" type="default" @click="downloadCurrentYaml">
           下载 YAML
-        </a-button>
+        </Button>
       </div>
       <div class="border rounded bg-gray-900 overflow-hidden">
         <Codemirror
@@ -137,7 +106,7 @@
           :extensions="extensions"
         />
       </div>
-    </a-modal>
+    </BasicModal>
 
     <!-- 🚀 扩缩容 副本数 弹窗 -->
     <ScaleDeploymentModal
@@ -154,14 +123,12 @@
 <script lang="ts" setup>
   import { ref, onMounted, onUnmounted } from 'vue';
   import {
-    Select as ASelect,
-    InputSearch as AInputSearch,
-    Button as AButton,
-    Modal as AModal,
-    Popconfirm as APopconfirm,
-    Tag as ATag,
+    Button,
+    Popconfirm,
+    Tag,
   } from 'ant-design-vue';
   import { BasicTable, useTable, TableAction } from '@/components/Table';
+  import { BasicModal, useModal } from '@/components/Modal';
   import {
     getClusterForSelect,
     getK8sNamespaceList,
@@ -173,7 +140,7 @@
     deleteK8sDeployment,
     deleteK8sDeploymentBatch,
   } from '@/api/demo/system';
-  import { columns } from '../deployment/deployment.data';
+  import { columns, searchFormSchema } from '../deployment/deployment.data';
   import { useMessage } from '@/hooks/web/useMessage';
   import { useGo } from '@/hooks/web/usePage';
   import { useGlobSetting } from '@/hooks/setting';
@@ -196,8 +163,7 @@
   const clusterOptions = ref<Array<{ label: string; value: string }>>([]);
   const namespaceOptions = ref<Array<{ label: string; value: string }>>([]);
 
-  const modalVisible = ref(false);
-  const modalLoading = ref(false);
+  const [registerYamlModal, { openModal: openYamlModal, setModalProps: setYamlModalProps, closeModal: closeYamlModal }] = useModal();
   const isCreate = ref(false);
   const activeName = ref('');
   const activeNamespace = ref('');
@@ -278,9 +244,13 @@ spec:
     }
   }
 
-  const [registerTable, { reload, getDataSource, setTableData }] = useTable({
+  const [registerTable, { reload, getDataSource, setTableData, getForm }] = useTable({
     title: 'K8s Deployment 控制器列表',
-    api: async () => {
+    api: async (params) => {
+      selectedCluster.value = params.clusterName || selectedCluster.value;
+      selectedNamespace.value = params.namespace || selectedNamespace.value;
+      keyword.value = params.keyword || '';
+
       if (!selectedCluster.value) {
         return { items: [], total: 0 };
       }
@@ -305,9 +275,16 @@ spec:
       }
     },
     columns,
+    formConfig: {
+      schemas: searchFormSchema,
+      autoSubmitOnEnter: true,
+    },
+    pagination: {
+      showQuickJumper: false,
+    },
     bordered: true,
     showIndexColumn: false,
-    useSearchForm: false,
+    useSearchForm: true,
     showTableSetting: true,
     clickToRowSelect: true,
     actionColumn: {
@@ -335,6 +312,24 @@ spec:
 
       if (clusterOptions.value.length > 0) {
         selectedCluster.value = clusterOptions.value[0].value;
+        
+        await getForm().updateSchema([
+          {
+            field: 'clusterName',
+            componentProps: {
+              options: clusterOptions.value,
+              onChange: async (val: string) => {
+                await loadNamespaceList(val);
+                getForm().setFieldsValue({ namespace: '' });
+                checkedKeys.value = [];
+                await reload();
+                initDeploymentWatch();
+              },
+            },
+          },
+        ]);
+        
+        await getForm().setFieldsValue({ clusterName: selectedCluster.value });
         await loadNamespaceList(selectedCluster.value);
         await reload();
         initDeploymentWatch();
@@ -354,10 +349,26 @@ spec:
         ...nsList.map((ns: string) => ({ label: ns, value: ns })),
       ];
       selectedNamespace.value = '';
+      
+      await getForm().updateSchema([
+        {
+          field: 'namespace',
+          componentProps: {
+            options: namespaceOptions.value,
+            onChange: async (val: string) => {
+              selectedNamespace.value = val;
+              checkedKeys.value = [];
+              await reload();
+              initDeploymentWatch();
+            },
+          },
+        },
+      ]);
     } catch (e) {
       console.error(e);
       namespaceOptions.value = [{ label: '全部命名空间', value: '' }];
       selectedNamespace.value = '';
+      await getForm().updateSchema([{ field: 'namespace', componentProps: { options: namespaceOptions.value } }]);
     }
   }
 
@@ -368,7 +379,14 @@ spec:
       watchWs.onmessage = null;
       watchWs.onerror = null;
       watchWs.onclose = null;
-      watchWs.close();
+      if (watchWs.readyState === WebSocket.OPEN) {
+        watchWs.close();
+      } else if (watchWs.readyState === WebSocket.CONNECTING) {
+        // We can't cleanly close a connecting socket without throwing a browser warning,
+        // so we just let it connect and then close it in a delayed manner or drop reference.
+        const ws = watchWs;
+        ws.onopen = () => ws.close();
+      }
       watchWs = null;
     }
     isWatching.value = false;
@@ -453,21 +471,6 @@ spec:
     };
   }
 
-  async function handleClusterChange(val: string) {
-    selectedCluster.value = val;
-    checkedKeys.value = [];
-    await loadNamespaceList(val);
-    await reload();
-    initDeploymentWatch();
-  }
-
-  async function handleNamespaceChange(val: string) {
-    selectedNamespace.value = val;
-    checkedKeys.value = [];
-    await reload();
-    initDeploymentWatch();
-  }
-
   async function handleReload() {
     checkedKeys.value = [];
     await reload();
@@ -478,7 +481,7 @@ spec:
     isCreate.value = true;
     activeName.value = '';
     deploymentYamlContent.value = defaultDeploymentYaml;
-    modalVisible.value = true;
+    openYamlModal(true);
   }
 
   function handleOpenScale(record: Recordable) {
@@ -518,7 +521,7 @@ spec:
       activeName.value = record.name;
       activeNamespace.value = record.namespace;
       deploymentYamlContent.value = typeof yamlStr === 'string' ? yamlStr : JSON.stringify(yamlStr, null, 2);
-      modalVisible.value = true;
+      openYamlModal(true);
     } catch (e: any) {
       console.error(e);
       createMessage.error({ content: '获取 Deployment YAML 失败: ' + (e.message || e), key: 'load_deploy_yaml' });
@@ -530,9 +533,9 @@ spec:
       createMessage.warning('Deployment YAML 内容不能为空');
       return;
     }
-    modalLoading.value = true;
     try {
       if (isCreate.value) {
+        setYamlModalProps({ confirmLoading: true });
         await createK8sDeployment({
           clusterName: selectedCluster.value,
           namespace: selectedNamespace.value,
@@ -540,6 +543,7 @@ spec:
         });
         createMessage.success('Deployment 创建成功');
       } else {
+        setYamlModalProps({ confirmLoading: true });
         await updateK8sDeployment({
           clusterName: selectedCluster.value,
           namespace: activeNamespace.value,
@@ -547,14 +551,14 @@ spec:
         });
         createMessage.success('Deployment 更新成功');
       }
-      modalVisible.value = false;
+      closeYamlModal();
       await reload();
       initDeploymentWatch();
     } catch (e: any) {
       console.error(e);
       createMessage.error('保存失败: ' + (e.message || e));
     } finally {
-      modalLoading.value = false;
+      setYamlModalProps({ confirmLoading: false });
     }
   }
 

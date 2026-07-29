@@ -1,14 +1,16 @@
 <template>
   <div class="p-4">
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm mb-4">
-      <a-tabs v-model:activeKey="activeTab" type="line" size="large">
-        <a-tab-pane key="configmap" tab="ConfigMap (配置字典)">
-          <ConfigMapList />
-        </a-tab-pane>
-        <a-tab-pane key="secret" tab="Secret (密钥凭据)">
-          <SecretList />
-        </a-tab-pane>
+    <div class="bg-white dark:bg-gray-800 px-4 pt-2 mb-3 rounded-md shadow-sm border border-gray-100 dark:border-gray-700">
+      <a-tabs v-model:activeKey="activeTab" :animated="false">
+        <a-tab-pane key="configmap" tab="ConfigMap (配置字典)" />
+        <a-tab-pane key="secret" tab="Secret (密钥凭据)" />
       </a-tabs>
+    </div>
+    <div v-show="activeTab === 'configmap'">
+      <ConfigMapList />
+    </div>
+    <div v-show="activeTab === 'secret'">
+      <SecretList />
     </div>
   </div>
 </template>
