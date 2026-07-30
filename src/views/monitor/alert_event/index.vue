@@ -34,14 +34,14 @@
               onClick: handleSilence.bind(null, record),
               tooltip: '屏蔽告警',
               ifShow: () => record.status !== 'silenced' && record.status !== 'resolved',
-              auth: 'POST:/api/monitor/alertManagerEventSilence'
+              auth: 'POST:/api/monitor/alertManagerEventSilence/:id'
             },
             {
               icon: 'bi:bell',
               onClick: handleUnSilence.bind(null, record),
               tooltip: '解除屏蔽',
               ifShow: () => record.status === 'silenced',
-              auth: 'POST:/api/monitor/alertManagerEventUnSilence'
+              auth: 'POST:/api/monitor/alertManagerEventUnSilence/:id'
             },
             {
               icon: 'ant-design:check-circle-outlined',
