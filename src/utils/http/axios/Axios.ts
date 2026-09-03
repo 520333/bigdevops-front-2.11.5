@@ -150,7 +150,7 @@ export class VAxios {
       });
     }
 
-    return this.axiosInstance.request<T>({
+    return this.request<T>({
       ...config,
       method: 'POST',
       data: formData,

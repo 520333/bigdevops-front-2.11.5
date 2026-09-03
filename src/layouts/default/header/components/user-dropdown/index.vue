@@ -11,6 +11,12 @@
 
     <template #overlay>
       <Menu @click="handleMenuClick">
+        <MenuItem
+          key="setting"
+          text="个人设置"
+          icon="ant-design:setting-outlined"
+        />
+        <Menu.Divider />
         <!-- <MenuItem
           key="doc"
           :text="t('layout.header.dropdownItemDoc')"
@@ -47,6 +53,7 @@
   import { computed } from 'vue';
   import { DOC_URL } from '@/settings/siteSetting';
   import { useUserStore } from '@/store/modules/user';
+  import { useGo } from '@/hooks/web/usePage';
   import { useHeaderSetting } from '@/hooks/setting/useHeaderSetting';
   import { useI18n } from '@/hooks/web/useI18n';
   import { useDesign } from '@/hooks/web/useDesign';
@@ -72,6 +79,7 @@
   const { t } = useI18n();
   const { getShowDoc, getUseLockPage, getShowApi } = useHeaderSetting();
   const userStore = useUserStore();
+  const go = useGo();
 
   const getUserInfo = computed(() => {
     const { realName = '', avatar, desc } = userStore.getUserInfo || {};
@@ -102,7 +110,10 @@
   }
 
   function handleMenuClick(e: MenuInfo) {
-    switch (e.key as MenuEvent) {
+    switch (e.key as string) {
+      case 'setting':
+        go('/system/accountSetting');
+        break;
       case 'logout':
         handleLoginOut();
         break;

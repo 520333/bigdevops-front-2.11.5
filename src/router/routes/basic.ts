@@ -104,3 +104,23 @@ export const OAUTH_CALLBACK_ROUTE = {
     ignoreAuth: true, // 必须忽略 Auth 检查
   },
 };
+export const ACCOUNT_SETTING_ROUTE: AppRouteRecordRaw = {
+  path: '/system/accountSetting',
+  name: 'AccountSettingStatic',
+  component: LAYOUT,
+  meta: {
+    title: '个人设置',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'AccountSettingPageStatic',
+      component: () => import('@/views/system/account/setting/index.vue'),
+      meta: {
+        title: '个人设置',
+        hideMenu: true,
+      },
+    },
+  ],
+};

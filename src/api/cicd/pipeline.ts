@@ -1,25 +1,25 @@
 import { defHttp } from '@/utils/http/axios';
 
 enum Api {
-  getJenkinsPipelineList = '/api/jenkins/getJenkinsPipelineList',
-  createJenkinsPipeline = '/api/jenkins/createJenkinsPipeline',
-  updateJenkinsPipeline = '/api/jenkins/updateJenkinsPipeline',
-  deleteJenkinsPipeline = '/api/jenkins/deleteJenkinsPipeline',
+  getJenkinsPipelineList = '/api/cicd/getJenkinsPipelineList',
+  createJenkinsPipeline = '/api/cicd/createJenkinsPipeline',
+  updateJenkinsPipeline = '/api/cicd/updateJenkinsPipeline',
+  deleteJenkinsPipeline = '/api/cicd/deleteJenkinsPipeline',
 
-  getJenkinsStageList = '/api/jenkins/getJenkinsStageList',
-  createJenkinsStage = '/api/jenkins/createJenkinsStage',
-  updateJenkinsStage = '/api/jenkins/updateJenkinsStage',
-  deleteJenkinsStage = '/api/jenkins/deleteJenkinsStage',
+  getJenkinsStageList = '/api/cicd/getJenkinsStageList',
+  createJenkinsStage = '/api/cicd/createJenkinsStage',
+  updateJenkinsStage = '/api/cicd/updateJenkinsStage',
+  deleteJenkinsStage = '/api/cicd/deleteJenkinsStage',
 
-  getJenkinsEnvList = '/api/jenkins/getJenkinsEnvList',
-  createJenkinsEnv = '/api/jenkins/createJenkinsEnv',
-  updateJenkinsEnv = '/api/jenkins/updateJenkinsEnv',
-  deleteJenkinsEnv = '/api/jenkins/deleteJenkinsEnv',
+  getJenkinsEnvList = '/api/cicd/getJenkinsEnvList',
+  createJenkinsEnv = '/api/cicd/createJenkinsEnv',
+  updateJenkinsEnv = '/api/cicd/updateJenkinsEnv',
+  deleteJenkinsEnv = '/api/cicd/deleteJenkinsEnv',
 
-  getJenkinsParamList = '/api/jenkins/getJenkinsParamList',
-  createJenkinsParam = '/api/jenkins/createJenkinsParam',
-  updateJenkinsParam = '/api/jenkins/updateJenkinsParam',
-  deleteJenkinsParam = '/api/jenkins/deleteJenkinsParam',
+  getJenkinsParamList = '/api/cicd/getJenkinsParamList',
+  createJenkinsParam = '/api/cicd/createJenkinsParam',
+  updateJenkinsParam = '/api/cicd/updateJenkinsParam',
+  deleteJenkinsParam = '/api/cicd/deleteJenkinsParam',
 }
 
 // Pipeline CRUD
@@ -36,7 +36,7 @@ export const deleteJenkinsPipeline = (id: number) =>
   defHttp.delete({ url: `${Api.deleteJenkinsPipeline}?id=${id}` });
 
 export const validateJenkinsPipeline = (data: { pipelineScript: string; instanceId?: number }) =>
-  defHttp.post({ url: '/api/jenkins/validateJenkinsPipeline', data });
+  defHttp.post({ url: '/api/cicd/validateJenkinsPipeline', data });
 
 // Stage CRUD
 export const getJenkinsStageList = (params?: { category?: string; keyword?: string }) =>

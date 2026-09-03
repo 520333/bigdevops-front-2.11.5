@@ -13,6 +13,8 @@ import {
 import { defHttp } from '@/utils/http/axios';
 
 enum Api {
+  updateUserInfo = '/api/system/updateUserInfo',
+  uploadAvatar = '/api/system/uploadAvatar',
   AccountList = '/api/system/getAccountList',
   IsAccountExist = '/api/system/accountExist',
   createAccount = "/api/system/createAccount",
@@ -1014,3 +1016,15 @@ export const deployK8sInstance = (id: number) =>
 
 
 
+
+export const updateUserInfoApi = (data: any) =>
+  defHttp.post({ url: Api.updateUserInfo, data });
+
+export const uploadAvatarApi = (params: any, onUploadProgress?: any) =>
+  defHttp.uploadFile<{ url: string; avatar: string }>(
+    {
+      url: Api.uploadAvatar,
+      onUploadProgress,
+    },
+    params,
+  );

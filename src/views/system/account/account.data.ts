@@ -208,3 +208,38 @@ export const accountFormSchema: FormSchema[] = [
     ifShow: false,
   }
 ];
+
+export const baseSetSchemas: FormSchema[] = [
+  {
+    field: 'realName',
+    component: 'Input',
+    label: '用户昵称/姓名',
+    colProps: { span: 18 },
+    required: true,
+  },
+  {
+    field: 'email',
+    component: 'Input',
+    label: '邮箱地址',
+    colProps: { span: 18 },
+    rules: [{ type: 'email', message: '请输入正确的邮箱格式' }],
+  },
+  {
+    field: 'feiShuUserId',
+    component: 'Input',
+    label: '飞书 UserID',
+    colProps: { span: 18 },
+  },
+  {
+    field: 'homePath',
+    component: 'Input',
+    label: '默认首页',
+    colProps: { span: 18 },
+  },
+  {
+    field: 'desc',
+    component: 'InputTextArea',
+    label: '个人介绍',
+    colProps: { span: 18 },
+  },
+];
