@@ -490,6 +490,14 @@ const componentAttrs: IBaseComponentProps = {
   ],
   Select: [
     {
+      name: 'defaultValue',
+      label: '默认值',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入默认选中值（如 18 或 8）',
+      },
+    },
+    {
       name: 'mode',
       label: '选择模式（默认单选）',
       component: 'RadioGroup',
@@ -521,6 +529,56 @@ const componentAttrs: IBaseComponentProps = {
       name: 'defaultOpen',
       label: '默认展开下拉菜单',
       component: 'Checkbox',
+    },
+  ],
+  ApiSelect: [
+    {
+      name: 'defaultValue',
+      label: '默认值',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入默认选中值',
+      },
+    },
+    {
+      name: 'api',
+      label: 'API 请求地址',
+      component: 'Input',
+      componentProps: {
+        placeholder: '例如 /api/code/getCodeGitRepoList',
+      },
+    },
+    {
+      name: 'resultField',
+      label: '结果列表字段',
+      component: 'Input',
+      componentProps: {
+        placeholder: '例如 items',
+      },
+    },
+    {
+      name: 'labelField',
+      label: '显示文本字段',
+      component: 'Input',
+      componentProps: {
+        placeholder: '例如 fullName',
+      },
+    },
+    {
+      "name": "valueField",
+      "label": "绑定数值字段",
+      "component": "Input",
+      "componentProps": {
+        "placeholder": "例如 cloneUrlSsh"
+      }
+    },
+    {
+      name: 'optionLabelProp',
+      label: '选中项渲染字段(设为value显示SSH地址)',
+      component: 'Input',
+      componentProps: {
+        placeholder: '设为 value 则选中后显示绑定数值(SSH地址)',
+      },
     },
   ],
   Checkbox: [
@@ -1116,6 +1174,31 @@ deleteProps(componentAttrs['StrengthMeter'], 'type');
 deleteProps(componentAttrs['StrengthMeter'], 'prefix');
 deleteProps(componentAttrs['StrengthMeter'], 'defaultValue');
 deleteProps(componentAttrs['StrengthMeter'], 'suffix');
+
+componentAttrs['Divider'] = [
+  {
+    name: 'dashed',
+    label: '是否虚线',
+    component: 'Switch',
+  },
+  {
+    name: 'orientation',
+    label: '标题位置',
+    component: 'RadioGroup',
+    componentProps: {
+      options: [
+        { label: '居左', value: 'left' },
+        { label: '居中', value: 'center' },
+        { label: '居右', value: 'right' },
+      ],
+    },
+  },
+  {
+    name: 'plain',
+    label: '普通文本样式',
+    component: 'Switch',
+  },
+];
 //组件属性
 // name 控件的属性
 export const baseComponentAttrs: IBaseComponentProps = componentAttrs;

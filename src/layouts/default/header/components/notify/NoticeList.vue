@@ -1,19 +1,21 @@
 <template>
   <List :class="prefixCls" bordered :pagination="getPagination">
     <template v-for="item in getData" :key="item.id">
-      <List.Item class="list-item">
+      <List.Item class="list-item" @click="handleTitleClick(item)">
         <List.Item.Meta>
           <template #title>
-            <div class="title">
-              <Typography.Paragraph
-                @click="handleTitleClick(item)"
-                :delete="!!item.titleDelete"
-                :ellipsis="
-                  titleRows && titleRows > 0 ? { rows: titleRows, tooltip: !!item.title } : false
-                "
-                :content="item.title"
-              />
-              <div class="extra" v-if="item.extra">
+            <div class="title flex justify-between items-start">
+              <div class="title-text flex-1 min-w-0 mr-2">
+                <Typography.Paragraph
+                  class="!mb-0"
+                  :delete="!!item.titleDelete"
+                  :ellipsis="
+                    titleRows && titleRows > 0 ? { rows: titleRows, tooltip: !!item.title } : false
+                  "
+                  :content="item.title"
+                />
+              </div>
+              <div class="extra shrink-0" v-if="item.extra">
                 <Tag class="tag" :color="item.color">
                   {{ item.extra }}
                 </Tag>
@@ -81,7 +83,7 @@
     },
   });
 
-  const emit = defineEmits(['update:currentPage']);
+  const emit = defineEmits(['update:currentPage', 'titleClick', 'title-click']);
 
   const { prefixCls } = useDesign('header-notify-list');
   const current = ref(props.currentPage || 1);
@@ -120,7 +122,7 @@
   });
 
   function handleTitleClick(item: ListItem) {
-    props.onTitleClick && props.onTitleClick(item);
+    emit('title-click', item);
   }
 </script>
 <style lang="less" scoped>
@@ -142,13 +144,24 @@
       cursor: pointer;
 
       .title {
-        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 6px;
         font-weight: normal;
 
+        .title-text {
+          flex: 1;
+          min-width: 0;
+          margin-right: 8px;
+
+          .ant-typography {
+            margin-bottom: 0 !important;
+          }
+        }
+
         .extra {
-          margin-top: -1.5px;
-          margin-right: 0;
-          float: right;
+          flex-shrink: 0;
           font-weight: normal;
 
           .tag {

@@ -2,7 +2,7 @@
  * @Description:
 -->
 <template>
-  <Col v-bind="colPropsComputed">
+  <Col v-bind="colPropsComputed" v-show="showComponent">
     <FormItem v-bind="{ ...formItemProps }">
       <template #label v-if="!formItemProps.hiddenLabel && schema.component !== 'Divider'">
         <Tooltip>
@@ -20,11 +20,13 @@
         v-bind="schema"
       ></slot>
       <Divider
-        v-else-if="schema.component == 'Divider' && schema.label && !formItemProps.hiddenLabel"
-        >{{ schema.label }}</Divider
+        v-else-if="schema.component === 'Divider'"
+        v-bind="{ ...cmpProps, ...asyncProps }"
       >
+        <span v-if="!formItemProps.hiddenLabel">{{ schema.label }}</span>
+      </Divider>
       <!-- 部分控件需要一个空div -->
-      <div
+      <div v-else
         ><component
           class="v-form-item-wrapper"
           :is="componentItem"
@@ -99,7 +101,7 @@
           : formConfig.layout === 'horizontal'
             ? formConfig.labelLayout === 'flex'
               ? { style: `width:${formConfig.labelWidth}px` }
-              : formConfig.labelCol
+              : (formConfig.labelCol || {})
             : {};
 
         wrapperCol = wrapperCol
@@ -107,7 +109,7 @@
           : formConfig.layout === 'horizontal'
             ? formConfig.labelLayout === 'flex'
               ? { style: 'width:auto;flex:1' }
-              : formConfig.wrapperCol
+              : (formConfig.wrapperCol || {})
             : {};
 
         const style =
@@ -119,28 +121,44 @@
          * 将字符串正则格式化成正则表达式
          */
 
+        const isRequired = Boolean(itemProps?.required || required || props.schema.required) && showComponent.value;
+        let finalRules = showComponent.value ? (itemProps?.rules || rules || []) : [];
+        if (!Array.isArray(finalRules)) {
+          finalRules = [finalRules];
+        }
+        finalRules = [...finalRules];
+
+        const hasRequiredRule = finalRules.some((r: any) => r && r.required);
+        if (isRequired && !hasRequiredRule) {
+          const msg = itemProps?.message || props.schema.itemProps?.message || `${props.schema.label || field}为必填项`;
+          finalRules.push({
+            required: true,
+            message: msg,
+            trigger: ['change', 'blur'],
+          });
+        }
+
         const newConfig = Object.assign(
           {},
           {
             name: field,
             style: { ...style },
             colon,
-            required,
-            rules,
-            labelCol,
-            wrapperCol,
+            required: isRequired,
+            rules: finalRules,
+            labelCol: labelCol || {},
+            wrapperCol: wrapperCol || {},
           },
           itemProps,
         );
         if (!itemProps?.labelCol?.span) {
-          newConfig.labelCol = labelCol;
+          newConfig.labelCol = labelCol || {};
         }
         if (!itemProps?.wrapperCol?.span) {
-          newConfig.wrapperCol = wrapperCol;
+          newConfig.wrapperCol = wrapperCol || {};
         }
-        if (!itemProps?.rules) {
-          newConfig.rules = rules;
-        }
+        newConfig.rules = finalRules;
+        newConfig.required = isRequired;
         return newConfig;
       }) as Recordable<any>;
 
@@ -172,13 +190,29 @@
           props.schema && ['Switch', 'Checkbox', 'Radio'].includes(props.schema.component);
         let { field } = props.schema;
 
-        let { disabled, ...attrs } =
+        let { disabled, params, ...attrs } =
           omit(props.schema.componentProps, ['options', 'treeData']) ?? {};
 
         disabled = props.formConfig.disabled || disabled;
 
+        if (params && typeof params === 'object') {
+          const dynamicParams = { ...params };
+          Object.keys(dynamicParams).forEach((k) => {
+            const val = dynamicParams[k];
+            if (typeof val === 'string' && val.startsWith('$')) {
+              const paramField = val.substring(1);
+              dynamicParams[k] = formData1.value[paramField] || '';
+            } else if (props.schema.link && props.schema.link.length > 0) {
+              const linkField = props.schema.link[0];
+              dynamicParams[k] = formData1.value[linkField] || val;
+            }
+          });
+          params = dynamicParams;
+        }
+
         return {
           ...attrs,
+          params,
           disabled,
           [isCheck ? 'checked' : 'value']: formData1.value[field!],
         };
@@ -191,6 +225,20 @@
         setFormModel(props.schema.field!, value);
         emit('change', value);
       };
+      const showComponent = computed(() => {
+        const schema = props.schema;
+        const vShow = schema?.vShow || schema?.itemProps?.vShow;
+        if (vShow) {
+          try {
+            const func = new Function('values', 'formData', `return (${vShow});`);
+            return Boolean(func(formData1.value || {}, formData1.value || {}));
+          } catch (e) {
+            return true;
+          }
+        }
+        return true;
+      });
+
       return {
         ...toRefs(state),
         componentItem,
@@ -200,6 +248,7 @@
         cmpProps,
         handleChange,
         colPropsComputed,
+        showComponent,
       };
     },
   });
@@ -211,7 +260,7 @@
   }
 
   // form字段中的标签有ant-col，不能使用width:100%
-  :deep(.ant-col) {
+  :deep(.ant-form-item .ant-col) {
     width: auto;
   }
 
@@ -219,7 +268,13 @@
     margin-bottom: 20px;
   }
 
-  // .w-full {
-  //   width: 100% !important;
-  // }
+  .v-form-item-wrapper {
+    width: 100%;
+  }
+
+  :deep(.ant-select),
+  :deep(.ant-input-number),
+  :deep(.ant-picker) {
+    width: 100%;
+  }
 </style>

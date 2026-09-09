@@ -1,5 +1,8 @@
 <template>
   <Select
+    show-search
+    :option-label-prop="optionLabelProp || undefined"
+    :filter-option="filterOption"
     @dropdown-visible-change="handleFetch"
     v-bind="$attrs"
     @change="handleChange"
@@ -33,6 +36,7 @@
   import { useI18n } from '@/hooks/web/useI18n';
   import { propTypes } from '@/utils/propTypes';
   import { useDebounceFn } from '@vueuse/core';
+  import { defHttp } from '@/utils/http/axios';
 
   type OptionsItem = { label?: string; value?: string; disabled?: boolean; [name: string]: any };
 
@@ -55,7 +59,7 @@
     value: { type: [Array, Object, String, Number] as PropType<SelectValue> },
     numberToString: propTypes.bool,
     api: {
-      type: Function as PropType<(arg?: any) => Promise<OptionsItem[] | Recordable>>,
+      type: [Function, String] as PropType<((arg?: any) => Promise<OptionsItem[] | Recordable>) | string>,
       default: null,
     },
     // api params
@@ -64,6 +68,7 @@
     resultField: propTypes.string.def(''),
     labelField: propTypes.string.def('label'),
     valueField: propTypes.string.def('value'),
+    optionLabelProp: propTypes.string.def(''),
     immediate: propTypes.bool.def(true),
     alwaysLoad: propTypes.bool.def(false),
     options: {
@@ -126,6 +131,9 @@
     () => props.params,
     (value, oldValue) => {
       if (isEqual(value, oldValue)) return;
+      if (oldValue !== undefined) {
+        state.value = undefined;
+      }
       fetch();
     },
     { deep: true, immediate: props.immediate },
@@ -145,7 +153,28 @@
 
   async function fetch() {
     let { api, beforeFetch, afterFetch, params, resultField } = props;
-    if (!api || !isFunction(api) || loading.value) return;
+    if (!api || loading.value) return;
+
+    if (params && typeof params === 'object') {
+      const keys = Object.keys(params);
+      for (const k of keys) {
+        if (['fullName', 'repoId', 'serverId'].includes(k)) {
+          const v = params[k];
+          if (v === '' || v === null || v === undefined) {
+            optionsRef.value = [];
+            isFirstLoaded.value = false;
+            return;
+          }
+        }
+      }
+    }
+
+    let fetchApiFn: any = api;
+    if (typeof api === 'string') {
+      fetchApiFn = (p: any) => defHttp.get({ url: api as string, params: p });
+    } else if (!isFunction(api)) {
+      return;
+    }
     optionsRef.value = [];
     try {
       loading.value = true;
@@ -153,7 +182,7 @@
       if (beforeFetch && isFunction(beforeFetch)) {
         apiParams = (await beforeFetch(apiParams)) || apiParams;
       }
-      let res = await api(apiParams);
+      let res = await fetchApiFn(apiParams);
       if (afterFetch && isFunction(afterFetch)) {
         res = (await afterFetch(res)) || res;
       }
@@ -169,7 +198,6 @@
       emitChange();
     } catch (error) {
       console.warn(error);
-      // reset status
       isFirstLoaded.value = false;
     } finally {
       loading.value = false;
@@ -178,10 +206,9 @@
 
   async function handleFetch(visible: boolean) {
     if (visible) {
-      if (props.alwaysLoad) {
+      if (props.alwaysLoad || unref(optionsRef).length === 0) {
         await fetch();
       } else if (!props.immediate && !unref(isFirstLoaded)) {
-        // 动态搜索查询时，允许控制初始不加载数据
         if (!(!!props.apiSearch && !!props.apiSearch.show && !props.apiSearch.emptySearch)) {
           await fetch();
         } else {
@@ -224,5 +251,13 @@
 
   function handleChange(_, ...args) {
     emitData.value = args;
+  }
+
+  function filterOption(input: string, option: any) {
+    if (!input) return true;
+    const label = option?.label ?? '';
+    const value = option?.value ?? '';
+    const str = `${label} ${value}`.toLowerCase();
+    return str.includes(input.trim().toLowerCase());
   }
 </script>

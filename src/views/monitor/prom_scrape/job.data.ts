@@ -187,6 +187,7 @@ export const formSchema: FormSchema[] = [
       options: [
         { label: 'http', value: 'http' },
         { label: 'https', value: 'https' },
+        { label: 'none (无协议前缀，用于TCP/ICMP)', value: 'none' },
       ]
     }
   },
@@ -233,13 +234,21 @@ export const formSchema: FormSchema[] = [
     required: true,
     component: 'Select',
     colProps: { span: 24 },
-    componentProps: {
+    componentProps: ({ formActionType }) => ({
       placeholder: '请选择服务发现类型',
       options: [
-        { label: 'HTTP', value: 'http' },
-        { label: 'kubernetes', value: 'kubernetes' },
-      ]
-    },
+        { label: 'HTTP (服务树主机发现)', value: 'http' },
+        { label: 'Blackbox-DNS (服务树域名探测)', value: 'blackbox_dns' },
+        { label: 'Kubernetes (K8s发现)', value: 'kubernetes' },
+      ],
+      onChange: (val: any) => {
+        if (val === 'blackbox_dns') {
+          formActionType.setFieldsValue({ metricsPath: '/probe', scheme: 'https' });
+        } else if (val === 'http') {
+          formActionType.setFieldsValue({ metricsPath: '/metrics', scheme: 'http' });
+        }
+      }
+    }),
   },
   {
     field: 'kubernetesSdRole',
@@ -327,23 +336,23 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'port',
-    label: '采集端口',
+    label: '端口',
     labelWidth: 120,
     required: true,
     colProps: { span: 12 },
     component: 'InputNumber',
-    ifShow: ({ values }) => values.serviceDiscoveryType === 'http',
-    componentProps: {
-      placeholder: '例如 9200',
+    ifShow: ({ values }) => values.serviceDiscoveryType === 'http' || (values.serviceDiscoveryType === 'blackbox_dns' && values.probeModule === 'tcp_connect'),
+    componentProps: ({ formModel }) => ({
+      placeholder: formModel?.serviceDiscoveryType === 'blackbox_dns' ? 'TCP探测端口，例如 443、80、3306' : '例如 9100、9200',
       style: { width: '100%' },
-    }
+    })
   },
   {
     field: 'refreshInterval',
     label: 'sd刷新间隔(s)',
     labelWidth: 120,
     colProps: { span: 12 },
-    ifShow: ({ values }) => values.serviceDiscoveryType === 'http',
+    ifShow: ({ values }) => values.serviceDiscoveryType === 'http' || values.serviceDiscoveryType === 'blackbox_dns',
     component: 'InputNumber',
     defaultValue: 5,
     componentProps: {
@@ -358,7 +367,7 @@ export const formSchema: FormSchema[] = [
     required: true,
     colProps: { span: 24 },
     component: 'ApiSelect',
-    ifShow: ({ values }) => values.serviceDiscoveryType === 'http',
+    ifShow: ({ values }) => values.serviceDiscoveryType === 'http' || values.serviceDiscoveryType === 'blackbox_dns',
     componentProps: {
       api: getLeafStreeNodes,
       mode: 'multiple',
@@ -370,5 +379,48 @@ export const formSchema: FormSchema[] = [
       placeholder: '请选择关联实例',
     },
 
+  },
+
+
+  {
+    field: 'blackboxAddress',
+    label: 'Blackbox地址',
+    labelWidth: 120,
+    required: true,
+    colProps: { span: 12 },
+    component: 'Input',
+    // defaultValue: '192.168.50.200:9115',
+    ifShow: ({ values }) => values.serviceDiscoveryType === 'blackbox_dns',
+    componentProps: {
+      placeholder: '例如：192.168.50.200:9115',
+      style: { width: '100%' }
+    }
+  },
+  {
+    field: 'probeModule',
+    label: '探测模块',
+    labelWidth: 120,
+    required: true,
+    colProps: { span: 12 },
+    component: 'Select',
+    defaultValue: 'http_2xx',
+    ifShow: ({ values }) => values.serviceDiscoveryType === 'blackbox_dns',
+    componentProps: ({ formActionType }) => ({
+      options: [
+        { label: 'http_2xx (检测 HTTP/HTTPS 状态码2xx)', value: 'http_2xx' },
+        { label: 'tcp_connect (检测 TCP 端口是否连通)', value: 'tcp_connect' },
+        { label: 'icmp (网络 Ping 探测)', value: 'icmp' },
+      ],
+      style: { width: '100%' },
+      onChange: (val: any) => {
+        if (val === 'tcp_connect') {
+          formActionType.setFieldsValue({ scheme: 'none', port: 443 });
+        } else if (val === 'icmp') {
+          formActionType.setFieldsValue({ scheme: 'none' });
+        } else if (val === 'http_2xx') {
+          formActionType.setFieldsValue({ scheme: 'https' });
+        }
+      }
+    }),
   },
 ];

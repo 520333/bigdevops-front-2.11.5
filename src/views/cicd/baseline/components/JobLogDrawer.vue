@@ -215,6 +215,16 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
         deployEnv: data.deployEnv,
         deployType: data.deployType,
         gitRepo: data.gitRepo,
+        scanCode: data.scanCode,
+        buildNode: data.buildNode,
+        jdkVersion: data.jdkVersion,
+        buildCommand: data.buildCommand,
+        module: data.module,
+        configFile: data.configFile,
+        port: data.port,
+        targetHost: data.targetHost,
+        customParams: data.customParams,
+        createUserName: data.createUserName || '',
       });
       buildNumber.value = triggerRes.buildNumber || 0;
       createMessage.success('Jenkins 构建流程调度成功！');

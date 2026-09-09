@@ -53,6 +53,12 @@
       }>({
         toolbarsConfigs: [
           {
+            title: '加载开通表单联动模板(含API动态Git仓库选择)',
+            type: 'preset',
+            event: 'handleLoadPreset',
+            icon: 'ant-design:rocket-outlined',
+          },
+          {
             title: '预览-支持布局',
             type: 'preview',
             event: 'handlePreview',

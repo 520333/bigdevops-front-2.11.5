@@ -211,11 +211,11 @@ export const baseFormItemProps: IBaseFormAttrs[] = [
     exclude: ['Grid'],
   },
   {
-    name: 'helpMessage',
-    label: 'helpMessage',
+    name: 'vShow',
+    label: '显隐条件(表达式)',
     component: Input,
     componentProps: {
-      placeholder: '请输入提示信息',
+      placeholder: "如 values.deploy_type === 'docker'",
     },
     exclude: ['Grid'],
   },

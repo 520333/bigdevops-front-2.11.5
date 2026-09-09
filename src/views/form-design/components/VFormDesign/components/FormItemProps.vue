@@ -3,8 +3,8 @@
 -->
 <template>
   <div class="properties-content">
-    <div class="properties-body" v-if="formConfig.currentItem?.itemProps">
-      <Empty class="hint-box" v-if="!formConfig.currentItem.key" description="未选择控件" />
+    <div class="properties-body" v-if="formConfig.currentItem">
+      <Empty class="hint-box" v-if="!formConfig.currentItem.key && !formConfig.currentItem.component" description="未选择控件" />
       <Form v-else label-align="left" layout="vertical">
         <div v-for="item of baseFormItemProps" :key="item.name">
           <FormItem :label="item.label" v-if="showProps(item.exclude)">
@@ -34,7 +34,8 @@
               class="component-props"
               v-bind="item.componentProps"
               :is="item.component"
-              v-model:value="formConfig.currentItem.itemProps[item.name]['span']"
+              :value="getColSpan(item.name)"
+              @update:value="setColSpan(item.name, $event)"
             />
           </FormItem>
         </div>
@@ -84,6 +85,9 @@
     () => formConfig.value,
     () => {
       if (formConfig.value.currentItem) {
+        if (!formConfig.value.currentItem.key && (formConfig.value.currentItem.field || formConfig.value.currentItem.component)) {
+          formConfig.value.currentItem.key = formConfig.value.currentItem.field || formConfig.value.currentItem.component;
+        }
         formConfig.value.currentItem.itemProps = formConfig.value.currentItem.itemProps || {};
         formConfig.value.currentItem.itemProps.labelCol =
           formConfig.value.currentItem.itemProps.labelCol || {};
@@ -105,4 +109,15 @@
       return showProps(item.exclude);
     });
   });
+
+  const getColSpan = (name: string) => {
+    return formConfig.value?.currentItem?.itemProps?.[name]?.span ?? 0;
+  };
+
+  const setColSpan = (name: string, val: number) => {
+    if (!formConfig.value?.currentItem) return;
+    formConfig.value.currentItem.itemProps = formConfig.value.currentItem.itemProps || {};
+    formConfig.value.currentItem.itemProps[name] = formConfig.value.currentItem.itemProps[name] || {};
+    formConfig.value.currentItem.itemProps[name].span = val;
+  };
 </script>

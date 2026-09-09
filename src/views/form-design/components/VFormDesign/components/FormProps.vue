@@ -45,7 +45,7 @@
           <Slider v-model:value="sliderSpan" :max="24" />
         </FormItem>
         <FormItem label="wrapperCol">
-          <Slider v-model:value="sliderSpan" :max="24" />
+          <Slider v-model:value="sliderWrapperSpan" :max="24" />
         </FormItem>
 
         <FormItem label="标签对齐">
@@ -76,7 +76,7 @@
   </div>
 </template>
 <script lang="ts" setup name="FormProps">
-  import { computed } from 'vue';
+  import { computed, watch } from 'vue';
   import { useFormDesignState } from '../../../hooks/useFormDesignState';
   import {
     InputNumber,
@@ -92,21 +92,58 @@
 
   const { formConfig } = useFormDesignState();
 
-  formConfig.value = formConfig.value || {
-    labelCol: { span: 24 },
-    wrapperCol: { span: 24 },
+  const ensureColProps = () => {
+    if (!formConfig.value) return;
+    if (!formConfig.value.labelCol) {
+      formConfig.value.labelCol = { span: 4 };
+    } else if (typeof formConfig.value.labelCol.span !== 'number') {
+      formConfig.value.labelCol.span = 4;
+    }
+    if (!formConfig.value.wrapperCol) {
+      formConfig.value.wrapperCol = { span: 20 };
+    } else if (typeof formConfig.value.wrapperCol.span !== 'number') {
+      formConfig.value.wrapperCol.span = 20;
+    }
   };
+
+  watch(
+    () => formConfig.value,
+    () => {
+      ensureColProps();
+    },
+    { immediate: true, deep: true },
+  );
 
   const lableLayoutChange = (e: RadioChangeEvent) => {
     if (e.target.value === 'Grid') {
       formConfig.value.layout = 'horizontal';
+      ensureColProps();
     }
   };
 
-  const sliderSpan = computed(() => {
-    if (formConfig.value.labelLayout) {
-      return Number(formConfig.value.labelCol!.span);
-    }
-    return 0;
+  const sliderSpan = computed({
+    get() {
+      ensureColProps();
+      return Number(formConfig.value?.labelCol?.span ?? 4);
+    },
+    set(val: number) {
+      ensureColProps();
+      if (formConfig.value?.labelCol) {
+        formConfig.value.labelCol.span = val;
+      }
+    },
+  });
+
+  const sliderWrapperSpan = computed({
+    get() {
+      ensureColProps();
+      return Number(formConfig.value?.wrapperCol?.span ?? 20);
+    },
+    set(val: number) {
+      ensureColProps();
+      if (formConfig.value?.wrapperCol) {
+        formConfig.value.wrapperCol.span = val;
+      }
+    },
   });
 </script>

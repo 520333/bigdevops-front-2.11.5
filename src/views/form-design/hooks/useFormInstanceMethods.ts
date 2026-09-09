@@ -37,12 +37,34 @@ export function useFormInstanceMethods<E extends EmitsOptions = EmitsOptions>(
 
   const { emit } = context;
 
-  const useForm = Form.useForm;
+  const validate = async () => {
+    if (_formInstance.value && isFunction((_formInstance.value as any).validate)) {
+      return await (_formInstance.value as any).validate();
+    }
+    return Promise.resolve();
+  };
 
-  const { resetFields, validate, clearValidate, validateField } = useForm(formdata, []);
+  const validateField = async (name: string) => {
+    if (_formInstance.value && isFunction((_formInstance.value as any).validateField)) {
+      return await (_formInstance.value as any).validateField(name);
+    }
+    return Promise.resolve();
+  };
+
+  const resetFields = async () => {
+    if (_formInstance.value && isFunction((_formInstance.value as any).resetFields)) {
+      (_formInstance.value as any).resetFields();
+    }
+  };
+
+  const clearValidate = async () => {
+    if (_formInstance.value && isFunction((_formInstance.value as any).clearValidate)) {
+      (_formInstance.value as any).clearValidate();
+    }
+  };
 
   const submit = async () => {
-    //const _result = await validate();
+    await validate();
 
     const data = cloneDeep(toRaw(formdata.value));
     emit?.('submit', data);

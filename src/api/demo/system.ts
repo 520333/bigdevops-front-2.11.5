@@ -69,6 +69,10 @@ enum Api {
   getResourceRdsUnbindList = "/api/stree/getResourceRdsUnbindList",
   bindRdsToStreeNode = "/api/stree/bindRdsToStreeNode",
   unBindRdsToStreeNode = "/api/stree/unBindRdsToStreeNode",
+
+  getResourceDnsUnbindList = "/api/stree/getResourceDnsUnbindList",
+  bindDnsToStreeNode = "/api/stree/bindDnsToStreeNode",
+  unBindDnsToStreeNode = "/api/stree/unBindDnsToStreeNode",
   
   fetchResourceByNode = "/api/stree/fetchResourceByNode",
 
@@ -98,6 +102,7 @@ enum Api {
   actionWorkOrderInstance = "/api/workorder/actionWorkOrderInstance",
   getWorkOrderInstanceDetail = "/api/workorder/getWorkOrderInstanceDetail",
   commentWorkOrderInstance ="/api/workorder/commentWorkOrderInstance",
+  getWorkOrderNotificationList = "/api/workorder/getNotificationList",
 
 
   getJobExecScriptList = "/api/jobexec/getJobExecScriptList",
@@ -438,6 +443,15 @@ export const bindRdsToStreeNode = (data) =>
 export const unBindRdsToStreeNode = (data) =>
   defHttp.post({ url: Api.unBindRdsToStreeNode, data });
 
+export const getResourceDnsUnbindList = () =>
+  defHttp.get({ url: Api.getResourceDnsUnbindList });
+
+export const bindDnsToStreeNode = (data) =>
+  defHttp.post({ url: Api.bindDnsToStreeNode, data });
+
+export const unBindDnsToStreeNode = (data) =>
+  defHttp.post({ url: Api.unBindDnsToStreeNode, data });
+
 export const fetchResourceByNode = (params) =>
   defHttp.get({ url: Api.fetchResourceByNode, params: params });
 
@@ -509,6 +523,15 @@ export const getWorkOrderInstanceDetail = (id: number | string) =>
 
 export const commentWorkOrderInstance = (id: number | string, comment: string) =>
   defHttp.post({ url: `${Api.commentWorkOrderInstance}/${id}`, data: { comment } });
+
+export const getWorkOrderNotificationList = () =>
+  defHttp.get({ url: Api.getWorkOrderNotificationList });
+
+export const markWorkOrderNotifyRead = (noticeId: string) =>
+  defHttp.post({ url: '/api/workorder/markNotifyRead', data: { noticeId } });
+
+export const clearWorkOrderNotifyTab = (noticeIds: string[]) =>
+  defHttp.post({ url: '/api/workorder/clearNotifyTab', data: { noticeIds } });
 
 
 

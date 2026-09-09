@@ -44,6 +44,7 @@
         @handle-preview2="handleOpenModal(eFormPreview2!)"
         @handle-open-code-modal="handleOpenModal(codeModal!)"
         @handle-clear-form-items="handleClearFormItems"
+        @handle-load-preset="handleLoadPreset"
       />
       <FormComponentPanel
         :current-item="formConfig.currentItem"
@@ -142,11 +143,39 @@
   const setFormConfig = (config: IFormConfig) => {
     //外部导入时，可能会缺少必要的信息。
     config.schemas = config.schemas || [];
-    config.schemas.forEach((item) => {
+    config.layout = config.layout || 'horizontal';
+    config.labelLayout = config.labelLayout || 'flex';
+    config.labelWidth = config.labelWidth || 100;
+    config.labelCol = config.labelCol || { span: 4 };
+    if (!config.labelCol.span) config.labelCol.span = 4;
+    config.wrapperCol = config.wrapperCol || { span: 20 };
+    if (!config.wrapperCol.span) config.wrapperCol.span = 20;
+
+    const initItem = (item: any) => {
+      if (!item) return;
+      if (!item.key) {
+        item.key = item.field || (typeof uniqueId === 'function' ? uniqueId('key_') : `key_${Math.random().toString(36).slice(2, 9)}`);
+      }
       item.colProps = item.colProps || { span: 24 };
+      if (typeof item.colProps.span !== 'number') item.colProps.span = 24;
       item.componentProps = item.componentProps || {};
       item.itemProps = item.itemProps || {};
-    });
+      item.itemProps.labelCol = item.itemProps.labelCol || {};
+      item.itemProps.wrapperCol = item.itemProps.wrapperCol || {};
+
+      if (item.component === 'Grid' && Array.isArray(item.columns)) {
+        item.columns.forEach((col: any) => {
+          if (col) {
+            if (typeof col.span !== 'number') col.span = 12;
+            if (Array.isArray(col.children)) {
+              col.children.forEach(initItem);
+            }
+          }
+        });
+      }
+    };
+
+    config.schemas.forEach(initItem);
     formConfig.value = config as any;
   };
   // 获取历史记录，用于撤销和重构
@@ -173,9 +202,12 @@
    * @param schema 当前选中的表单项
    */
   const handleSetSelectItem = (schema: IVFormComponent) => {
+    if (schema && (schema.component || schema.field) && !schema.key) {
+      schema.key = schema.field || (typeof uniqueId === 'function' ? uniqueId('key_') : `key_${Math.random().toString(36).slice(2, 9)}`);
+    }
     formConfig.value.currentItem = schema as any;
     handleChangePropsTabs(
-      schema.key ? (formConfig.value.activeKey! === 1 ? 2 : formConfig.value.activeKey!) : 1,
+      schema?.key || schema?.component ? (formConfig.value.activeKey! === 1 ? 2 : formConfig.value.activeKey!) : 1,
     );
   };
 
@@ -306,6 +338,99 @@
   const handleClearFormItems = () => {
     formConfig.value.schemas = [];
     handleSetSelectItem({ component: '' });
+  };
+
+  /**
+   * 🚀 加载开通表单联动模板（包含 API 动态 Git 仓库选择）
+   */
+  const handleLoadPreset = () => {
+    setFormConfig({
+      schemas: [
+        {
+          component: 'RadioGroup',
+          label: '部署类型',
+          field: 'deploy_type',
+          colProps: { span: 24 },
+          componentProps: {
+            options: [
+              { label: '二进制 / 主机发布', value: 'binary' },
+              { label: 'Docker 容器部署', value: 'docker' },
+              { label: 'K8S 容器集群', value: 'k8s' },
+            ],
+          },
+          itemProps: { required: true },
+        },
+        {
+          component: 'ApiSelect',
+          label: 'Git 仓库地址',
+          field: 'git_repo',
+          colProps: { span: 24 },
+          componentProps: {
+            api: '/api/code/getCodeGitRepoList',
+            resultField: 'items',
+            labelField: 'fullName',
+            valueField: 'cloneUrlSsh',
+            optionLabelProp: 'value',
+            placeholder: '下拉选择关联的 Git 代码仓库...',
+            showSearch: true,
+          },
+          itemProps: { required: true, helpMessage: '从系统 Git 仓库 API 动态加载下拉列表' },
+        },
+        {
+          component: 'ApiSelect',
+          label: 'Git 真实分支',
+          field: 'git_branch',
+          colProps: { span: 24 },
+          componentProps: {
+            api: '/api/code/getRepoBranches',
+            labelField: 'name',
+            valueField: 'name',
+            params: { fullName: '$git_repo' },
+            placeholder: '选定仓库后实时拉取真实 Git 分支...',
+            showSearch: true,
+          },
+          link: ['git_repo'],
+          itemProps: { required: true, helpMessage: '选定 Git 仓库后联动拉取分支' },
+        },
+        {
+          component: 'Input',
+          label: '主机部署路径',
+          field: 'binary_path',
+          colProps: { span: 24 },
+          componentProps: { placeholder: '如 /opt/apps/umipay-service' },
+          vShow: "values.deploy_type === 'binary'",
+        },
+        {
+          component: 'Input',
+          label: 'Docker 镜像Tag',
+          field: 'docker_image',
+          colProps: { span: 24 },
+          componentProps: { placeholder: '如 registry.net/app:v1.0' },
+          vShow: "values.deploy_type === 'docker'",
+        },
+        {
+          component: 'Input',
+          label: 'K8S 命名空间',
+          field: 'k8s_namespace',
+          colProps: { span: 24 },
+          componentProps: { placeholder: '如 prod-namespace' },
+          vShow: "values.deploy_type === 'k8s'",
+        },
+        {
+          component: 'InputTextArea',
+          label: 'K8S YAML 配置',
+          field: 'k8s_yaml',
+          colProps: { span: 24 },
+          componentProps: { placeholder: 'apiVersion: apps/v1...', rows: 4 },
+          vShow: "values.deploy_type === 'k8s'",
+        },
+      ],
+      layout: 'horizontal',
+      labelLayout: 'flex',
+      labelWidth: 120,
+      currentItem: { component: '', componentProps: {} },
+      activeKey: 1,
+    } as any);
   };
 
   const setFormModel = (key, value) => (formModel.value[key] = value);

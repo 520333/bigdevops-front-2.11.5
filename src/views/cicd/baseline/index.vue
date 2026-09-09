@@ -15,7 +15,7 @@
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'name'">
           <span class="font-bold text-gray-800 dark:text-gray-100 font-mono">
-            {{ record.name }}
+            {{ formatServiceName(record) }}
           </span>
         </template>
 
@@ -215,6 +215,7 @@ import {
   getJenkinsJobStageView,
 } from '@/api/cicd';
 import { useMessage } from '@/hooks/web/useMessage';
+import { useUserStore } from '@/store/modules/user';
 import { columns, searchFormSchema } from './job.data';
 import JobDrawer from './JobDrawer.vue';
 import BuildModal from './components/BuildModal.vue';
@@ -223,6 +224,7 @@ import JobLogDrawer from './components/JobLogDrawer.vue';
 defineOptions({ name: 'JenkinsJobManagement' });
 
 const { createMessage } = useMessage();
+const userStore = useUserStore();
 const selectedInstanceId = ref<number | undefined>(undefined);
 const instanceOptions = ref<any[]>([]);
 const stageViewMap = ref<Record<string, { loading: boolean; buildNumber?: string; status?: string; stages?: any[] }>>({});
@@ -303,11 +305,11 @@ function formatDuration(ms: number) {
   return `${sec}s`;
 }
 
-async function fetchStageView(jobNameKey: string, manual = false) {
+async function fetchStageView(jobNameKey: string, manual = false, record?: any) {
   if (!jobNameKey || !selectedInstanceId.value) return;
 
-  const shortJobName = jobNameKey.includes('/') ? jobNameKey.split('/').pop()! : jobNameKey;
-  const folder = jobNameKey.includes('/') ? jobNameKey.split('/')[0] : '';
+  const shortJobName = record?.name || (jobNameKey.includes('/') ? jobNameKey.split('/').pop()! : jobNameKey);
+  const folder = record?.projectName || record?.folder || (jobNameKey.includes('/') ? jobNameKey.split('/')[0] : '');
 
   if (!stageViewMap.value[jobNameKey]) {
     stageViewMap.value[jobNameKey] = { loading: true, stages: [] };
@@ -427,6 +429,19 @@ function handleEditJob(record: Recordable) {
   });
 }
 
+const formatServiceName = (record: any) => {
+  if (!record || !record.name) return '';
+  let name = record.name;
+  const proj = record.projectName || record.folder || '';
+  if (proj && name.startsWith(proj + '/')) {
+    return name.substring(proj.length + 1);
+  }
+  if (name.includes('/')) {
+    return name.substring(name.lastIndexOf('/') + 1);
+  }
+  return name;
+};
+
 function handleOpenBuildModal(record: Recordable) {
   if (!selectedInstanceId.value) return;
   openBuildModal(true, {
@@ -450,6 +465,7 @@ function handleConfirmBuild(data: any) {
       fetchStageView(data.jobName, true);
     }, 1500);
   }
+  const currentUser = userStore.getUserInfo?.realName || userStore.getUserInfo?.username || '';
   openLogDrawer(true, {
     instanceId: selectedInstanceId.value,
     jobName: data.jobName,
@@ -459,6 +475,16 @@ function handleConfirmBuild(data: any) {
     deployEnv: data.deployEnv,
     deployType: data.deployType,
     gitRepo: data.gitRepo,
+    scanCode: data.scanCode,
+    buildNode: data.buildNode,
+    jdkVersion: data.jdkVersion,
+    buildCommand: data.buildCommand,
+    module: data.module,
+    configFile: data.configFile,
+    port: data.port,
+    targetHost: data.targetHost,
+    customParams: data.customParams,
+    createUserName: currentUser,
     triggerBuild: true,
   });
 }

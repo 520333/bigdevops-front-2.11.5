@@ -1,6 +1,6 @@
 <template>
   <div :class="prefixCls">
-    <Popover title="" trigger="click" :overlayClassName="`${prefixCls}__overlay`">
+    <Popover v-model:open="popoverVisible" title="" trigger="click" :overlayClassName="`${prefixCls}__overlay`" @openChange="handleOpenChange">
       <Badge :count="count" dot :numberStyle="numberStyle">
         <BellOutlined />
       </Badge>
@@ -10,11 +10,16 @@
             <Tabs.TabPane>
               <template #tab>
                 {{ item.name }}
-                <span v-if="item.list.length !== 0">({{ item.list.length }})</span>
+                <span v-if="getTabUnreadCount(item) !== 0">({{ getTabUnreadCount(item) }})</span>
               </template>
-              <!-- 绑定title-click事件的通知列表中标题是“可点击”的-->
-              <NoticeList :list="item.list" v-if="item.key === '1'" @title-click="onNoticeClick" />
-              <NoticeList :list="item.list" v-else />
+              <NoticeList :list="item.list" @title-click="onNoticeClick" />
+              <div 
+                v-if="item.list && item.list.length > 0" 
+                class="flex justify-center items-center py-2 border-t dark:border-zinc-800 text-sm text-blue-500 hover:text-blue-600 cursor-pointer select-none"
+                @click="clearCurrentTab(item)"
+              >
+                清空{{ item.name }}
+              </div>
             </Tabs.TabPane>
           </template>
         </Tabs>
@@ -23,33 +28,134 @@
   </div>
 </template>
 <script lang="ts" setup>
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
+  import { useRoute } from 'vue-router';
   import { Popover, Tabs, Badge } from 'ant-design-vue';
   import { BellOutlined } from '@ant-design/icons-vue';
-  import { tabListData, ListItem } from './data';
+  import { ListItem, TabItem } from './data';
   import NoticeList from './NoticeList.vue';
   import { useDesign } from '@/hooks/web/useDesign';
-  import { useMessage } from '@/hooks/web/useMessage';
+  import { useGo } from '@/hooks/web/usePage';
+  import {
+    getWorkOrderNotificationList,
+    markWorkOrderNotifyRead,
+    clearWorkOrderNotifyTab,
+  } from '@/api/demo/system';
 
   const { prefixCls } = useDesign('header-notify');
-  const { createMessage } = useMessage();
-  const listData = ref(tabListData);
+  const go = useGo();
+  const route = useRoute();
+
+  const listData = ref<TabItem[]>([]);
   const numberStyle = {};
+  let timer: any = null;
+  const popoverVisible = ref(false);
+
+  function getTabUnreadCount(item: TabItem) {
+    if (!item.list) return 0;
+    return item.list.filter((i) => !i.read && !i.titleDelete).length;
+  }
 
   const count = computed(() => {
-    let count = 0;
-    for (let i = 0; i < tabListData.length; i++) {
-      count += tabListData[i].list.length;
+    let unreadCount = 0;
+    for (let i = 0; i < listData.value.length; i++) {
+      unreadCount += getTabUnreadCount(listData.value[i]);
     }
-    return count;
+    return unreadCount;
   });
 
-  function onNoticeClick(record: ListItem) {
-    createMessage.success('你点击了通知，ID=' + record.id);
-    // 可以直接将其标记为已读（为标题添加删除线）,此处演示的代码会切换删除线状态
-    record.titleDelete = !record.titleDelete;
+  async function fetchNotificationList() {
+    try {
+      const res = await getWorkOrderNotificationList();
+      let rawData: TabItem[] = [];
+      if (Array.isArray(res)) {
+        rawData = res;
+      } else if (res && res.result && Array.isArray(res.result)) {
+        rawData = res.result;
+      }
+      listData.value = rawData;
+    } catch (e) {
+      console.error('获取通知列表失败', e);
+    }
   }
+
+  function handleOpenChange(open: boolean) {
+    popoverVisible.value = open;
+    if (open) {
+      fetchNotificationList();
+    }
+  }
+
+  async function onNoticeClick(record: ListItem) {
+    popoverVisible.value = false;
+    record.titleDelete = true;
+    record.read = true;
+    if (record.id) {
+      try {
+        await markWorkOrderNotifyRead(record.id);
+      } catch (e) {
+        console.error('标记已读失败', e);
+      }
+    }
+
+    let queryModel = 'all';
+
+    if (record.extra === '待审批' || record.type === '3') {
+      queryModel = 'Approval';
+    } else if (record.extra === '待执行') {
+      queryModel = 'Action';
+    } else if (
+      record.type === '2' ||
+      (record.id && record.id.startsWith('msg-')) ||
+      (record.title && record.title.includes('评论'))
+    ) {
+      queryModel = 'all';
+    } else if (record.type === '1') {
+      queryModel = 'all';
+    }
+
+    go(`/workOrder/search?queryModel=${queryModel}`);
+  }
+
+  async function clearCurrentTab(tab: TabItem) {
+    if (tab.list && tab.list.length > 0) {
+      const noticeIds = tab.list.map((item) => item.id).filter(Boolean) as string[];
+      tab.list = [];
+      if (noticeIds.length > 0) {
+        try {
+          await clearWorkOrderNotifyTab(noticeIds);
+        } catch (e) {
+          console.error('清空通知页签失败', e);
+        }
+      }
+    }
+  }
+
+  // 监听路由变化自动更新通知
+  watch(
+    () => route.fullPath,
+    () => {
+      fetchNotificationList();
+    }
+  );
+
+  onMounted(() => {
+    fetchNotificationList();
+    timer = setInterval(() => {
+      fetchNotificationList();
+    }, 15000);
+
+    window.addEventListener('focus', fetchNotificationList);
+  });
+
+  onUnmounted(() => {
+    if (timer) {
+      clearInterval(timer);
+    }
+    window.removeEventListener('focus', fetchNotificationList);
+  });
 </script>
+
 <style lang="less">
   @prefix-cls: ~'@{namespace}-header-notify';
 
@@ -57,11 +163,20 @@
     padding-bottom: 1px;
 
     &__overlay {
-      max-width: 360px;
+      width: 460px !important;
+      max-width: 90vw !important;
+
+      .ant-popover-inner-content {
+        width: 100%;
+      }
+    }
+
+    .ant-tabs {
+      width: 100%;
     }
 
     .ant-tabs-content {
-      width: 300px;
+      width: 100% !important;
     }
 
     .ant-badge {

@@ -107,10 +107,10 @@ export const formSchema: FormSchema[] = [
     component: 'Input',
     colProps: { span: 12 },
     componentProps: {
-      placeholder: '请输入远程存储地址，例如：http://192.168.50.200:9090/api/v1/write'
+      placeholder: '选填，留空则使用本地TSDB存储。例如：http://192.168.50.200:8428/api/v1/write'
     },
     rules: [
-      { required: true, type: 'url', message: '请输入正确的 URL 格式 (必须以 http:// 或 https:// 开头)', trigger: 'blur' },
+      { required: false, type: 'url', message: '请输入正确的 URL 格式 (必须以 http:// 或 https:// 开头)', trigger: 'blur' },
     ],
   },
   {

@@ -106,7 +106,8 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive } from 'vue';
+  import { ref, reactive, watch, nextTick } from 'vue';
+  import { useRoute } from 'vue-router';
   import { Radio as ARadio, Modal as AModal, Input as AInput } from 'ant-design-vue';
   import { BasicTable, useTable, TableAction } from '@/components/Table';
   
@@ -126,8 +127,9 @@
   const ARadioButton = ARadio.Button;
   const ATextarea = AInput.TextArea;
   
+  const route = useRoute();
   const { createMessage } = useMessage();
-  const currentQueryModel = ref('all');
+  const currentQueryModel = ref((route.query.queryModel as string) || 'mine');
 
   // 声明子组件 Ref
   const detailDrawerRef = ref<any>(null);
@@ -148,6 +150,29 @@
     searchInfo: searchInfo,
     actionColumn: { width: 300, title: '操作', dataIndex: 'action' }, 
   });
+
+  function handleRouteQuery() {
+    const query = route.query;
+    const newModel = (query.queryModel as string) || 'mine';
+
+    if (currentQueryModel.value !== newModel) {
+      currentQueryModel.value = newModel;
+      searchInfo.queryModel = newModel;
+      nextTick(() => {
+        if (typeof reload === 'function') {
+          reload({ page: 1 });
+        }
+      });
+    }
+  }
+
+  watch(
+    () => route.fullPath,
+    () => {
+      handleRouteQuery();
+    },
+    { immediate: true }
+  );
 
   function handleModeChange(e: any) {
     const newMode = e.target.value;

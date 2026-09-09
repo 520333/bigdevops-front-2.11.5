@@ -5,7 +5,7 @@
         class="grid-col"
         v-for="(colItem, index) in schema.columns"
         :key="index"
-        :span="colItem.span"
+        :span="colItem?.span || 12"
       >
         <FormRender
           v-for="(item, k) in colItem.children"

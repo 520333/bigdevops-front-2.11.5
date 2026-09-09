@@ -104,7 +104,7 @@ export const baseComponents: IVFormComponent[] = [
     field: '',
     componentProps: {
       orientation: 'center',
-      dashed: true,
+      dashed: false,
     },
   },
   {
@@ -177,6 +177,36 @@ export const baseComponents: IVFormComponent[] = [
         },
       ],
     },
+  },
+  {
+    component: 'ApiSelect',
+    label: 'API动态下拉',
+    icon: 'ant-design:api-outlined',
+    field: '',
+    colProps: { span: 24 },
+    componentProps: {
+      api: '/api/code/getCodeGitRepoList',
+      resultField: 'items',
+      labelField: 'fullName',
+      valueField: 'cloneUrlSsh',
+      optionLabelProp: 'value',
+      placeholder: '下拉选择 Git 仓库地址...',
+    },
+  },
+  {
+    component: 'ApiSelect',
+    label: 'Git真实分支联动',
+    icon: 'ant-design:branches-outlined',
+    field: 'git_branch',
+    colProps: { span: 24 },
+    componentProps: {
+      api: '/api/code/getRepoBranches',
+      labelField: 'name',
+      valueField: 'name',
+      params: { fullName: '$git_repo' },
+      placeholder: '选定 Git 仓库后自动获取真实分支...',
+    },
+    link: ['git_repo'],
   },
 
   {

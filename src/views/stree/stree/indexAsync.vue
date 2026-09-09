@@ -236,8 +236,35 @@
 
             <a-tab-pane key="4">
               <template #tab><span><global-outlined /> DNS列表</span></template>
-              <div class="p-4 overflow-hidden" v-if="currentNode.id && activeKey === '4'">
-                <DnsTable :nodeId="currentNode.id" :refreshKey="dnsTableRefreshKey" />
+              <div class="p-4 overflow-hidden">
+                <a-space v-if="isLeaf && !showDnsBindTranferIf && !showDnsUnBindTranferIf">
+                  <a-button type="primary" @click="showDnsBindTranfer" v-auth="'POST:/api/stree/bindDnsToStreeNode'">打开 DNS 资源绑定</a-button>
+                  <a-button type="primary" danger @click="showDnsUnBindTranfer" v-auth="'POST:/api/stree/unBindDnsToStreeNode'">打开 DNS 资源解绑</a-button>
+                </a-space>
+                <div v-else-if="!isLeaf && !showDnsBindTranferIf && !showDnsUnBindTranferIf" class="text-gray-400 p-4">
+                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
+                </div>
+
+                <a-transfer v-if="showDnsBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="dnsListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="dnsBindTargetKeys" @change="dnsBindHandleChange" @search="dnsBindHandleSelectChange"
+                  :list-style="{ width: '550px', height: '450px' }" />
+                <a-transfer v-if="showDnsUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="dnsUnBindListData"
+                  :render="record => record.title" show-search :filter-option="filterOption"
+                  :target-keys="dnsUnBindTargetKeys" @change="dnsUnBindHandleChange"
+                  @search="dnsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
+                <a-divider v-if="showDnsBindTranferIf || showDnsUnBindTranferIf" />
+                <a-space v-if="showDnsBindTranferIf">
+                  <a-button type="primary" @click="sendDnsBind">确认绑定</a-button>
+                  <a-button @click="closeDnsBindTranfer">取消</a-button>
+                </a-space>
+                <a-space v-if="showDnsUnBindTranferIf">
+                  <a-button type="primary" danger @click="sendDnsUnBind">确认解绑</a-button>
+                  <a-button @click="closeDnsUnBindTranfer">取消</a-button>
+                </a-space>
+                <div class="mt-4" v-if="currentNode.id && activeKey === '4'">
+                  <DnsTable :nodeId="currentNode.id" :refreshKey="dnsTableRefreshKey" />
+                </div>
               </div>
             </a-tab-pane>
 
@@ -302,7 +329,8 @@ import {
   deleteStreeNode, getTopStreeNodes, getChildrenStreeNodes,
   getResourceEcsUnbindList, bindEcsToStreeNode, unBindEcsToStreeNode,
   getResourceElbUnbindList, bindElbToStreeNode, unBindElbToStreeNode,
-  getResourceRdsUnbindList, bindRdsToStreeNode, unBindRdsToStreeNode
+  getResourceRdsUnbindList, bindRdsToStreeNode, unBindRdsToStreeNode,
+  getResourceDnsUnbindList, bindDnsToStreeNode, unBindDnsToStreeNode
 } from '@/api/demo/system';
 import type { TreeItem } from '@/components/Tree';
 import StreeDrawer from './StreeDrawer.vue';
@@ -341,6 +369,16 @@ export default defineComponent({
     const showElbUnBindTranferIf = ref(false); const elbUnBindListData = ref<any[]>([]); const elbUnBindTargetKeys = ref<string[]>([]); const elbUnBindselectedKeys = ref<string[]>([]);
     const elbTableRefreshKey = ref(0);
 
+    // 🌟 ================== 新增 DNS 相关变量 ==================
+    const showDnsBindTranferIf = ref(false);
+    const dnsListData = ref<any[]>([]);
+    const dnsBindTargetKeys = ref<string[]>([]);
+    const dnsBindselectedKeys = ref<string[]>([]);
+
+    const showDnsUnBindTranferIf = ref(false);
+    const dnsUnBindListData = ref<any[]>([]);
+    const dnsUnBindTargetKeys = ref<string[]>([]);
+    const dnsUnBindselectedKeys = ref<string[]>([]);
     const dnsTableRefreshKey = ref(0);
 
     // 🌟 ================== 新增 RDS 相关变量 ==================
@@ -447,6 +485,66 @@ export default defineComponent({
       } catch (error) { }
     };
 
+    // 🌟 ================== 新增 DNS 交互逻辑 ==================
+    const dnsBindHandleChange = (nextTargetKeys: string[]) => { dnsBindTargetKeys.value = nextTargetKeys; };
+    const dnsBindHandleSelectChange = (s: string[], t: string[]) => { dnsBindselectedKeys.value = [...s, ...t]; };
+    const dnsUnBindHandleChange = (nextTargetKeys: string[]) => { dnsUnBindTargetKeys.value = nextTargetKeys; };
+    const dnsUnBindHandleSelectChange = (s: string[], t: string[]) => { dnsUnBindselectedKeys.value = [...s, ...t]; };
+
+    const showDnsBindTranfer = () => {
+      if (!currentNode.value.id) return createMessage.warning('请先选择一个节点');
+      getResourceDnsUnbindList().then((res: any) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        dnsListData.value = list.map((item: any) => {
+          const full = (item.name === '@' || !item.name) ? item.domain : `${item.name}.${item.domain}`;
+          return {
+            ...item,
+            key: String(item.id),
+            title: `${full} [${item.type} -> ${item.value}] (${item.vendor})`
+          };
+        });
+      });
+      showDnsBindTranferIf.value = true;
+    };
+
+    const showDnsUnBindTranfer = () => {
+      const rawData = currentNode.value.bind_dnss || [];
+      dnsUnBindListData.value = rawData.map((item: any) => {
+        const full = (item.name === '@' || !item.name) ? item.domain : `${item.name}.${item.domain}`;
+        return {
+          ...item,
+          key: String(item.id),
+          title: `${full} [${item.type} -> ${item.value}] (${item.vendor})`
+        };
+      });
+      showDnsUnBindTranferIf.value = true;
+    };
+
+    const closeDnsBindTranfer = () => { showDnsBindTranferIf.value = false; dnsBindTargetKeys.value = []; dnsBindselectedKeys.value = []; };
+    const closeDnsUnBindTranfer = () => { showDnsUnBindTranferIf.value = false; dnsUnBindTargetKeys.value = []; dnsUnBindselectedKeys.value = []; };
+
+    const sendDnsBind = async () => {
+      if (dnsBindTargetKeys.value.length === 0) return createMessage.warning('请至少选择一个 DNS 资源进行绑定');
+      try {
+        await bindDnsToStreeNode({ node_id: currentNode.value.id, resource_ids: dnsBindTargetKeys.value });
+        createMessage.success(`已成功绑定 ${dnsBindTargetKeys.value.length} 个域名`);
+        closeDnsBindTranfer();
+        await refreshCurrentNode();
+        dnsTableRefreshKey.value += 1;
+      } catch (error) { }
+    };
+
+    const sendDnsUnBind = async () => {
+      if (dnsUnBindTargetKeys.value.length === 0) return createMessage.warning('请至少选择一个 DNS 资源进行解绑');
+      try {
+        await unBindDnsToStreeNode({ node_id: currentNode.value.id, resource_ids: dnsUnBindTargetKeys.value });
+        createMessage.success(`已成功解绑 ${dnsUnBindTargetKeys.value.length} 个域名`);
+        closeDnsUnBindTranfer();
+        await refreshCurrentNode();
+        dnsTableRefreshKey.value += 1;
+      } catch (error) { }
+    };
+
     // ================== 树节点控制逻辑 ==================
     const updateNodeInTree = (list: any[], targetId: number, newData: any) => {
       for (const node of list) {
@@ -503,6 +601,7 @@ export default defineComponent({
       closeEcsBindTranfer(); closeEcsUnBindTranfer();
       closeElbBindTranfer(); closeElbUnBindTranfer();
       closeRdsBindTranfer(); closeRdsUnBindTranfer(); // 🌟 关掉 RDS 弹窗
+      closeDnsBindTranfer(); closeDnsUnBindTranfer(); // 🌟 关掉 DNS 弹窗
     };
 
     const onLoadData = (treeNode: any) => {
@@ -534,7 +633,7 @@ export default defineComponent({
       showEcsBindTranfer, showEcsUnBindTranfer, closeEcsBindTranfer, closeEcsUnBindTranfer, showEcsBindTranferIf, showEcsUnBindTranferIf, ecsListData, ecsUnBindListData, ecsBindTargetKeys, ecsBindselectedKeys, ecsUnBindTargetKeys, ecsUnBindselectedKeys, ecsBindHandleChange, ecsUnBindHandleChange, ecsBindHandleSelectChange, ecsUnBindHandleSelectChange, sendEcsBind, sendEcsUnBind, ecsTableRefreshKey,
 
       // ELB
-      showElbBindTranfer, showElbUnBindTranfer, closeElbBindTranfer, closeElbUnBindTranfer, showElbBindTranferIf, showElbUnBindTranferIf, elbListData, elbUnBindListData, elbBindTargetKeys, elbBindselectedKeys, elbUnBindTargetKeys, elbUnBindselectedKeys, elbBindHandleChange, elbUnBindHandleChange, elbBindHandleSelectChange, elbUnBindHandleSelectChange, sendElbBind, sendElbUnBind, elbTableRefreshKey, dnsTableRefreshKey,
+      showElbBindTranfer, showElbUnBindTranfer, closeElbBindTranfer, closeElbUnBindTranfer, showElbBindTranferIf, showElbUnBindTranferIf, elbListData, elbUnBindListData, elbBindTargetKeys, elbBindselectedKeys, elbUnBindTargetKeys, elbUnBindselectedKeys, elbBindHandleChange, elbUnBindHandleChange, elbBindHandleSelectChange, elbUnBindHandleSelectChange, sendElbBind, sendElbUnBind, elbTableRefreshKey,
 
       // 🌟 RDS
       showRdsBindTranfer, showRdsUnBindTranfer, closeRdsBindTranfer, closeRdsUnBindTranfer,
@@ -542,6 +641,14 @@ export default defineComponent({
       rdsBindTargetKeys, rdsBindselectedKeys, rdsUnBindTargetKeys, rdsUnBindselectedKeys,
       rdsBindHandleChange, rdsUnBindHandleChange, rdsBindHandleSelectChange, rdsUnBindHandleSelectChange,
       sendRdsBind, sendRdsUnBind, rdsTableRefreshKey,
+
+      // 🌟 DNS
+      showDnsBindTranfer, showDnsUnBindTranfer, closeDnsBindTranfer, closeDnsUnBindTranfer,
+      showDnsBindTranferIf, showDnsUnBindTranferIf, dnsListData, dnsUnBindListData,
+      dnsBindTargetKeys, dnsBindselectedKeys, dnsUnBindTargetKeys, dnsUnBindselectedKeys,
+      dnsBindHandleChange, dnsUnBindHandleChange, dnsBindHandleSelectChange, dnsUnBindHandleSelectChange,
+      sendDnsBind, sendDnsUnBind, dnsTableRefreshKey,
+
       hasPermission
     };
   },
