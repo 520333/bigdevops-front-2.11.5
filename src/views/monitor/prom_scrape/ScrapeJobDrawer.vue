@@ -50,7 +50,6 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
     templateId.value = data.record.id;
     const recordData = { ...data.record };
 
-
     if (recordData.treeNodeIds && Array.isArray(recordData.treeNodeIds)) {
       recordData.treeNodeIds = recordData.treeNodeIds.map(id => Number(id));
     }
@@ -59,15 +58,35 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
         recordData.relabelConfigsYamlString = '\n' + recordData.relabelConfigsYamlString;
       }
     }
-    setFieldsValue(recordData);
+    // 非 blackbox_dns 模式清空 blackbox 相关字段，防止 probeModule 的默认值或残留值触发 onChange 篡改 scheme
+    if (recordData.serviceDiscoveryType !== 'blackbox_dns') {
+      delete recordData.probeModule;
+      delete recordData.blackboxAddress;
+    }
+    if (recordData.serviceDiscoveryType !== 'kubernetes') {
+      delete recordData.kubernetesSdRole;
+      delete recordData.apiServer;
+      delete recordData.kubeConfigFilePath;
+      delete recordData.tlsCaFilePath;
+      delete recordData.tlsCaContent;
+      delete recordData.bearerToken;
+      delete recordData.bearerTokenFile;
+    }
+    await setFieldsValue(recordData);
+
+    // 关键兜底：再次显式回显后端真实保存的 scheme 与 metricsPath，避免被任何联动 onChange 覆盖
+    if (recordData.scheme) {
+      await setFieldsValue({
+        scheme: recordData.scheme,
+        ...(recordData.metricsPath ? { metricsPath: recordData.metricsPath } : {}),
+      });
+    }
   } else {
     templateId.value = null;
-
   }
 
   await nextTick();
   renderEditor.value = true;
-
 });
 
 async function handleSubmit() {
@@ -80,8 +99,13 @@ async function handleSubmit() {
       values.relabelConfigsYamlString = '\n' + values.relabelConfigsYamlString.trim();
     }
 
-    setDrawerProps({ confirmLoading: true });
+    // 根据服务发现类型清理无关字段
+    if (values.serviceDiscoveryType === 'http') {
+      values.blackboxAddress = '';
+      values.probeModule = '';
+    }
 
+    setDrawerProps({ confirmLoading: true });
 
     if (!unref(isUpdate)) {
       await createMonitorPromScrapeJob(values);
@@ -93,8 +117,9 @@ async function handleSubmit() {
 
     closeDrawer();
     emit('success');
-  } catch (error) {
+  } catch (error: any) {
     console.error('提交失败:', error);
+    createMessage.error(error?.message || error?.msg || '提交失败');
   } finally {
     setDrawerProps({ confirmLoading: false });
   }

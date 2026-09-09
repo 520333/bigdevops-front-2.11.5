@@ -405,7 +405,7 @@ export const formSchema: FormSchema[] = [
     component: 'Select',
     defaultValue: 'http_2xx',
     ifShow: ({ values }) => values.serviceDiscoveryType === 'blackbox_dns',
-    componentProps: ({ formActionType }) => ({
+    componentProps: ({ formActionType, formModel }) => ({
       options: [
         { label: 'http_2xx (检测 HTTP/HTTPS 状态码2xx)', value: 'http_2xx' },
         { label: 'tcp_connect (检测 TCP 端口是否连通)', value: 'tcp_connect' },
@@ -413,6 +413,10 @@ export const formSchema: FormSchema[] = [
       ],
       style: { width: '100%' },
       onChange: (val: any) => {
+        // 关键守卫：只有当服务发现类型确实为 blackbox_dns 时才联动修改 scheme
+        if (formModel?.serviceDiscoveryType !== 'blackbox_dns') {
+          return;
+        }
         if (val === 'tcp_connect') {
           formActionType.setFieldsValue({ scheme: 'none', port: 443 });
         } else if (val === 'icmp') {
