@@ -21,7 +21,7 @@
     color: @white;
   }
 
-  &-default {
+  &-default:not(.ant-btn-dangerous) {
     border-color: @button-cancel-border-color;
     background-color: @button-cancel-bg-color;
     color: @button-cancel-color;
@@ -31,6 +31,22 @@
       border-color: @button-cancel-hover-border-color;
       background-color: @button-cancel-hover-bg-color;
       color: @button-cancel-hover-color;
+    }
+  }
+
+  &-default.ant-btn-dangerous {
+    border-color: @button-error-color;
+    color: @button-error-color;
+
+    &:hover,
+    &:focus {
+      border-color: @button-error-hover-color !important;
+      color: @button-error-hover-color !important;
+    }
+
+    &:active {
+      border-color: @button-error-active-color;
+      color: @button-error-active-color;
     }
   }
 

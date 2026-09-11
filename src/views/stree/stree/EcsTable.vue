@@ -67,6 +67,7 @@ export default defineComponent({
         colProps: { span: 6 },
         componentProps: {
           options: [
+            { label: '自建', value: 'self' },
             { label: '阿里云', value: 'aliyun' },
             { label: 'AWS', value: 'aws' },
             { label: '腾讯云', value: 'tencent' },
@@ -203,6 +204,7 @@ export default defineComponent({
         dataIndex: 'Vendor',
         width: 90,
         filters: [
+          { text: '自建', value: 'self' },
           { text: 'AWS', value: 'aws' },
           { text: '阿里云', value: 'aliyun' },
           { text: '腾讯云', value: 'tencent' },
@@ -210,6 +212,7 @@ export default defineComponent({
         ],
         onFilter: (value, record) => record.Vendor === value,
         customRender: ({ text }) => {
+          if (text === 'self' || text === 'idc') return '自建';
           if (text === 'aws') return 'AWS';
           if (text === 'aliyun') return '阿里云';
           if (text === 'tencent') return '腾讯云';
@@ -283,7 +286,8 @@ export default defineComponent({
       const exportData = data.map((item) => {
         // 厂商映射逻辑
         let vendorName = item.Vendor;
-        if (vendorName === 'aws') vendorName = 'AWS';
+        if (vendorName === 'self' || vendorName === 'idc') vendorName = '自建';
+        else if (vendorName === 'aws') vendorName = 'AWS';
         else if (vendorName === 'aliyun') vendorName = '阿里云';
         else if (vendorName === 'tencent') vendorName = '腾讯云';
         else if (vendorName === 'huawei') vendorName = '华为云';

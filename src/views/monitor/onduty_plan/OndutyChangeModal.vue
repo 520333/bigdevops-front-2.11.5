@@ -1,9 +1,13 @@
 <template>
   <BasicModal v-bind="$attrs" @register="registerModal" title="调整值班人员" @ok="handleSubmit">
-    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-      正在为 <strong>{{ currentData.dateString }}</strong> 的
-      <strong>{{ currentData.originRealName }}</strong> 寻找替班人员。
-    </div>
+    <a-alert type="info" show-icon class="mb-4">
+      <template #message>
+        <span>
+          正在为 <strong>{{ currentData.dateString }}</strong> 的
+          <strong>{{ currentData.originRealName }}</strong> 寻找替班人员。
+        </span>
+      </template>
+    </a-alert>
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
@@ -14,11 +18,11 @@ import { BasicModal, useModalInner } from '@/components/Modal';
 import { BasicForm, useForm } from '@/components/Form';
 import { ondutyChangeFormSchema } from './plan.data';
 import { createMonitorOndutyChange } from '@/api/demo/system';
-import { message } from 'ant-design-vue';
+import { Alert as AAlert, message } from 'ant-design-vue';
 
 export default defineComponent({
   name: 'OndutyChangeModal',
-  components: { BasicModal, BasicForm },
+  components: { BasicModal, BasicForm, AAlert },
   emits: ['success', 'register'],
   setup(_, { emit }) {
     const currentData = ref<any>({});

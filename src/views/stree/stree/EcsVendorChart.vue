@@ -59,7 +59,7 @@ const renderEcharts = () => {
   if (!chartRef.value || !props.node) return;
   if (!myChart) myChart = echarts.init(chartRef.value);
 
-  const vendorMap: Record<string, string> = { aliyun: '阿里云', aws: 'AWS', tencent: '腾讯云', huawei: '华为云' };
+  const vendorMap: Record<string, string> = { aliyun: '阿里云', aws: 'AWS', tencent: '腾讯云', huawei: '华为云', self: '自建', idc: '自建' };
   const vendorData = (props.node.groupByVendor || []).map((item: any) => ({
     name: vendorMap[item.name] || item.name || '未知',
     value: item.value || 0

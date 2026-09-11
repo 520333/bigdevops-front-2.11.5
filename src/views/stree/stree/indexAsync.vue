@@ -13,7 +13,8 @@
           </div>
 
           <a-directory-tree :tree-data="treeData" multiple block-node :load-data="onLoadData" @select="onSelect"
-            v-if="isShow" v-model:expandedKeys="expandedKeys" :field-names="{ title: 'title', key: 'id' }">
+            v-if="isShow" v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys"
+            :field-names="{ title: 'title', key: 'id' }">
             <template #title="{ key: treeKey, title, id, level, children, isLeaf }">
               <a-dropdown :trigger="['contextmenu']">
                 <span class="block w-full select-none truncate">{{ title }}</span>
@@ -22,6 +23,9 @@
                     @click="({ key: menuKey }) => onContextMenuClick(title, menuKey, id, level, children, isLeaf)">
                     <a-menu-item key="1" v-if="!isLeaf && hasPermission('POST:/api/stree/createStreeNode')">
                       <Icon icon="ant-design:plus-outlined" class="mr-2" color="#55D187" />新增节点
+                    </a-menu-item>
+                    <a-menu-item key="4" v-if="!isLeaf && hasPermission('POST:/api/stree/createStreeNode')">
+                      <Icon icon="ant-design:thunderbolt-outlined" class="mr-2" color="#1890FF" />批量添加叶子节点
                     </a-menu-item>
                     <a-menu-item key="2" v-if="hasPermission('DELETE:/api/stree/deleteStreeNode/:id')">
                       <Icon icon="ant-design:delete-outlined" class="mr-2" color="#F56C6C" />删除节点
@@ -54,45 +58,69 @@
               <div class="mt-4" v-if="currentNode.id && activeKey === '1'">
                 <div class="flex justify-between items-center mb-4">
                   <span class="text-base font-semibold text-gray-800 dark:text-gray-200">详细信息</span>
-                  <a-button type="primary" @click="showNodeModal">修改节点属性</a-button>
+                  <div class="flex items-center gap-2">
+                    <a-button v-if="!currentNode.isLeaf && hasPermission('POST:/api/stree/createStreeNode')"
+                      type="primary" ghost preIcon="ant-design:thunderbolt-outlined" @click="handleOpenInitModal">
+                      批量添加叶子节点
+                    </a-button>
+                    <a-button type="primary" @click="showNodeModal">修改节点属性</a-button>
+                  </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                   <!-- 左侧：关联资源统计 Card -->
-                  <Card title="关联资源统计" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40 flex flex-col h-full">
+                  <Card title="关联资源统计" size="small" :bordered="true"
+                    class="shadow-sm dark:bg-zinc-900/40 flex flex-col h-full">
                     <div class="grid grid-cols-2 gap-4 py-2 flex-1 align-middle">
                       <!-- ECS Card -->
-                      <div class="bg-blue-50/50 dark:bg-blue-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-blue-100 dark:border-blue-900/30">
-                        <span class="text-blue-500 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-1">ECS 实例</span>
+                      <div
+                        class="bg-blue-50/50 dark:bg-blue-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-blue-100 dark:border-blue-900/30">
+                        <span
+                          class="text-blue-500 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-1">ECS
+                          实例</span>
                         <div class="flex items-baseline gap-1 mt-1">
-                          <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ currentNode.ecsNum || 0 }}</span>
+                          <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ currentNode.ecsNum || 0
+                          }}</span>
                           <span class="text-xs text-blue-400 dark:text-blue-500">台</span>
                         </div>
                       </div>
 
                       <!-- ELB Card -->
-                      <div class="bg-orange-50/50 dark:bg-orange-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-orange-100 dark:border-orange-900/30">
-                        <span class="text-orange-500 dark:text-orange-400 text-xs font-semibold uppercase tracking-wider mb-1">ELB 负载均衡</span>
+                      <div
+                        class="bg-orange-50/50 dark:bg-orange-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-orange-100 dark:border-orange-900/30">
+                        <span
+                          class="text-orange-500 dark:text-orange-400 text-xs font-semibold uppercase tracking-wider mb-1">ELB
+                          负载均衡</span>
                         <div class="flex items-baseline gap-1 mt-1">
-                          <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ currentNode.elbNum || 0 }}</span>
+                          <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ currentNode.elbNum ||
+                            0
+                          }}</span>
                           <span class="text-xs text-orange-400 dark:text-orange-500">个</span>
                         </div>
                       </div>
 
                       <!-- RDS Card -->
-                      <div class="bg-green-50/50 dark:bg-green-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-green-100 dark:border-green-900/30">
-                        <span class="text-green-500 dark:text-green-400 text-xs font-semibold uppercase tracking-wider mb-1">RDS 数据库</span>
+                      <div
+                        class="bg-green-50/50 dark:bg-green-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-green-100 dark:border-green-900/30">
+                        <span
+                          class="text-green-500 dark:text-green-400 text-xs font-semibold uppercase tracking-wider mb-1">RDS
+                          数据库</span>
                         <div class="flex items-baseline gap-1 mt-1">
-                          <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ currentNode.rdsNum || 0 }}</span>
+                          <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ currentNode.rdsNum || 0
+                          }}</span>
                           <span class="text-xs text-green-400 dark:text-green-500">个</span>
                         </div>
                       </div>
 
                       <!-- DNS Card -->
-                      <div class="bg-cyan-50/50 dark:bg-cyan-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-cyan-100 dark:border-cyan-900/30">
-                        <span class="text-cyan-500 dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">DNS 域名</span>
+                      <div
+                        class="bg-cyan-50/50 dark:bg-cyan-950/20 p-4 rounded-lg flex flex-col items-center justify-center border border-cyan-100 dark:border-cyan-900/30">
+                        <span
+                          class="text-cyan-500 dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">DNS
+                          域名</span>
                         <div class="flex items-baseline gap-1 mt-1">
-                          <span class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{{ currentNode.dnsNum || 0 }}</span>
+                          <span class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{{ currentNode.dnsNum || 0
+                          }}</span>
                           <span class="text-xs text-cyan-400 dark:text-cyan-500">条</span>
                         </div>
                       </div>
@@ -100,7 +128,8 @@
                   </Card>
 
                   <!-- 右侧：基本属性 Card -->
-                  <Card title="基本属性" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40 flex flex-col h-full">
+                  <Card title="基本属性" size="small" :bordered="true"
+                    class="shadow-sm dark:bg-zinc-900/40 flex flex-col h-full">
                     <div class="flex flex-col gap-3 py-1 flex-1">
                       <div class="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
                         <span class="text-gray-500 dark:text-gray-400">节点名称:</span>
@@ -113,17 +142,20 @@
                       <div class="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
                         <span class="text-gray-500 dark:text-gray-400">运维负责人:</span>
                         <div class="flex flex-wrap gap-1 justify-end">
-                          <Tag v-for="(user, index) in currentNode.ops_admin_users" :key="index" color="orange" class="text-sm px-2 py-0.5 m-0">
+                          <Tag v-for="(user, index) in currentNode.ops_admin_users" :key="index" color="orange"
+                            class="text-sm px-2 py-0.5 m-0">
                             {{ user }}
                           </Tag>
-                          <span v-if="!currentNode.ops_admin_users || currentNode.ops_admin_users.length === 0" class="text-gray-400 dark:text-gray-500 text-xs">
+                          <span v-if="!currentNode.ops_admin_users || currentNode.ops_admin_users.length === 0"
+                            class="text-gray-400 dark:text-gray-500 text-xs">
                             暂无配置
                           </span>
                         </div>
                       </div>
                       <div class="flex flex-col gap-1">
                         <span class="text-gray-500 dark:text-gray-400">节点描述:</span>
-                        <span class="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/60 p-2 rounded text-xs min-h-[40px] mt-1 whitespace-pre-wrap">
+                        <span
+                          class="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/60 p-2 rounded text-xs min-h-[40px] mt-1 whitespace-pre-wrap">
                           {{ currentNode.desc || '暂无描述' }}
                         </span>
                       </div>
@@ -131,7 +163,9 @@
                   </Card>
                 </div>
                 <div class="mt-4" v-if="currentNode.id">
-                  <div class="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 border-l-4 border-blue-500 pl-2">资源分布统计</div>
+                  <div
+                    class="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4 border-l-4 border-blue-500 pl-2">
+                    资源分布统计</div>
                   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <!-- ECS 资源分布 Card -->
                     <Card title="ECS 资源分布" size="small" :bordered="true" class="shadow-sm dark:bg-zinc-900/40">
@@ -166,143 +200,193 @@
             </a-tab-pane>
 
             <a-tab-pane key="2">
-              <template #tab><span><cloud-server-outlined /> ECS列表</span></template>
+              <template #tab>
+                <span>
+                  <cloud-server-outlined /> ECS列表
+                  <Tag v-if="currentNode.ecsNum" color="blue"
+                    class="ml-1 px-1.5 py-0 text-xs font-semibold leading-tight rounded-full">
+                    {{ currentNode.ecsNum }}
+                  </Tag>
+                </span>
+              </template>
               <div class="p-4 overflow-hidden">
-                <a-space v-if="isLeaf && !showEcsBindTranferIf && !showEcsUnBindTranferIf">
-                  <a-button type="primary" @click="showEcsBindTranfer" v-auth="'POST:/api/stree/bindEcsToStreeNode'">打开
-                    ECS
-                    资源绑定</a-button>
-                  <a-button type="primary" danger @click="showEcsUnBindTranfer"
-                    v-auth="'POST:/api/stree/unBindEcsToStreeNode'">打开 ECS 资源解绑</a-button>
-                </a-space>
-                <div v-else-if="!isLeaf && !showEcsBindTranferIf && !showEcsUnBindTranferIf" class="text-gray-400 p-4">
-                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
+                <!-- 顶部操作栏 -->
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-zinc-800">
+                  <a-space v-if="isLeaf">
+                    <a-button type="primary" preIcon="ant-design:link-outlined" @click="showEcsBindTranfer"
+                      v-auth="'POST:/api/stree/bindEcsToStreeNode'">
+                      关联 ECS 资源
+                    </a-button>
+                    <a-button danger preIcon="ant-design:disconnect-outlined" @click="showEcsUnBindTranfer"
+                      v-auth="'POST:/api/stree/unBindEcsToStreeNode'">
+                      批量解绑
+                    </a-button>
+                  </a-space>
+                  <div v-else class="text-gray-400 flex items-center text-sm flex-wrap gap-2">
+                    <span class="flex items-center"><info-circle-outlined
+                        class="mr-1.5 text-amber-500" />请在左侧服务树中选择【叶子节点】进行资产管理</span>
+                    <a-button v-if="hasPermission('POST:/api/stree/createStreeNode')" type="link" size="small"
+                      class="flex items-center text-blue-500 p-0 h-auto" @click="handleOpenInitModal">
+                      <Icon icon="ant-design:thunderbolt-outlined" class="mr-1" />一键为此项目初始化标准组件节点
+                    </a-button>
+                  </div>
+
+                  <div v-if="isLeaf" class="text-xs text-gray-500 dark:text-gray-400">
+                    当前节点已绑定 <strong class="text-blue-600 dark:text-blue-400 text-sm font-semibold">{{ currentNode.ecsNum
+                      || 0
+                    }}</strong> 台主机
+                  </div>
                 </div>
 
-                <a-transfer v-if="showEcsBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="ecsListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="ecsBindTargetKeys" @change="ecsBindHandleChange" @search="ecsBindHandleSelectChange"
-                  :list-style="{ width: '550px', height: '450px' }" />
-                <a-transfer v-if="showEcsUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="ecsUnBindListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="ecsUnBindTargetKeys" @change="ecsUnBindHandleChange"
-                  @search="ecsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                <a-divider v-if="showEcsBindTranferIf || showEcsUnBindTranferIf" />
-                <a-space v-if="showEcsBindTranferIf"><a-button type="primary"
-                    @click="sendEcsBind">确认绑定</a-button><a-button @click="closeEcsBindTranfer">取消</a-button></a-space>
-                <a-space v-if="showEcsUnBindTranferIf"><a-button type="primary" danger
-                    @click="sendEcsUnBind">确认解绑</a-button><a-button
-                    @click="closeEcsUnBindTranfer">取消</a-button></a-space>
-                <div class="mt-4" v-if="currentNode.id && activeKey === '2'">
+                <!-- 弹窗 1：关联绑定 ECS 资源 (表格多选，告别右箭头) -->
+                <EcsBindModal @register="registerEcsBindModal" @success="handleEcsBindSuccess" />
+
+                <!-- 弹窗 2：批量解绑 ECS 资源 (表格多选解绑，免去右箭头穿梭框) -->
+                <EcsUnbindModal @register="registerEcsUnbindModal" @success="handleEcsUnbindSuccess" />
+
+                <!-- 表格主体全高展示 -->
+                <div v-if="currentNode.id && activeKey === '2'">
                   <EcsTable :nodeId="currentNode.id" :refreshKey="ecsTableRefreshKey" />
                 </div>
               </div>
             </a-tab-pane>
 
             <a-tab-pane key="3">
-              <template #tab><span><database-outlined /> ELB列表</span></template>
+              <template #tab>
+                <span>
+                  <database-outlined /> ELB列表
+                  <Tag v-if="currentNode.elbNum" color="orange"
+                    class="ml-1 px-1.5 py-0 text-xs font-semibold leading-tight rounded-full">
+                    {{ currentNode.elbNum }}
+                  </Tag>
+                </span>
+              </template>
               <div class="p-4 overflow-hidden">
-                <a-space v-if="isLeaf && !showElbBindTranferIf && !showElbUnBindTranferIf">
-                  <a-button type="primary" @click="showElbBindTranfer" v-auth="'POST:/api/stree/bindElbToStreeNode'">打开
-                    ELB
-                    资源绑定</a-button>
-                  <a-button type="primary" danger @click="showElbUnBindTranfer"
-                    v-auth="'POST:/api/stree/unBindElbToStreeNode'">打开 ELB 资源解绑</a-button>
+                <!-- 顶部操作栏 -->
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-zinc-800">
+                  <a-space v-if="isLeaf">
+                    <a-button type="primary" preIcon="ant-design:link-outlined" @click="showElbBindTranfer"
+                      v-auth="'POST:/api/stree/bindElbToStreeNode'">
+                      关联 ELB 资源
+                    </a-button>
+                    <a-button danger preIcon="ant-design:disconnect-outlined" @click="showElbUnBindTranfer"
+                      v-auth="'POST:/api/stree/unBindElbToStreeNode'">
+                      批量解绑
+                    </a-button>
+                  </a-space>
+                  <div v-else class="text-gray-400 flex items-center text-sm">
+                    <info-circle-outlined class="mr-1.5 text-amber-500" />请在左侧服务树中选择【叶子节点】进行资产管理
+                  </div>
 
-                </a-space>
-                <div v-else-if="!isLeaf && !showElbBindTranferIf && !showElbUnBindTranferIf" class="text-gray-400 p-4">
-                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
+                  <div v-if="isLeaf" class="text-xs text-gray-500 dark:text-gray-400">
+                    当前节点已绑定 <strong class="text-orange-600 dark:text-orange-400 text-sm font-semibold">{{
+                      currentNode.elbNum ||
+                      0 }}</strong> 个负载均衡
+                  </div>
                 </div>
 
-                <a-transfer v-if="showElbBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="elbListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="elbBindTargetKeys" @change="elbBindHandleChange" @search="elbBindHandleSelectChange"
-                  :list-style="{ width: '550px', height: '450px' }" />
-                <a-transfer v-if="showElbUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="elbUnBindListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="elbUnBindTargetKeys" @change="elbUnBindHandleChange"
-                  @search="elbUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                <a-divider v-if="showElbBindTranferIf || showElbUnBindTranferIf" />
-                <a-space v-if="showElbBindTranferIf"><a-button type="primary"
-                    @click="sendElbBind">确认绑定</a-button><a-button @click="closeElbBindTranfer">取消</a-button></a-space>
-                <a-space v-if="showElbUnBindTranferIf"><a-button type="primary" danger
-                    @click="sendElbUnBind">确认解绑</a-button><a-button
-                    @click="closeElbUnBindTranfer">取消</a-button></a-space>
-                <div class="mt-4" v-if="currentNode.id && activeKey === '3'">
+                <!-- 弹窗 1：关联绑定 ELB 资源 (表格多选，告别右箭头) -->
+                <ElbBindModal @register="registerElbBindModal" @success="handleElbBindSuccess" />
+
+                <!-- 弹窗 2：批量解绑 ELB 资源 (表格多选解绑) -->
+                <ElbUnbindModal @register="registerElbUnbindModal" @success="handleElbUnbindSuccess" />
+
+                <!-- 表格主体全高展示 -->
+                <div v-if="currentNode.id && activeKey === '3'">
                   <ElbTable :nodeId="currentNode.id" :refreshKey="elbTableRefreshKey" />
                 </div>
               </div>
             </a-tab-pane>
 
             <a-tab-pane key="4">
-              <template #tab><span><global-outlined /> DNS列表</span></template>
+              <template #tab>
+                <span>
+                  <global-outlined /> DNS列表
+                  <Tag v-if="currentNode.dnsNum" color="cyan"
+                    class="ml-1 px-1.5 py-0 text-xs font-semibold leading-tight rounded-full">
+                    {{ currentNode.dnsNum }}
+                  </Tag>
+                </span>
+              </template>
               <div class="p-4 overflow-hidden">
-                <a-space v-if="isLeaf && !showDnsBindTranferIf && !showDnsUnBindTranferIf">
-                  <a-button type="primary" @click="showDnsBindTranfer" v-auth="'POST:/api/stree/bindDnsToStreeNode'">打开 DNS 资源绑定</a-button>
-                  <a-button type="primary" danger @click="showDnsUnBindTranfer" v-auth="'POST:/api/stree/unBindDnsToStreeNode'">打开 DNS 资源解绑</a-button>
-                </a-space>
-                <div v-else-if="!isLeaf && !showDnsBindTranferIf && !showDnsUnBindTranferIf" class="text-gray-400 p-4">
-                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
+                <!-- 顶部操作栏 -->
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-zinc-800">
+                  <a-space v-if="isLeaf">
+                    <a-button type="primary" preIcon="ant-design:link-outlined" @click="showDnsBindTranfer"
+                      v-auth="'POST:/api/stree/bindDnsToStreeNode'">
+                      关联 DNS 资源
+                    </a-button>
+                    <a-button danger preIcon="ant-design:disconnect-outlined" @click="showDnsUnBindTranfer"
+                      v-auth="'POST:/api/stree/unBindDnsToStreeNode'">
+                      批量解绑
+                    </a-button>
+                  </a-space>
+                  <div v-else class="text-gray-400 flex items-center text-sm">
+                    <info-circle-outlined class="mr-1.5 text-amber-500" />请在左侧服务树中选择【叶子节点】进行资产管理
+                  </div>
+
+                  <div v-if="isLeaf" class="text-xs text-gray-500 dark:text-gray-400">
+                    当前节点已绑定 <strong class="text-cyan-600 dark:text-cyan-400 text-sm font-semibold">{{ currentNode.dnsNum
+                      || 0
+                      }}</strong> 条域名记录
+                  </div>
                 </div>
 
-                <a-transfer v-if="showDnsBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="dnsListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="dnsBindTargetKeys" @change="dnsBindHandleChange" @search="dnsBindHandleSelectChange"
-                  :list-style="{ width: '550px', height: '450px' }" />
-                <a-transfer v-if="showDnsUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="dnsUnBindListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="dnsUnBindTargetKeys" @change="dnsUnBindHandleChange"
-                  @search="dnsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                <a-divider v-if="showDnsBindTranferIf || showDnsUnBindTranferIf" />
-                <a-space v-if="showDnsBindTranferIf">
-                  <a-button type="primary" @click="sendDnsBind">确认绑定</a-button>
-                  <a-button @click="closeDnsBindTranfer">取消</a-button>
-                </a-space>
-                <a-space v-if="showDnsUnBindTranferIf">
-                  <a-button type="primary" danger @click="sendDnsUnBind">确认解绑</a-button>
-                  <a-button @click="closeDnsUnBindTranfer">取消</a-button>
-                </a-space>
-                <div class="mt-4" v-if="currentNode.id && activeKey === '4'">
+                <!-- 弹窗 1：关联绑定 DNS 资源 (表格多选，告别右箭头) -->
+                <DnsBindModal @register="registerDnsBindModal" @success="handleDnsBindSuccess" />
+
+                <!-- 弹窗 2：批量解绑 DNS 资源 (表格多选解绑) -->
+                <DnsUnbindModal @register="registerDnsUnbindModal" @success="handleDnsUnbindSuccess" />
+
+                <!-- 表格主体全高展示 -->
+                <div v-if="currentNode.id && activeKey === '4'">
                   <DnsTable :nodeId="currentNode.id" :refreshKey="dnsTableRefreshKey" />
                 </div>
               </div>
             </a-tab-pane>
 
             <a-tab-pane key="5">
-              <template #tab><span><database-outlined /> RDS列表</span></template>
+              <template #tab>
+                <span>
+                  <database-outlined /> RDS列表
+                  <Tag v-if="currentNode.rdsNum" color="green"
+                    class="ml-1 px-1.5 py-0 text-xs font-semibold leading-tight rounded-full">
+                    {{ currentNode.rdsNum }}
+                  </Tag>
+                </span>
+              </template>
               <div class="p-4 overflow-hidden">
-                <a-space v-if="isLeaf && !showRdsBindTranferIf && !showRdsUnBindTranferIf">
-                  <a-button type="primary" @click="showRdsBindTranfer" v-auth="'POST:/api/stree/bindRdsToStreeNode'">打开
-                    RDS
-                    资源绑定</a-button>
-                  <a-button type="primary" danger @click="showRdsUnBindTranfer"
-                    v-auth="'POST:/api/stree/unBindRdsToStreeNode'">打开 RDS 资源解绑</a-button>
-                </a-space>
-                <div v-else-if="!isLeaf && !showRdsBindTranferIf && !showRdsUnBindTranferIf" class="text-gray-400 p-4">
-                  <info-circle-outlined class="mr-2" />请在服务树中选择一个【叶子节点】来管理资源
+                <!-- 顶部操作栏 -->
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-zinc-800">
+                  <a-space v-if="isLeaf">
+                    <a-button type="primary" preIcon="ant-design:link-outlined" @click="showRdsBindTranfer"
+                      v-auth="'POST:/api/stree/bindRdsToStreeNode'">
+                      关联 RDS 资源
+                    </a-button>
+                    <a-button danger preIcon="ant-design:disconnect-outlined" @click="showRdsUnBindTranfer"
+                      v-auth="'POST:/api/stree/unBindRdsToStreeNode'">
+                      批量解绑
+                    </a-button>
+                  </a-space>
+                  <div v-else class="text-gray-400 flex items-center text-sm">
+                    <info-circle-outlined class="mr-1.5 text-amber-500" />请在左侧服务树中选择【叶子节点】进行资产管理
+                  </div>
+
+                  <div v-if="isLeaf" class="text-xs text-gray-500 dark:text-gray-400">
+                    当前节点已绑定 <strong class="text-green-600 dark:text-green-400 text-sm font-semibold">{{
+                      currentNode.rdsNum || 0
+                      }}</strong> 个数据库实例
+                  </div>
                 </div>
 
-                <a-transfer v-if="showRdsBindTranferIf" :titles="['待绑定', '选中绑定']" :data-source="rdsListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="rdsBindTargetKeys" @change="rdsBindHandleChange" @search="rdsBindHandleSelectChange"
-                  :list-style="{ width: '550px', height: '450px' }" />
-                <a-transfer v-if="showRdsUnBindTranferIf" :titles="['当前已绑定', '选中解绑']" :data-source="rdsUnBindListData"
-                  :render="record => record.title" show-search :filter-option="filterOption"
-                  :target-keys="rdsUnBindTargetKeys" @change="rdsUnBindHandleChange"
-                  @search="rdsUnBindHandleSelectChange" :list-style="{ width: '550px', height: '450px' }" />
-                <a-divider v-if="showRdsBindTranferIf || showRdsUnBindTranferIf" />
+                <!-- 弹窗 1：关联绑定 RDS 资源 (表格多选，告别右箭头) -->
+                <RdsBindModal @register="registerRdsBindModal" @success="handleRdsBindSuccess" />
 
-                <a-space v-if="showRdsBindTranferIf">
-                  <a-button type="primary" @click="sendRdsBind"
-                    auth="POST:/api/stree/bindRdsToStreeNode">确认绑定</a-button>
-                  <a-button @click="closeRdsBindTranfer">取消</a-button>
-                </a-space>
-                <a-space v-if="showRdsUnBindTranferIf">
-                  <a-button type="primary" danger @click="sendRdsUnBind">确认解绑</a-button>
-                  <a-button @click="closeRdsUnBindTranfer">取消</a-button>
-                </a-space>
+                <!-- 弹窗 2：批量解绑 RDS 资源 (表格多选解绑) -->
+                <RdsUnbindModal @register="registerRdsUnbindModal" @success="handleRdsUnbindSuccess" />
 
-                <div class="mt-4" v-if="currentNode.id && activeKey === '5'">
+                <!-- 表格主体全高展示 -->
+                <div v-if="currentNode.id && activeKey === '5'">
                   <RdsTable :nodeId="currentNode.id" :refreshKey="rdsTableRefreshKey" />
                 </div>
               </div>
@@ -315,22 +399,19 @@
     </PageWrapper>
     <TreeNodeModal @register="registerModal" @success="handlerSuccess" />
     <StreeDrawer @register="registerDrawer" @success="handlerSuccess" />
+    <InitStandardNodesModal @register="registerInitModal" @success="handleInitSuccess" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, nextTick } from 'vue';
+import { defineComponent, ref, computed, nextTick, onMounted, onActivated } from 'vue';
 import { PageWrapper } from '@/components/Page';
-import { Row, Col, Tree, Dropdown, Menu, Space, Empty, Tabs, Card, Descriptions, Tag, Transfer, Divider } from 'ant-design-vue';
+import { Row, Col, Tree, Dropdown, Menu, Space, Empty, Tabs, Card, Descriptions, Tag, Transfer, Divider, Radio, Select } from 'ant-design-vue';
 import { CloudServerOutlined, DatabaseOutlined, InfoCircleOutlined, GlobalOutlined } from '@ant-design/icons-vue';
 import Icon from '@/components/Icon/Icon.vue';
 import { usePermission } from '@/hooks/web/usePermission';
 import {
-  deleteStreeNode, getTopStreeNodes, getChildrenStreeNodes,
-  getResourceEcsUnbindList, bindEcsToStreeNode, unBindEcsToStreeNode,
-  getResourceElbUnbindList, bindElbToStreeNode, unBindElbToStreeNode,
-  getResourceRdsUnbindList, bindRdsToStreeNode, unBindRdsToStreeNode,
-  getResourceDnsUnbindList, bindDnsToStreeNode, unBindDnsToStreeNode
+  deleteStreeNode, getTopStreeNodes, getChildrenStreeNodes
 } from '@/api/demo/system';
 import type { TreeItem } from '@/components/Tree';
 import StreeDrawer from './StreeDrawer.vue';
@@ -341,64 +422,50 @@ import EcsVendorChart from './EcsVendorChart.vue';
 import ElbVendorChart from './ElbVendorChart.vue';
 import DnsVendorChart from './DnsVendorChart.vue';
 import RdsVendorChart from './RdsVendorChart.vue';
-import { useModal } from '@/components/Modal';
+import { BasicModal, useModal } from '@/components/Modal';
 import EcsTable from './EcsTable.vue';
 import ElbTable from './ElbTable.vue';
 import DnsTable from './DnsTable.vue';
 import RdsTable from './RdsTable.vue';
+import InitStandardNodesModal from './InitStandardNodesModal.vue';
+import EcsBindModal from './EcsBindModal.vue';
+import EcsUnbindModal from './EcsUnbindModal.vue';
+import ElbBindModal from './ElbBindModal.vue';
+import ElbUnbindModal from './ElbUnbindModal.vue';
+import RdsBindModal from './RdsBindModal.vue';
+import RdsUnbindModal from './RdsUnbindModal.vue';
+import DnsBindModal from './DnsBindModal.vue';
+import DnsUnbindModal from './DnsUnbindModal.vue';
 
 export default defineComponent({
   name: 'DemoTree',
   components: {
     ADirectoryTree: Tree.DirectoryTree, ADropdown: Dropdown, Col, Row,
     AMenu: Menu, AMenuItem: Menu.Item, AEmpty: Empty, ATabs: Tabs, ATabPane: Tabs.TabPane,
-    Card, ADescriptions: Descriptions, ADescriptionsItem: Descriptions.Item, Tag,
-    ATransfer: Transfer, ADivider: Divider, ASpace: Space, PageWrapper,
+    Card, ADescriptions: Descriptions, ADescriptionsItem: Descriptions.Item, Tag, ATag: Tag,
+    ATransfer: Transfer, ADivider: Divider, ASpace: Space, BasicModal, PageWrapper,
+    ARadioGroup: Radio.Group, ARadioButton: Radio.Button, ASelect: Select, ASelectOption: Select.Option,
     Icon, Space, StreeDrawer, DatabaseOutlined, CloudServerOutlined, InfoCircleOutlined, GlobalOutlined,
-    TreeNodeModal, EcsTable, ElbTable, DnsTable, RdsTable, EcsVendorChart, ElbVendorChart, DnsVendorChart, RdsVendorChart
+    TreeNodeModal, EcsTable, ElbTable, DnsTable, RdsTable, EcsVendorChart, ElbVendorChart, DnsVendorChart, RdsVendorChart,
+    InitStandardNodesModal, EcsBindModal, EcsUnbindModal,
+    ElbBindModal, ElbUnbindModal, RdsBindModal, RdsUnbindModal, DnsBindModal, DnsUnbindModal
   },
   setup() {
     const isTreeCollapsed = ref(false);
     const { hasPermission } = usePermission();
-    // ================== ECS / ELB 变量保持不变 ==================
-    const showEcsBindTranferIf = ref(false); const ecsListData = ref<any[]>([]); const ecsBindTargetKeys = ref<string[]>([]); const ecsBindselectedKeys = ref<string[]>([]);
-    const showEcsUnBindTranferIf = ref(false); const ecsUnBindListData = ref<any[]>([]); const ecsUnBindTargetKeys = ref<string[]>([]); const ecsUnBindselectedKeys = ref<string[]>([]);
     const ecsTableRefreshKey = ref(0);
-
-    const showElbBindTranferIf = ref(false); const elbListData = ref<any[]>([]); const elbBindTargetKeys = ref<string[]>([]); const elbBindselectedKeys = ref<string[]>([]);
-    const showElbUnBindTranferIf = ref(false); const elbUnBindListData = ref<any[]>([]); const elbUnBindTargetKeys = ref<string[]>([]); const elbUnBindselectedKeys = ref<string[]>([]);
     const elbTableRefreshKey = ref(0);
-
-    // 🌟 ================== 新增 DNS 相关变量 ==================
-    const showDnsBindTranferIf = ref(false);
-    const dnsListData = ref<any[]>([]);
-    const dnsBindTargetKeys = ref<string[]>([]);
-    const dnsBindselectedKeys = ref<string[]>([]);
-
-    const showDnsUnBindTranferIf = ref(false);
-    const dnsUnBindListData = ref<any[]>([]);
-    const dnsUnBindTargetKeys = ref<string[]>([]);
-    const dnsUnBindselectedKeys = ref<string[]>([]);
-    const dnsTableRefreshKey = ref(0);
-
-    // 🌟 ================== 新增 RDS 相关变量 ==================
-    const showRdsBindTranferIf = ref(false);
-    const rdsListData = ref<any[]>([]);
-    const rdsBindTargetKeys = ref<string[]>([]);
-    const rdsBindselectedKeys = ref<string[]>([]);
-
-    const showRdsUnBindTranferIf = ref(false);
-    const rdsUnBindListData = ref<any[]>([]);
-    const rdsUnBindTargetKeys = ref<string[]>([]);
-    const rdsUnBindselectedKeys = ref<string[]>([]);
     const rdsTableRefreshKey = ref(0);
+    const dnsTableRefreshKey = ref(0);
 
     // ================== 基础状态 ==================
     const activeKey = ref('1');
     const isShow = ref(false);
     const treeData = ref<TreeItem[]>([]);
-    const expandedKeys = ref<string[]>(['0-0', '0-1', '0-2']);
+    const expandedKeys = ref<any[]>([]);
+    const selectedKeys = ref<any[]>([]);
     const [registerModal, { openModal }] = useModal();
+    const [registerInitModal, { openModal: openInitModal }] = useModal();
     const [registerDrawer, { openDrawer }] = useDrawer();
     const { createMessage } = useMessage();
     const currentNode = ref<any>({});
@@ -409,140 +476,96 @@ export default defineComponent({
     const filterOption = (inputValue: string, option: any) => option.title.indexOf(inputValue) > -1;
 
 
-    const ecsBindHandleChange = (nextTargetKeys: string[]) => { ecsBindTargetKeys.value = nextTargetKeys; };
-    const ecsBindHandleSelectChange = (sourceSelectedKeys: string[], targetSelectedKeys: string[]) => { ecsBindselectedKeys.value = [...sourceSelectedKeys, ...targetSelectedKeys]; };
-    const ecsUnBindHandleChange = (nextTargetKeys: string[]) => { ecsUnBindTargetKeys.value = nextTargetKeys; };
-    const ecsUnBindHandleSelectChange = (sourceSelectedKeys: string[], targetSelectedKeys: string[]) => { ecsUnBindselectedKeys.value = [...sourceSelectedKeys, ...targetSelectedKeys]; };
-    const showEcsBindTranfer = () => { if (!currentNode.value.id) return createMessage.warning('请选择节点'); getResourceEcsUnbindList().then(res => { ecsListData.value = res.map(item => ({ ...item, key: String(item.id), title: `${item.title || item.instanceName} [${item.PrivateIpAddress?.[0] || '无IP'}] ${item.account_name}` })); showEcsBindTranferIf.value = true; }); };
-    const showEcsUnBindTranfer = () => { ecsUnBindListData.value = (currentNode.value.bind_ecss || []).map(item => ({ ...item, key: String(item.id), title: `${item.title || item.instanceName} [${item.PrivateIpAddress?.[0] || '无IP'}] ${item.account_name}` })); showEcsUnBindTranferIf.value = true; };
-    const sendEcsBind = async () => { if (!ecsBindTargetKeys.value.length) return; await bindEcsToStreeNode({ node_id: currentNode.value.id, resource_ids: ecsBindTargetKeys.value }); createMessage.success('绑定成功'); closeEcsBindTranfer(); refreshCurrentNode(); ecsTableRefreshKey.value++; };
-    const sendEcsUnBind = async () => { if (!ecsUnBindTargetKeys.value.length) return; await unBindEcsToStreeNode({ node_id: currentNode.value.id, resource_ids: ecsUnBindTargetKeys.value }); createMessage.success('解绑成功'); closeEcsUnBindTranfer(); refreshCurrentNode(); ecsTableRefreshKey.value++; };
-    const closeEcsBindTranfer = () => { showEcsBindTranferIf.value = false; ecsBindTargetKeys.value = []; ecsBindselectedKeys.value = []; };
-    const closeEcsUnBindTranfer = () => { showEcsUnBindTranferIf.value = false; ecsUnBindTargetKeys.value = []; ecsUnBindselectedKeys.value = []; };
 
-    const elbBindHandleChange = (nextTargetKeys: string[]) => { elbBindTargetKeys.value = nextTargetKeys; };
-    const elbBindHandleSelectChange = (s: string[], t: string[]) => { elbBindselectedKeys.value = [...s, ...t]; };
-    const elbUnBindHandleChange = (nextTargetKeys: string[]) => { elbUnBindTargetKeys.value = nextTargetKeys; };
-    const elbUnBindHandleSelectChange = (s: string[], t: string[]) => { elbUnBindselectedKeys.value = [...s, ...t]; };
-    const showElbBindTranfer = () => { if (!currentNode.value.id) return createMessage.warning('请选择节点'); getResourceElbUnbindList().then(res => { elbListData.value = res.map(item => ({ ...item, key: String(item.id), title: `${item.loadBalancerName || item.id} [${item.PublicIpAddresses?.[0] || '内网'}] ${item.account_name}` })); showElbBindTranferIf.value = true; }); };
-    const showElbUnBindTranfer = () => { elbUnBindListData.value = (currentNode.value.bind_elbs || []).map(item => ({ ...item, key: String(item.id), title: `${item.loadBalancerName || item.id} [${item.PublicIpAddresses?.[0] || '内网'}] ${item.account_name}` })); showElbUnBindTranferIf.value = true; };
-    const closeElbBindTranfer = () => { showElbBindTranferIf.value = false; elbBindTargetKeys.value = []; };
-    const closeElbUnBindTranfer = () => { showElbUnBindTranferIf.value = false; elbUnBindTargetKeys.value = []; };
-    const sendElbBind = async () => { if (!elbBindTargetKeys.value.length) return; await bindElbToStreeNode({ node_id: currentNode.value.id, resource_ids: elbBindTargetKeys.value }); createMessage.success('绑定成功'); closeElbBindTranfer(); refreshCurrentNode(); elbTableRefreshKey.value++; };
-    const sendElbUnBind = async () => { if (!elbUnBindTargetKeys.value.length) return; await unBindElbToStreeNode({ node_id: currentNode.value.id, resource_ids: elbUnBindTargetKeys.value }); createMessage.success('解绑成功'); closeElbUnBindTranfer(); refreshCurrentNode(); elbTableRefreshKey.value++; };
+
+    // ECS
+    const [registerEcsBindModal, { openModal: openEcsBindModal }] = useModal();
+    const [registerEcsUnbindModal, { openModal: openEcsUnbindModal }] = useModal();
+    const showEcsBindTranfer = () => {
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openEcsBindModal(true, currentNode.value);
+    };
+    const showEcsUnBindTranfer = () => {
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openEcsUnbindModal(true, currentNode.value);
+    };
+    const handleEcsBindSuccess = () => {
+      refreshCurrentNode();
+      ecsTableRefreshKey.value++;
+    };
+    const handleEcsUnbindSuccess = () => {
+      refreshCurrentNode();
+      ecsTableRefreshKey.value++;
+    };
+
+    // ELB
+    const [registerElbBindModal, { openModal: openElbBindModal }] = useModal();
+    const [registerElbUnbindModal, { openModal: openElbUnbindModal }] = useModal();
+    const showElbBindTranfer = () => {
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openElbBindModal(true, currentNode.value);
+    };
+    const showElbUnBindTranfer = () => {
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openElbUnbindModal(true, currentNode.value);
+    };
+    const handleElbBindSuccess = () => {
+      refreshCurrentNode();
+      elbTableRefreshKey.value++;
+    };
+    const handleElbUnbindSuccess = () => {
+      refreshCurrentNode();
+      elbTableRefreshKey.value++;
+    };
+
 
     // 🌟 ================== 新增 RDS 交互逻辑 ==================
-    const rdsBindHandleChange = (nextTargetKeys: string[]) => { rdsBindTargetKeys.value = nextTargetKeys; };
-    const rdsBindHandleSelectChange = (s: string[], t: string[]) => { rdsBindselectedKeys.value = [...s, ...t]; };
-    const rdsUnBindHandleChange = (nextTargetKeys: string[]) => { rdsUnBindTargetKeys.value = nextTargetKeys; };
-    const rdsUnBindHandleSelectChange = (s: string[], t: string[]) => { rdsUnBindselectedKeys.value = [...s, ...t]; };
-
+    const [registerRdsBindModal, { openModal: openRdsBindModal }] = useModal();
+    const [registerRdsUnbindModal, { openModal: openRdsUnbindModal }] = useModal();
     const showRdsBindTranfer = () => {
-      if (!currentNode.value.id) return createMessage.warning('请先选择一个节点');
-      getResourceRdsUnbindList().then((res) => {
-        rdsListData.value = res.map(item => ({
-          ...item,
-          key: String(item.id),
-          title: `${item.name || item.DBInstanceId} [${item.engine}] ${item.account_name}`
-        }));
-      });
-      showRdsBindTranferIf.value = true;
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openRdsBindModal(true, currentNode.value);
     };
-
     const showRdsUnBindTranfer = () => {
-      // 获取当前节点关联的 RDS 数据
-      const rawData = currentNode.value.bind_rdss || [];
-      rdsUnBindListData.value = rawData.map(item => ({
-        ...item,
-        key: String(item.id),
-        title: `${item.name || item.DBInstanceId} [${item.engine}] ${item.account_name}`
-      }));
-      showRdsUnBindTranferIf.value = true;
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openRdsUnbindModal(true, currentNode.value);
+    };
+    const handleRdsBindSuccess = () => {
+      refreshCurrentNode();
+      rdsTableRefreshKey.value++;
+    };
+    const handleRdsUnbindSuccess = () => {
+      refreshCurrentNode();
+      rdsTableRefreshKey.value++;
     };
 
-    const closeRdsBindTranfer = () => { showRdsBindTranferIf.value = false; rdsBindTargetKeys.value = []; rdsBindselectedKeys.value = []; };
-    const closeRdsUnBindTranfer = () => { showRdsUnBindTranferIf.value = false; rdsUnBindTargetKeys.value = []; rdsUnBindselectedKeys.value = []; };
-
-    const sendRdsBind = async () => {
-      if (rdsBindTargetKeys.value.length === 0) return createMessage.warning('请至少选择一个 RDS 资源进行绑定');
-      try {
-        await bindRdsToStreeNode({ node_id: currentNode.value.id, resource_ids: rdsBindTargetKeys.value });
-        createMessage.success(`已成功绑定 ${rdsBindTargetKeys.value.length} 个 RDS`);
-        closeRdsBindTranfer();
-        await refreshCurrentNode();
-        rdsTableRefreshKey.value += 1;
-      } catch (error) { }
-    };
-
-    const sendRdsUnBind = async () => {
-      if (rdsUnBindTargetKeys.value.length === 0) return createMessage.warning('请至少选择一个 RDS 资源进行解绑');
-      try {
-        await unBindRdsToStreeNode({ node_id: currentNode.value.id, resource_ids: rdsUnBindTargetKeys.value });
-        createMessage.success(`已成功解绑 ${rdsUnBindTargetKeys.value.length} 个 RDS`);
-        closeRdsUnBindTranfer();
-        await refreshCurrentNode();
-        rdsTableRefreshKey.value += 1;
-      } catch (error) { }
-    };
 
     // 🌟 ================== 新增 DNS 交互逻辑 ==================
-    const dnsBindHandleChange = (nextTargetKeys: string[]) => { dnsBindTargetKeys.value = nextTargetKeys; };
-    const dnsBindHandleSelectChange = (s: string[], t: string[]) => { dnsBindselectedKeys.value = [...s, ...t]; };
-    const dnsUnBindHandleChange = (nextTargetKeys: string[]) => { dnsUnBindTargetKeys.value = nextTargetKeys; };
-    const dnsUnBindHandleSelectChange = (s: string[], t: string[]) => { dnsUnBindselectedKeys.value = [...s, ...t]; };
-
+    const [registerDnsBindModal, { openModal: openDnsBindModal }] = useModal();
+    const [registerDnsUnbindModal, { openModal: openDnsUnbindModal }] = useModal();
     const showDnsBindTranfer = () => {
-      if (!currentNode.value.id) return createMessage.warning('请先选择一个节点');
-      getResourceDnsUnbindList().then((res: any) => {
-        const list = Array.isArray(res) ? res : (res?.data || []);
-        dnsListData.value = list.map((item: any) => {
-          const full = (item.name === '@' || !item.name) ? item.domain : `${item.name}.${item.domain}`;
-          return {
-            ...item,
-            key: String(item.id),
-            title: `${full} [${item.type} -> ${item.value}] (${item.vendor})`
-          };
-        });
-      });
-      showDnsBindTranferIf.value = true;
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openDnsBindModal(true, currentNode.value);
     };
-
     const showDnsUnBindTranfer = () => {
-      const rawData = currentNode.value.bind_dnss || [];
-      dnsUnBindListData.value = rawData.map((item: any) => {
-        const full = (item.name === '@' || !item.name) ? item.domain : `${item.name}.${item.domain}`;
-        return {
-          ...item,
-          key: String(item.id),
-          title: `${full} [${item.type} -> ${item.value}] (${item.vendor})`
-        };
-      });
-      showDnsUnBindTranferIf.value = true;
+      (document.activeElement as HTMLElement)?.blur();
+      if (!currentNode.value.id) return createMessage.warning('请选择节点');
+      openDnsUnbindModal(true, currentNode.value);
     };
-
-    const closeDnsBindTranfer = () => { showDnsBindTranferIf.value = false; dnsBindTargetKeys.value = []; dnsBindselectedKeys.value = []; };
-    const closeDnsUnBindTranfer = () => { showDnsUnBindTranferIf.value = false; dnsUnBindTargetKeys.value = []; dnsUnBindselectedKeys.value = []; };
-
-    const sendDnsBind = async () => {
-      if (dnsBindTargetKeys.value.length === 0) return createMessage.warning('请至少选择一个 DNS 资源进行绑定');
-      try {
-        await bindDnsToStreeNode({ node_id: currentNode.value.id, resource_ids: dnsBindTargetKeys.value });
-        createMessage.success(`已成功绑定 ${dnsBindTargetKeys.value.length} 个域名`);
-        closeDnsBindTranfer();
-        await refreshCurrentNode();
-        dnsTableRefreshKey.value += 1;
-      } catch (error) { }
+    const handleDnsBindSuccess = () => {
+      refreshCurrentNode();
+      dnsTableRefreshKey.value++;
     };
-
-    const sendDnsUnBind = async () => {
-      if (dnsUnBindTargetKeys.value.length === 0) return createMessage.warning('请至少选择一个 DNS 资源进行解绑');
-      try {
-        await unBindDnsToStreeNode({ node_id: currentNode.value.id, resource_ids: dnsUnBindTargetKeys.value });
-        createMessage.success(`已成功解绑 ${dnsUnBindTargetKeys.value.length} 个域名`);
-        closeDnsUnBindTranfer();
-        await refreshCurrentNode();
-        dnsTableRefreshKey.value += 1;
-      } catch (error) { }
+    const handleDnsUnbindSuccess = () => {
+      refreshCurrentNode();
+      dnsTableRefreshKey.value++;
     };
 
     // ================== 树节点控制逻辑 ==================
@@ -568,16 +591,51 @@ export default defineComponent({
       }
     };
 
+    const loadFirstNodeAndExpand = async (nodes: any[]) => {
+      if (Array.isArray(nodes) && nodes.length > 0) {
+        const firstNode = nodes[0];
+        if (!firstNode.isLeaf && (!firstNode.children || firstNode.children.length === 0)) {
+          try {
+            const childRes = await getChildrenStreeNodes(firstNode.id);
+            firstNode.children = Array.isArray(childRes) ? childRes : (childRes?.data || []);
+          } catch (e) {
+            console.error('加载子节点失败', e);
+          }
+        }
+        expandedKeys.value = [firstNode.id];
+        if (!currentNode.value.id) {
+          selectedKeys.value = [firstNode.id];
+          currentNode.value = firstNode;
+          thisNodePath.value = firstNode.nodePath || firstNode.title;
+        }
+      }
+    };
+
     async function reload() {
       try {
         const res = await getTopStreeNodes();
-        isShow.value = false; treeData.value = res;
-        await nextTick(); isShow.value = true;
-      } catch (error) { createMessage.error('获取服务树数据失败'); }
+        const nodes = Array.isArray(res) ? res : (res?.data || []);
+        await loadFirstNodeAndExpand(nodes);
+        isShow.value = false;
+        treeData.value = nodes;
+        await nextTick();
+        isShow.value = true;
+      } catch (error) {
+        createMessage.error('获取服务树数据失败');
+      }
     }
 
     async function addTopNode(): Promise<void> { openDrawer(true, { level: 1, pid: 0 }); };
-    getTopStreeNodes().then((res) => { treeData.value = res.data || res; isShow.value = true; });
+
+    onMounted(() => {
+      reload();
+    });
+
+    onActivated(() => {
+      if (treeData.value.length === 0) {
+        reload();
+      }
+    });
 
     async function handlerSuccess() {
       await reload();
@@ -589,19 +647,16 @@ export default defineComponent({
       }
     }
 
-    const onSelect = (selectedKeys: any[], info: any) => {
-      if (selectedKeys.length > 0) {
+    const onSelect = (keys: any[], info: any) => {
+      selectedKeys.value = keys;
+      if (keys.length > 0) {
         const nodeData = info.node.dataRef;
         thisNodePath.value = nodeData.nodePath || nodeData.title;
         currentNode.value = nodeData;
       } else {
         thisNodePath.value = '请选择一个节点'; currentNode.value = {};
       }
-      // 切换节点时关掉所有的弹窗
-      closeEcsBindTranfer(); closeEcsUnBindTranfer();
-      closeElbBindTranfer(); closeElbUnBindTranfer();
-      closeRdsBindTranfer(); closeRdsUnBindTranfer(); // 🌟 关掉 RDS 弹窗
-      closeDnsBindTranfer(); closeDnsUnBindTranfer(); // 🌟 关掉 DNS 弹窗
+
     };
 
     const onLoadData = (treeNode: any) => {
@@ -624,30 +679,63 @@ export default defineComponent({
         }).catch(() => createMessage.error(`删除失败`));
       }
       if (menuKey === '3') { openModal(true, { ...(currentNode.value.id === id ? currentNode.value : { id, title: treeKey, level }) }); }
+      if (menuKey === '4') {
+        if (isLeaf) return createMessage.warning("叶子节点无法初始化标准架构，请选择父节点");
+        const nodeOpsAdmins = (currentNode.value.id === id ? currentNode.value.ops_admin_users : []) || [];
+        openInitModal(true, { id, title: treeKey, level, ops_admin_users: nodeOpsAdmins });
+      }
+    };
+
+    const handleOpenInitModal = () => {
+      if (!currentNode.value.id) return createMessage.warning('请先在左侧选择一个项目节点');
+      if (currentNode.value.isLeaf) return createMessage.warning('当前节点为叶子节点，只能在非叶子节点(如项目/服务组)上批量初始化');
+      openInitModal(true, {
+        id: currentNode.value.id,
+        title: currentNode.value.title,
+        level: currentNode.value.level,
+        ops_admin_users: currentNode.value.ops_admin_users || []
+      });
+    };
+
+    const handleInitSuccess = async ({ parentId }: any) => {
+      await reload();
+      if (parentId) {
+        if (!expandedKeys.value.includes(parentId)) {
+          expandedKeys.value = [...expandedKeys.value, parentId];
+        }
+        try {
+          const childRes = await getChildrenStreeNodes(parentId);
+          const childList = Array.isArray(childRes) ? childRes : (childRes?.data || []);
+          updateNodeInTree(treeData.value, parentId, { children: childList });
+        } catch (e) {
+          console.error(e);
+        }
+      }
     };
 
     return {
-      isShow, treeData, onContextMenuClick, expandedKeys, registerDrawer, addTopNode, handlerSuccess, reload, onLoadData, onSelect, thisNodePath, currentNode, activeKey, registerModal, showNodeModal, filterOption, isLeaf: isCurrentNodeLeaf, isTreeCollapsed,
+      isShow, treeData, onContextMenuClick, expandedKeys, selectedKeys, registerDrawer, addTopNode, handlerSuccess, reload, onLoadData, onSelect, thisNodePath, currentNode, activeKey, registerModal, showNodeModal, filterOption, isLeaf: isCurrentNodeLeaf, isTreeCollapsed,
+      registerInitModal, handleOpenInitModal, handleInitSuccess,
 
       // ECS
-      showEcsBindTranfer, showEcsUnBindTranfer, closeEcsBindTranfer, closeEcsUnBindTranfer, showEcsBindTranferIf, showEcsUnBindTranferIf, ecsListData, ecsUnBindListData, ecsBindTargetKeys, ecsBindselectedKeys, ecsUnBindTargetKeys, ecsUnBindselectedKeys, ecsBindHandleChange, ecsUnBindHandleChange, ecsBindHandleSelectChange, ecsUnBindHandleSelectChange, sendEcsBind, sendEcsUnBind, ecsTableRefreshKey,
+      registerEcsBindModal, handleEcsBindSuccess,
+      registerEcsUnbindModal, handleEcsUnbindSuccess,
+      showEcsBindTranfer, showEcsUnBindTranfer, ecsTableRefreshKey,
 
       // ELB
-      showElbBindTranfer, showElbUnBindTranfer, closeElbBindTranfer, closeElbUnBindTranfer, showElbBindTranferIf, showElbUnBindTranferIf, elbListData, elbUnBindListData, elbBindTargetKeys, elbBindselectedKeys, elbUnBindTargetKeys, elbUnBindselectedKeys, elbBindHandleChange, elbUnBindHandleChange, elbBindHandleSelectChange, elbUnBindHandleSelectChange, sendElbBind, sendElbUnBind, elbTableRefreshKey,
+      registerElbBindModal, handleElbBindSuccess,
+      registerElbUnbindModal, handleElbUnbindSuccess,
+      showElbBindTranfer, showElbUnBindTranfer, elbTableRefreshKey,
 
       // 🌟 RDS
-      showRdsBindTranfer, showRdsUnBindTranfer, closeRdsBindTranfer, closeRdsUnBindTranfer,
-      showRdsBindTranferIf, showRdsUnBindTranferIf, rdsListData, rdsUnBindListData,
-      rdsBindTargetKeys, rdsBindselectedKeys, rdsUnBindTargetKeys, rdsUnBindselectedKeys,
-      rdsBindHandleChange, rdsUnBindHandleChange, rdsBindHandleSelectChange, rdsUnBindHandleSelectChange,
-      sendRdsBind, sendRdsUnBind, rdsTableRefreshKey,
+      registerRdsBindModal, handleRdsBindSuccess,
+      registerRdsUnbindModal, handleRdsUnbindSuccess,
+      showRdsBindTranfer, showRdsUnBindTranfer, rdsTableRefreshKey,
 
       // 🌟 DNS
-      showDnsBindTranfer, showDnsUnBindTranfer, closeDnsBindTranfer, closeDnsUnBindTranfer,
-      showDnsBindTranferIf, showDnsUnBindTranferIf, dnsListData, dnsUnBindListData,
-      dnsBindTargetKeys, dnsBindselectedKeys, dnsUnBindTargetKeys, dnsUnBindselectedKeys,
-      dnsBindHandleChange, dnsUnBindHandleChange, dnsBindHandleSelectChange, dnsUnBindHandleSelectChange,
-      sendDnsBind, sendDnsUnBind, dnsTableRefreshKey,
+      registerDnsBindModal, handleDnsBindSuccess,
+      registerDnsUnbindModal, handleDnsUnbindSuccess,
+      showDnsBindTranfer, showDnsUnBindTranfer, dnsTableRefreshKey,
 
       hasPermission
     };
@@ -671,5 +759,28 @@ export default defineComponent({
 :deep(.ant-tree-title) {
   flex: 1;
   width: 0;
+}
+
+:deep(.dns-transfer .ant-transfer-list-content-item) {
+  height: auto !important;
+  min-height: 46px !important;
+  padding: 6px 12px !important;
+  border-bottom: 1px dashed rgba(128, 128, 128, 0.12);
+  transition: all 0.2s ease;
+}
+
+:deep(.dns-transfer .ant-transfer-list-content-item:hover) {
+  background-color: rgba(24, 144, 255, 0.07) !important;
+}
+
+:deep(.dns-transfer .ant-transfer-list-content-item-text) {
+  overflow: hidden;
+  width: 100%;
+}
+
+:deep(.ant-btn-dangerous:focus),
+:deep(.ant-btn-dangerous:focus-visible) {
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
 }
 </style>

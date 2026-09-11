@@ -20,7 +20,7 @@ enum Api {
   createAccount = "/api/system/createAccount",
   updateAccount = "/api/system/updateAccount",
   deleteAccount = "/api/system/deleteAccount",
-  setAccountStatus= "/api/system/setAccountStatus",
+  setAccountStatus = "/api/system/setAccountStatus",
   changePassword = "/api/system/changePassword",
   getAllUserAndRoles = "/api/system/getAllUserAndRoles",
 
@@ -41,13 +41,13 @@ enum Api {
   RolePageList = '/api/system/getRoleListAll',
   GetAllRoleList = '/api/system/getRoleListAll',
 
-  
+
   getApiList = "/api/system/getApiList",
   getApiListAll = "/api/system/getApiListAll",
   createApi = "/api/system/createApi",
   updateApi = "/api/system/updateApi",
   deleteApi = "/api/system/deleteApi",
-  
+
   StreeNodeList = '/api/stree/getStreeNodeList',
   getTopStreeNodes = '/api/stree/getTopStreeNodes',
   createStreeNode = '/api/stree/createStreeNode',
@@ -60,7 +60,7 @@ enum Api {
   getResourceEcsUnbindList = "/api/stree/getResourceEcsUnbindList",
   bindEcsToStreeNode = "/api/stree/bindEcsToStreeNode",
   unBindEcsToStreeNode = "/api/stree/unBindEcsToStreeNode",
-  getResourceEcsList= "/api/stree/getResourceEcsList",
+  getResourceEcsList = "/api/stree/getResourceEcsList",
 
   getResourceElbUnbindList = "/api/stree/getResourceElbUnbindList",
   bindElbToStreeNode = "/api/stree/bindElbToStreeNode",
@@ -73,7 +73,7 @@ enum Api {
   getResourceDnsUnbindList = "/api/stree/getResourceDnsUnbindList",
   bindDnsToStreeNode = "/api/stree/bindDnsToStreeNode",
   unBindDnsToStreeNode = "/api/stree/unBindDnsToStreeNode",
-  
+
   fetchResourceByNode = "/api/stree/fetchResourceByNode",
 
   getProcessList = "/api/workorder/getProcessList",
@@ -93,26 +93,26 @@ enum Api {
   createWorkOrderTemplate = "/api/workorder/createWorkOrderTemplate",
   updateWorkOrderTemplate = "/api/workorder/updateWorkOrderTemplate",
   deleteWorkOrderTemplate = "/api/workorder/deleteWorkOrderTemplate",
-  
+
   getWorkOrderInstanceList = "/api/workorder/getWorkOrderInstanceList",
   createWorkOrderInstance = "/api/workorder/createWorkOrderInstance",
   updateWorkOrderInstance = "/api/workorder/updateWorkOrderInstance",
   deleteWorkOrderInstance = "/api/workorder/deleteWorkOrderInstance",
-  approvalWorkOrderInstance ="/api/workorder/approvalWorkOrderInstance",
+  approvalWorkOrderInstance = "/api/workorder/approvalWorkOrderInstance",
   actionWorkOrderInstance = "/api/workorder/actionWorkOrderInstance",
   getWorkOrderInstanceDetail = "/api/workorder/getWorkOrderInstanceDetail",
-  commentWorkOrderInstance ="/api/workorder/commentWorkOrderInstance",
+  commentWorkOrderInstance = "/api/workorder/commentWorkOrderInstance",
   getWorkOrderNotificationList = "/api/workorder/getNotificationList",
 
 
   getJobExecScriptList = "/api/jobexec/getJobExecScriptList",
   getJobExecScriptSelect = "/api/jobexec/getJobExecScriptSelect",
-  getJobExecScriptOne= "/api/jobexec/getJobExecScriptOne",
+  getJobExecScriptOne = "/api/jobexec/getJobExecScriptOne",
   createJobExecScript = "/api/jobexec/createJobExecScript",
   updateJobExecScript = "/api/jobexec/updateJobExecScript",
   deleteJobExecScript = "/api/jobexec/deleteJobExecScript",
 
-  
+
   getJobExecTaskList = "/api/jobexec/getJobExecTaskList",
   createJobExecTask = "/api/jobexec/createJobExecTask",
   updateJobExecTask = "/api/jobexec/updateJobExecTask",
@@ -158,36 +158,36 @@ enum Api {
   getMonitorAlertManagerYamlOne = "/api/monitor/getMonitorAlertManagerYamlOne",
   // alertm发送组
   getMonitorAlertManagerSendGroupList = "/api/monitor/getMonitorAlertManagerSendGroupList",
-  createMonitorAlertManagerSendGroup ="/api/monitor/createMonitorAlertManagerSendGroup",
+  createMonitorAlertManagerSendGroup = "/api/monitor/createMonitorAlertManagerSendGroup",
   updateMonitorAlertManagerSendGroup = "/api/monitor/updateMonitorAlertManagerSendGroup",
   deleteMonitorAlertManagerSendGroup = "/api/monitor/deleteMonitorAlertManagerSendGroup",
   setAlertManagerSendGroupStatus = "/api/monitor/setAlertManagerSendGroupStatus",
   // prom告警规则
-  getMonitorPromAlertRuleList= "/api/monitor/getMonitorPromAlertRuleList",
-  createMonitorPromAlertRule= "/api/monitor/createMonitorPromAlertRule",
-  updateMonitorPromAlertRule= "/api/monitor/updateMonitorPromAlertRule",
-  deleteMonitorPromAlertRule= "/api/monitor/deleteMonitorPromAlertRule",
-  deleteMonitorPromAlertRuleBatch= "/api/monitor/deleteMonitorPromAlertRuleBatch",
-  setMonitorPromAlertRuleStatus= "/api/monitor/setMonitorPromAlertRuleStatus",
+  getMonitorPromAlertRuleList = "/api/monitor/getMonitorPromAlertRuleList",
+  createMonitorPromAlertRule = "/api/monitor/createMonitorPromAlertRule",
+  updateMonitorPromAlertRule = "/api/monitor/updateMonitorPromAlertRule",
+  deleteMonitorPromAlertRule = "/api/monitor/deleteMonitorPromAlertRule",
+  deleteMonitorPromAlertRuleBatch = "/api/monitor/deleteMonitorPromAlertRuleBatch",
+  setMonitorPromAlertRuleStatus = "/api/monitor/setMonitorPromAlertRuleStatus",
   setMonitorPromAlertRuleStatusBatch = "/api/monitor/setMonitorPromAlertRuleStatusBatch",
-  promqlExprCheck= "/api/monitor/promqlExprCheck",
+  promqlExprCheck = "/api/monitor/promqlExprCheck",
   // prom聚合规则
-  getMonitorPromRecordRuleList= "/api/monitor/getMonitorPromRecordRuleList",
-  createMonitorPromRecordRule= "/api/monitor/createMonitorPromRecordRule",
-  updateMonitorPromRecordRule= "/api/monitor/updateMonitorPromRecordRule",
-  deleteMonitorPromRecordRule= "/api/monitor/deleteMonitorPromRecordRule",
-  deleteMonitorPromRecordRuleBatch= "/api/monitor/deleteMonitorPromRecordRuleBatch",
-  setMonitorPromRecordRuleStatus= "/api/monitor/setMonitorPromRecordRuleStatus",
+  getMonitorPromRecordRuleList = "/api/monitor/getMonitorPromRecordRuleList",
+  createMonitorPromRecordRule = "/api/monitor/createMonitorPromRecordRule",
+  updateMonitorPromRecordRule = "/api/monitor/updateMonitorPromRecordRule",
+  deleteMonitorPromRecordRule = "/api/monitor/deleteMonitorPromRecordRule",
+  deleteMonitorPromRecordRuleBatch = "/api/monitor/deleteMonitorPromRecordRuleBatch",
+  setMonitorPromRecordRuleStatus = "/api/monitor/setMonitorPromRecordRuleStatus",
   setMonitorPromRecordRuleStatusBatch = "/api/monitor/setMonitorPromRecordRuleStatusBatch",
-  recordRulePromqlExprCheck= "/api/monitor/recordRulePromqlExprCheck",
+  recordRulePromqlExprCheck = "/api/monitor/recordRulePromqlExprCheck",
 
   // alerm告警事件
-  getMonitorAlertManagerEventList= "/api/monitor/getMonitorAlertManagerEventList",
-  alertManagerEventSilence= "/api/monitor/alertManagerEventSilence",
-  alertManagerEventUnSilence= "/api/monitor/alertManagerEventUnSilence",
+  getMonitorAlertManagerEventList = "/api/monitor/getMonitorAlertManagerEventList",
+  alertManagerEventSilence = "/api/monitor/alertManagerEventSilence",
+  alertManagerEventUnSilence = "/api/monitor/alertManagerEventUnSilence",
   alertManagerEventBatchSilence = '/api/monitor/alertManagerEventBatchSilence',
   alertManagerEventBatchUnSilence = '/api/monitor/alertManagerEventBatchUnSilence',
-  alertManagerEventReLing= "/api/monitor/alertManagerEventReLing",
+  alertManagerEventReLing = "/api/monitor/alertManagerEventReLing",
 
   // k8s集群
   getK8sClusterList = "/api/k8s/getK8sClusterList",
@@ -314,14 +314,14 @@ enum Api {
 export const getAccountList = (params: AccountParams) =>
   defHttp.get<AccountListGetResultModel>({ url: Api.AccountList, params });
 
-export const createAccount = (data) => 
+export const createAccount = (data) =>
   defHttp.post({ url: Api.createAccount, data });
 
-export const updateAccount = (data) => 
+export const updateAccount = (data) =>
   defHttp.post({ url: Api.updateAccount, data });
 
 export const deleteAccount = (id: number) =>
-  defHttp.delete({ url: Api.deleteAccount+"/"+id});
+  defHttp.delete({ url: Api.deleteAccount + "/" + id });
 
 export const setAccountStatus = (id: number, enable: number) =>
   defHttp.post({ url: Api.setAccountStatus, params: { id, enable } });
@@ -341,14 +341,14 @@ export const getMenuList = (params?: MenuParams) =>
 export const getMenuListAll = (params?: MenuParams) =>
   defHttp.get<MenuListGetResultModel>({ url: Api.MenuListAll, params });
 
-export const createMenu = (data) => 
+export const createMenu = (data) =>
   defHttp.post({ url: Api.createMenu, data });
 
-export const updateMenu = (data) => 
+export const updateMenu = (data) =>
   defHttp.post({ url: Api.updateMenu, data });
 
-export const deleteMenu = (id: number) => 
-  defHttp.delete({ url: Api.deleteMenu+"/"+id });
+export const deleteMenu = (id: number) =>
+  defHttp.delete({ url: Api.deleteMenu + "/" + id });
 
 export const getRoleListByPage = (params?: RolePageParams) =>
   defHttp.get<RolePageListGetResultModel>({ url: Api.RolePageList, params });
@@ -359,14 +359,14 @@ export const getAllRoleList = (params?: RoleParams) =>
 export const setRoleStatus = (id: number, status: string) =>
   defHttp.post({ url: Api.setRoleStatus, params: { id, status } });
 
-export const createRole = (data) => 
+export const createRole = (data) =>
   defHttp.post({ url: Api.createRole, data });
 
-export const updateRole = (data) => 
+export const updateRole = (data) =>
   defHttp.post({ url: Api.updateRole, data });
 
 export const deleteRole = (id: number) =>
-  defHttp.delete({ url: Api.deleteRole+"/"+id });
+  defHttp.delete({ url: Api.deleteRole + "/" + id });
 
 export const isAccountExist = (account?: string) =>
   defHttp.post({ url: Api.IsAccountExist, params: { account } }, { errorMessageMode: 'none' });
@@ -379,14 +379,14 @@ export const getApiList = (params?: MenuParams) =>
 export const getApiListAll = (params?: MenuParams) =>
   defHttp.get({ url: Api.getApiListAll, params });
 
-export const createApi = (data) => 
+export const createApi = (data) =>
   defHttp.post({ url: Api.createApi, data });
 
-export const updateApi = (data) => 
+export const updateApi = (data) =>
   defHttp.post({ url: Api.updateApi, data });
 
-export const deleteApi = (id: number) => 
-  defHttp.delete({ url: Api.deleteApi+"/"+id });
+export const deleteApi = (id: number) =>
+  defHttp.delete({ url: Api.deleteApi + "/" + id });
 
 
 
@@ -402,11 +402,11 @@ export const createStreeNode = (data) =>
 export const updateStreeNode = (data) =>
   defHttp.post({ url: Api.updateStreeNode, data });
 
-export const deleteStreeNode = (id) => 
-  defHttp.delete({ url: Api.deleteStreeNode+"/"+id });
+export const deleteStreeNode = (id) =>
+  defHttp.delete({ url: Api.deleteStreeNode + "/" + id });
 
-export const getChildrenStreeNodes = (id) => 
-  defHttp.get({ url: Api.getChildrenStreeNodes+"/"+id });
+export const getChildrenStreeNodes = (id) =>
+  defHttp.get({ url: Api.getChildrenStreeNodes + "/" + id });
 
 export const getLeafStreeNodes = (params?: any) =>
   defHttp.get({ url: Api.getLeafStreeNodes, params });
@@ -468,7 +468,7 @@ export const updateProcess = (data) =>
   defHttp.post({ url: Api.updateProcess, data });
 
 export const deleteProcess = (id) =>
-  defHttp.delete({ url: Api.deleteProcess+"/"+id });
+  defHttp.delete({ url: Api.deleteProcess + "/" + id });
 
 
 export const getFormDesignList = (params?: any) =>
@@ -496,7 +496,7 @@ export const deleteWorkOrderTemplate = (id: number | string) =>
   defHttp.delete({ url: `${Api.deleteWorkOrderTemplate}/${id}` });
 
 export const getWorkOrderTemplateDetail = (id: number | string) =>
-    defHttp.get({ url: `${Api.getWorkOrderTemplateDetail}/${id}` });
+  defHttp.get({ url: `${Api.getWorkOrderTemplateDetail}/${id}` });
 
 
 
@@ -579,7 +579,7 @@ export const getJobExecTaskOne = (id: number | string) =>
   defHttp.get({ url: `${Api.getJobExecTaskOne}/${id}` });
 
 export const actionJobExecTaskOne = (id: number | string, action?: string) =>
-  defHttp.post({ url: `${Api.actionJobExecTaskOne}/${id}?action=${action}`});
+  defHttp.post({ url: `${Api.actionJobExecTaskOne}/${id}?action=${action}` });
 
 export const getJobExecResultByJobId = (params?: any) =>
   defHttp.get({ url: Api.getJobExecResultByJobId, params });
@@ -598,16 +598,16 @@ export const deleteMonitorPromScrapePool = (id: number | string) =>
   defHttp.delete({ url: `${Api.deleteMonitorPromScrapePool}/${id}` });
 
 export const getMonitorScrapePoolDetail = (id: number | string) =>
-    defHttp.get({ url: `${Api.getMonitorScrapePoolDetail}/${id}` });
+  defHttp.get({ url: `${Api.getMonitorScrapePoolDetail}/${id}` });
 
 export const getMonitorPrometheusYamlOne = (ip: string) =>
-    defHttp.get({ url: Api.getMonitorPrometheusYamlOne+ "?ip=" + ip });
+  defHttp.get({ url: Api.getMonitorPrometheusYamlOne + "?ip=" + ip });
 
 export const getMonitorPrometheusAlertRuleYamlOne = (ip: string) =>
-    defHttp.get({ url: Api.getMonitorPrometheusAlertRuleYamlOne+ "?ip=" + ip });
+  defHttp.get({ url: Api.getMonitorPrometheusAlertRuleYamlOne + "?ip=" + ip });
 
 export const getMonitorPrometheusRecordRuleYamlOne = (ip: string) =>
-    defHttp.get({ url: Api.getMonitorPrometheusRecordRuleYamlOne+ "?ip=" + ip });
+  defHttp.get({ url: Api.getMonitorPrometheusRecordRuleYamlOne + "?ip=" + ip });
 
 export const getMonitorPromScrapeJobList = (params?: any) =>
   defHttp.get({ url: Api.getMonitorPromScrapeJobList, params });
@@ -646,7 +646,7 @@ export const getMonitorOndutyGroupFuturePlan = (params: { id: string | number; s
   return defHttp.get({
     // 1. 使用模板字符串拼接 URL。注意这里没有双引号，使用的是反引号( ` )
     url: `${Api.getMonitorOndutyGroupFuturePlan}/${params.id}`,
-    
+
     // 2. 将 startDay 和 endDay 作为查询参数传递（Vben/Axios 会自动把它们拼接到 ? 后面）
     params: {
       startDay: params.startDay,
@@ -681,7 +681,7 @@ export const deleteMonitorAlertManagerPool = (id: number | string) =>
   defHttp.delete({ url: `${Api.deleteMonitorAlertManagerPool}/${id}` });
 
 export const getMonitorAlertManagerYamlOne = (ip: string) =>
-    defHttp.get({ url: Api.getMonitorAlertManagerYamlOne+ "?ip=" + ip });
+  defHttp.get({ url: Api.getMonitorAlertManagerYamlOne + "?ip=" + ip });
 
 
 export const getMonitorAlertManagerSendGroupList = (params?: any) =>

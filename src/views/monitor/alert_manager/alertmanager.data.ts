@@ -264,13 +264,13 @@ export const formSchema: FormSchema[] = [
     colProps: { span: 24 },
     component: 'InputTextArea',
     componentProps: {
-      placeholder: '请输入标签，必须为 k=v 格式，多个标签请换行输入。\n例如：\nenv=prod\ncluster=beijing',
+      placeholder: '请输入标签名，多个标签请换行输入。\n例如：\nalertname\ninstance\njob',
       rows: 4
     },
     rules: [
       {
-        message: '格式错误！必须为 k=v 格式，多个标签请【换行】输入',
-        pattern: /^([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^\n]+)(\n+[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^\n]+)*$/
+        message: '格式错误！必须为合法标签名（英文字母/下划线开头），多个标签请【换行】输入',
+        pattern: /^([a-zA-Z_][a-zA-Z0-9_]*)(\n+[a-zA-Z_][a-zA-Z0-9_]*)*$/
       },
     ],
   },

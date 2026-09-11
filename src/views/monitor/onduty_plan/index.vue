@@ -4,7 +4,7 @@
 
       <div class="member-list-bar mb-4 p-3 border-rounded">
         <div class="flex items-center flex-wrap gap-2">
-          <span class="text-sm font-bold text-gray-700 mr-2">团队成员：</span>
+          <span class="text-sm font-bold text-gray-700 dark:text-gray-300 mr-2">团队成员：</span>
 
           <template v-for="user in groupMembers" :key="user.id">
             <Tag :color="user.realName === todayDutyName ? 'error' : 'default'"
@@ -237,17 +237,24 @@ export default defineComponent({
 
     const monthlyDutyStats = computed(() => {
       const stats: Record<string, string[]> = {};
+      const currentMonthPrefix = value.value.format('YYYY-MM');
 
-      // 遍历整个月的排班数据
-      Object.keys(ondutyMap.value).forEach((date) => {
-        const duty = ondutyMap.value[date];
-        const name = duty.name;
+      // 遍历排班数据，过滤掉因日历格子补齐而拉取的相邻月份日期
+      Object.keys(ondutyMap.value)
+        .sort()
+        .forEach((date) => {
+          if (!date.startsWith(currentMonthPrefix)) {
+            return;
+          }
+          const duty = ondutyMap.value[date];
+          const name = duty?.name;
+          if (!name) return;
 
-        if (!stats[name]) {
-          stats[name] = [];
-        }
-        stats[name].push(date);
-      });
+          if (!stats[name]) {
+            stats[name] = [];
+          }
+          stats[name].push(date);
+        });
       return stats;
     });
 
