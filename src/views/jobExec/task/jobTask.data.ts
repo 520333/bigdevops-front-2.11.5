@@ -1,9 +1,9 @@
 import { BasicColumn, FormSchema } from '@/components/Table';
-import { 
-  getJobExecScriptSelect, 
-  getJobExecScriptOne, 
-  getStreeNodeSelect, 
-  getStreeNodeEcsList 
+import {
+  getJobExecScriptSelect,
+  getJobExecScriptOne,
+  getStreeNodeSelect,
+  getStreeNodeEcsList
 } from '@/api/demo/system';
 import { listToTree } from '@/utils/helper/treeHelper';
 
@@ -12,9 +12,9 @@ export const columns: BasicColumn[] = [
   { title: '任务名称', dataIndex: 'title', width: 180 },
   { title: '创建人', dataIndex: 'createUserName', width: 120 },
   { title: '执行账号', dataIndex: 'account', width: 100 },
-  { 
-    title: '错误策略', 
-    dataIndex: 'OnErrorStrategy', 
+  {
+    title: '错误策略',
+    dataIndex: 'OnErrorStrategy',
     width: 150,
     // 🚀 修复 1：利用 customRender 将后端的英文枚举在表格中映射为中文标签
     customRender: ({ record }) => {
@@ -40,7 +40,7 @@ export const leftFormSchema: FormSchema[] = [
   { field: 'title', label: '任务名称', component: 'Input', required: true },
   { field: 'account', label: '执行账号', component: 'Input', defaultValue: 'root', required: true },
   { field: 'args', label: '执行参数', component: 'Input', helpMessage: '脚本执行时传入的参数' },
-  
+
   {
     field: 'treeNodeId',
     label: '服务树节点',
@@ -54,10 +54,10 @@ export const leftFormSchema: FormSchema[] = [
         treeDefaultExpandAll: true,
         placeholder: '请选择服务树节点获取对应主机',
         afterFetch: (res) => (res ? listToTree(res, { id: 'id', pid: 'pId' }) : []),
-        
+
         onChange: async (nodeId: number) => {
           if (!nodeId) {
-            formModel.machineData = []; 
+            formModel.machineData = [];
             return;
           }
           try {
@@ -66,10 +66,12 @@ export const leftFormSchema: FormSchema[] = [
             ecsList.forEach((ecs: any) => {
               if (ecs.PrivateIpAddress && ecs.PrivateIpAddress.length > 0) {
                 const ip = ecs.PrivateIpAddress[0];
+                const isOnline = ecs.Status && ecs.Status.toLowerCase() === 'running';
+                const statusTag = isOnline ? '🟢' : '⚪';
                 transferData.push({
                   // 💡 核心：传给后端的必须是机器的 ID，转成字符串防止类型报错
-                  key: String(ecs.id), 
-                  title: `${ecs.title || ecs.HostName} (${ip})`, 
+                  key: String(ecs.id),
+                  title: `${statusTag} ${ecs.title || ecs.HostName} (${ip})`,
                 });
               }
             });
@@ -81,12 +83,12 @@ export const leftFormSchema: FormSchema[] = [
       };
     },
   },
-  
-  { 
-    field: 'targetIps', 
-    label: '目标机器', 
-    component: 'Input', 
-    slot: 'machineTransferSlot', 
+
+  {
+    field: 'targetIps',
+    label: '目标机器',
+    component: 'Input',
+    slot: 'machineTransferSlot',
     required: true,
     defaultValue: [], // 🚀 关键修复：确保永远是数组
   },
@@ -98,7 +100,7 @@ export const leftFormSchema: FormSchema[] = [
     label: '错误策略',
     component: 'Select',
     // 🚀 修复 2：默认值改为英文常量
-    defaultValue: 'stop', 
+    defaultValue: 'stop',
     componentProps: {
       // 🚀 修复 3：Label 给用户看（中文），Value 存进数据库（英文）
       options: [

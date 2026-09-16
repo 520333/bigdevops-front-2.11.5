@@ -54,8 +54,8 @@ export default defineComponent({
         colProps: { span: 6 },
         componentProps: {
           options: [
-            { label: '运行中', value: 'running' },
-            { label: '已停止', value: 'stopped' },
+            { label: '运行中 / 在线', value: 'running' },
+            { label: '已停止 / 离线', value: 'stopped' },
             { label: '启动中', value: 'starting' },
           ],
         },
@@ -146,13 +146,23 @@ export default defineComponent({
         title: '状态', 
         dataIndex: 'Status', 
         width: 100,
-        customRender: ({ text }) => {
+        customRender: ({ text, record }) => {
           if (!text) return '-';
           // 🌟 统一转为小写，兼容 Aliyun 的 "Running" 和 AWS 的 "running"
           const status = text.toLowerCase(); 
+          const isSelf = record.vendor === 'self';
           const color = status === 'running' ? 'success' : (status === 'stopped' ? 'error' : 'processing');
-          const label = status === 'running' ? '运行中' : (status === 'stopped' ? '已停止' : text);
+          const label = status === 'running' ? (isSelf ? '在线' : '运行中') : (status === 'stopped' ? (isSelf ? '离线' : '已停止') : text);
           return h(Tag, { color }, () => label);
+        }
+      },
+      { 
+        title: '最近心跳', 
+        dataIndex: 'lastHeartbeatTime', 
+        width: 160,
+        customRender: ({ text, record }) => {
+          if (!text) return record.vendor === 'self' ? '未上报' : '-';
+          return formatTime(text);
         }
       },
 

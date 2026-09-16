@@ -169,6 +169,17 @@ const transform: AxiosTransform = {
    * @description: 响应拦截器处理
    */
   responseInterceptors: (res: AxiosResponse<any>) => {
+    // 自动刷新 Token：检测响应头中由后端返回的 new-token 并无感更新本地存储
+    const headers = res?.headers;
+    const newToken =
+      (typeof headers?.get === 'function' ? headers.get('new-token') : null) ||
+      headers?.['new-token'] ||
+      headers?.['New-Token'];
+
+    if (newToken && typeof newToken === 'string') {
+      const userStore = useUserStoreWithOut();
+      userStore.setToken(newToken);
+    }
     return res;
   },
 
