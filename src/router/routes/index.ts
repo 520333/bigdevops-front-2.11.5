@@ -1,6 +1,13 @@
 import type { AppRouteRecordRaw, AppRouteModule } from '@/router/types';
 
-import { PAGE_NOT_FOUND_ROUTE, REDIRECT_ROUTE, CICD_WORKORDER_DETAIL_ROUTE, OAUTH_CALLBACK_ROUTE, ACCOUNT_SETTING_ROUTE } from '@/router/routes/basic';
+import {
+  PAGE_NOT_FOUND_ROUTE,
+  REDIRECT_ROUTE,
+  CICD_WORKORDER_DETAIL_ROUTE,
+  OAUTH_CALLBACK_ROUTE,
+  DINGTALK_CALLBACK_ROUTE,
+  ACCOUNT_SETTING_ROUTE,
+} from '@/router/routes/basic';
 
 import { mainOutRoutes } from './mainOut';
 import { PageEnum } from '@/enums/pageEnum';
@@ -29,20 +36,33 @@ export const RootRoute: AppRouteRecordRaw = {
   },
 };
 
+// 默认登录页（新版云原生智能运维平台登录页）
 export const LoginRoute: AppRouteRecordRaw = {
   path: '/login',
   name: 'Login',
-  component: () => import('@/views/sys/login/Login.vue'),
+  component: () => import('@/views/sys/login/LoginDevops.vue'),
   meta: {
-    title: t('routes.basic.login'),
+    title: 'BigDevOps 智能云原生运维平台',
+    ignoreAuth: true,
   },
 };
 
-// 新版云原生智能运维平台登录页 (预览路线，原登录页不受任何影响)
-export const LoginDevopsRoute: AppRouteRecordRaw = {
+// 保留原版旧登录页
+export const LoginOldRoute: AppRouteRecordRaw = {
+  path: '/login-old',
+  name: 'LoginOld',
+  component: () => import('@/views/sys/login/Login.vue'),
+  meta: {
+    title: t('routes.basic.login'),
+    ignoreAuth: true,
+  },
+};
+
+// 兼容老路径 /login-v2 直接重定向到 /login
+export const LoginV2RedirectRoute: AppRouteRecordRaw = {
   path: '/login-v2',
-  name: 'LoginDevops',
-  component: () => import('@/views/sys/login/LoginDevops.vue'),
+  name: 'LoginV2Redirect',
+  redirect: '/login',
   meta: {
     title: 'BigDevOps 智能云原生运维平台',
     ignoreAuth: true,
@@ -53,12 +73,14 @@ export const LoginDevopsRoute: AppRouteRecordRaw = {
 // 未经许可的基本路由
 export const basicRoutes = [
   LoginRoute,
-  LoginDevopsRoute,
+  LoginOldRoute,
+  LoginV2RedirectRoute,
   RootRoute,
   ...mainOutRoutes,
   REDIRECT_ROUTE,
   PAGE_NOT_FOUND_ROUTE,
   CICD_WORKORDER_DETAIL_ROUTE,
   OAUTH_CALLBACK_ROUTE,
+  DINGTALK_CALLBACK_ROUTE,
   ACCOUNT_SETTING_ROUTE,
 ];

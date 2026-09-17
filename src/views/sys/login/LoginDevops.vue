@@ -2,7 +2,7 @@
   <div :class="prefixCls" class="relative w-full h-full px-4">
     <!-- 右上角控制栏（与原版保持一致） -->
     <div class="flex items-center absolute right-4 top-4 z-20">
-      <a href="/#/login"
+      <a href="/#/login-old"
         class="enter-x mr-3 px-3 py-1 text-xs rounded-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 border border-blue-500/30 transition-all flex items-center gap-1 cursor-pointer"
         style="text-decoration: none;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
@@ -153,10 +153,9 @@
                 class="tab-btn flex-1 py-1.5 px-3 text-xs font-medium rounded flex items-center justify-center gap-1.5 transition-all"
                 :class="{ active: authMode === 'sso' }" @click="authMode = 'sso'">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
-                <span>Keycloak SSO</span>
+                <span>企业 SSO 认证</span>
               </button>
             </div>
 
@@ -213,20 +212,34 @@
 
               <!-- SSO 模式 -->
               <div v-else class="sso-panel enter-x flex flex-col justify-between h-full">
-                <div class="sso-desc-card p-3 rounded-lg border mb-4">
+                <div class="sso-desc-card p-3 rounded-lg border mb-3">
                   <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-semibold text-purple-400">OIDC 2.0 / SAML 2.0</span>
+                    <span class="text-xs font-semibold text-sky-400">企业级 SSO 联合认证</span>
                     <span
-                      class="text-[11px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">已就绪</span>
+                      class="text-[11px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">双通道已就绪</span>
                   </div>
-                  <div class="text-sm font-semibold mb-1">Keycloak 企业统一单点登录</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                    已接入企业微信、飞书与 LDAP 统一身份认证，点击下方按钮一键完成受信任安全接入。
+                    支持通过钉钉企业免密扫码认证或 Keycloak 统一凭证通道快速安全接入。
                   </div>
                 </div>
-                <Button type="primary" size="large" block @click="handleKeycloakLogin">
-                  {{ t('sys.login.loginSSOButton') }}
-                </Button>
+
+                <div class="flex flex-col gap-2.5">
+                  <!-- 钉钉单点登录主按钮 (使用系统主题色) -->
+                  <Button type="primary" size="large" block
+                    class="!h-10 !flex !items-center !justify-center gap-2 text-sm font-medium"
+                    @click="handleDingTalkLogin">
+                    <DingtalkCircleFilled style="font-size: 19px;" class="flex-shrink-0" />
+                    <span>钉钉登录</span>
+                  </Button>
+
+                  <!-- Keycloak 统一登录次按钮 (遵循主题规范与主题色 hover) -->
+                  <Button size="large" block
+                    class="!h-10 !flex !items-center !justify-center gap-2 text-sm font-medium transition-all"
+                    @click="handleKeycloakLogin">
+                    <SafetyCertificateOutlined style="font-size: 18px;" class="flex-shrink-0" />
+                    <span>Keycloak登录</span>
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -253,6 +266,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Button, Input, Checkbox } from 'ant-design-vue';
+import { DingtalkCircleFilled, SafetyCertificateOutlined } from '@ant-design/icons-vue';
 import { AppDarkModeToggle, AppLocalePicker, AppLogo } from '@/components/Application';
 import { useDesign } from '@/hooks/web/useDesign';
 import { useI18n } from '@/hooks/web/useI18n';
@@ -364,6 +378,20 @@ async function handleLogin() {
     createMessage.error(error?.message || '登录验证失败，请检查账号密码或后端服务状态');
   } finally {
     loading.value = false;
+  }
+}
+
+// 钉钉 SSO 跳转
+async function handleDingTalkLogin() {
+  try {
+    const res = await defHttp.get<{ url: string }>({ url: '/auth/dingtalk/login' });
+    if (res && res.url) {
+      window.location.href = res.url;
+    } else {
+      createMessage.warning('未获取到钉钉登录跳转地址，请确认后端钉钉配置');
+    }
+  } catch (err: any) {
+    createMessage.error(err?.message || '请求钉钉单点登录网关失败');
   }
 }
 
@@ -671,7 +699,7 @@ html[data-theme='dark'] {
 
       &.active {
         background: #fff;
-        color: #2563eb;
+        color: @primary-color;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
     }

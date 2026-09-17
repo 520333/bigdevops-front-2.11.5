@@ -104,6 +104,16 @@ export const OAUTH_CALLBACK_ROUTE = {
     ignoreAuth: true, // 必须忽略 Auth 检查
   },
 };
+
+export const DINGTALK_CALLBACK_ROUTE = {
+  path: '/oauth/dingtalk',
+  name: 'DingtalkCallback',
+  component: () => import('@/views/sys/login/DingtalkCallback.vue'),
+  meta: {
+    title: '钉钉 SSO 登录回调',
+    ignoreAuth: true, // 必须忽略 Auth 检查
+  },
+};
 export const ACCOUNT_SETTING_ROUTE: AppRouteRecordRaw = {
   path: '/system/accountSetting',
   name: 'AccountSettingStatic',

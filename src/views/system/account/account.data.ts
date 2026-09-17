@@ -29,6 +29,11 @@ export const columns: BasicColumn[] = [
     width: 160,
   },
   {
+    title: '钉钉userId',
+    dataIndex: 'dingTalkUserId',
+    width: 160,
+  },
+  {
     title: '角色列表',
     dataIndex: 'roles',
     width: 200,
@@ -210,6 +215,12 @@ export const accountFormSchema: FormSchema[] = [
     component: 'Input',
     // required: true,
   },
+  {
+    field: 'dingTalkUserId',
+    label: '钉钉用户id',
+    component: 'Input',
+    helpMessage: ['钉钉企业员工UserId/工号，用于钉钉单点登录与告警通知'],
+  },
 
   {
     label: '备注',
@@ -262,6 +273,12 @@ export const baseSetSchemas: FormSchema[] = [
     field: 'feiShuUserId',
     component: 'Input',
     label: '飞书 UserID',
+    colProps: { span: 18 },
+  },
+  {
+    field: 'dingTalkUserId',
+    component: 'Input',
+    label: '钉钉 UserID',
     colProps: { span: 18 },
   },
   {

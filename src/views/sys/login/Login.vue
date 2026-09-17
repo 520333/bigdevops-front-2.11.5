@@ -1,7 +1,7 @@
 <template>
   <div :class="prefixCls" class="relative w-full h-full px-4">
     <div class="flex items-center absolute right-4 top-4">
-      <a href="/#/login-v2"
+      <a href="/#/login"
         class="enter-x mr-3 px-3 py-1 text-xs rounded-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 border border-blue-500/30 transition-all flex items-center gap-1 cursor-pointer"
         style="text-decoration: none;">
         <span>新版登录页</span>
