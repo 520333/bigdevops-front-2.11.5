@@ -53,3 +53,21 @@ export function testRetry() {
     },
   );
 }
+
+export interface PlatformTelemetryModel {
+  clusters: number;
+  pods: number;
+  pipelineRuns: number;
+  alertRate: number;
+  updatedAt?: number;
+}
+
+/**
+ * @description: 获取登录页平台大盘公开遥测数据（免鉴权）
+ */
+export function getPlatformTelemetry() {
+  return defHttp.get<PlatformTelemetryModel>(
+    { url: '/noAuth/platform/telemetry' },
+    { errorMessageMode: 'none' },
+  );
+}
