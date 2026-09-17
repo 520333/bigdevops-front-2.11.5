@@ -26,9 +26,15 @@ export default defineApplicationConfig({
           ws: true,
           rewrite: (path) => path.replace(new RegExp(`^/basic-api`), ''),
           configure: (proxy) => {
-            proxy.on('proxyReq', (proxyReq) => {
+            proxy.on('proxyReq', (proxyReq, req: any) => {
               // 自动移除无用大 Cookie，防止请求头超出 431 限制
               proxyReq.removeHeader('cookie');
+              // 透传真实访问者的客户端 IP (跨机器访问时准确传递)
+              const remoteIp = req?.socket?.remoteAddress || req?.headers?.['x-forwarded-for'];
+              if (remoteIp) {
+                proxyReq.setHeader('x-real-ip', remoteIp);
+                proxyReq.setHeader('x-forwarded-for', remoteIp);
+              }
             });
           },
           // only https

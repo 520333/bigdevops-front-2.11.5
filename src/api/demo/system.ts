@@ -47,6 +47,7 @@ enum Api {
   createApi = "/api/system/createApi",
   updateApi = "/api/system/updateApi",
   deleteApi = "/api/system/deleteApi",
+  getAuditLogList = "/api/system/getAuditLogList",
 
   StreeNodeList = '/api/stree/getStreeNodeList',
   getTopStreeNodes = '/api/stree/getTopStreeNodes',
@@ -387,6 +388,9 @@ export const updateApi = (data) =>
 
 export const deleteApi = (id: number) =>
   defHttp.delete({ url: Api.deleteApi + "/" + id });
+
+export const getAuditLogList = (params?: any) =>
+  defHttp.get({ url: Api.getAuditLogList, params });
 
 
 
