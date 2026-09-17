@@ -96,8 +96,8 @@
                     placement: 'left',
                     confirm: handleKickout.bind(null, record),
                   },
-                  disabled: record.userName === currentUsername,
-                  tooltip: record.userName === currentUsername ? '当前登录账号不可强退自身' : '',
+                  disabled: isCurrentUser(record.userName),
+                  tooltip: isCurrentUser(record.userName) ? '当前登录账号不可强退自身' : '',
                 },
               ]"
             />
@@ -112,8 +112,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
-import { Tabs, TabPane, Tag, Badge } from 'ant-design-vue';
+import { ref, computed, watch } from 'vue';
+import { Tabs, TabPane, Tag, Badge, Button as AButton } from 'ant-design-vue';
 import { PageWrapper } from '@/components/Page';
 import { BasicTable, useTable, TableAction } from '@/components/Table';
 import { useDrawer } from '@/components/Drawer';
@@ -128,7 +128,15 @@ const activeTab = ref('auditLog');
 const onlineCount = ref(0);
 
 const userStore = useUserStore();
-const currentUsername = computed(() => userStore.getUserInfo?.userName || userStore.getUserInfo?.username);
+const currentUsername = computed(() => {
+  const info: any = userStore.getUserInfo;
+  return info?.username || info?.userName || '';
+});
+
+function isCurrentUser(userName: string) {
+  return !!userName && userName === currentUsername.value;
+}
+
 const { createMessage } = useMessage();
 
 // 操作审计抽屉
@@ -187,6 +195,12 @@ const [registerOnlineTable, { reload: reloadOnlineTable }] = useTable({
 function handleReloadOnline() {
   reloadOnlineTable();
 }
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'onlineUser') {
+    reloadOnlineTable();
+  }
+});
 
 async function handleKickout(record: Recordable) {
   try {
