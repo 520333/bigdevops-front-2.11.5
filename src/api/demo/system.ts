@@ -46,8 +46,9 @@ enum Api {
   getApiListAll = "/api/system/getApiListAll",
   createApi = "/api/system/createApi",
   updateApi = "/api/system/updateApi",
-  deleteApi = "/api/system/deleteApi",
   getAuditLogList = "/api/system/getAuditLogList",
+  getOnlineUserList = "/api/system/getOnlineUserList",
+  kickoutUser = "/api/system/kickoutUser",
 
   StreeNodeList = '/api/stree/getStreeNodeList',
   getTopStreeNodes = '/api/stree/getTopStreeNodes',
@@ -391,6 +392,12 @@ export const deleteApi = (id: number) =>
 
 export const getAuditLogList = (params?: any) =>
   defHttp.get({ url: Api.getAuditLogList, params });
+
+export const getOnlineUserList = () =>
+  defHttp.get({ url: Api.getOnlineUserList });
+
+export const kickoutUser = (userName: string) =>
+  defHttp.post({ url: Api.kickoutUser, data: { userName } });
 
 
 
