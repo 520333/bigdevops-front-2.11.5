@@ -29,6 +29,7 @@ const emit = defineEmits(['success', 'register']);
 const { createMessage } = useMessage();
 const isUpdate = ref(true);
 const templateId = ref<number | null>(null);
+const currentUserId = ref<number | null>(null);
 const renderEditor = ref(false);
 const getTitle = computed(() => (!unref(isUpdate) ? '新增采集任务' : '编辑采集任务'));
   const extensions = [oneDark, yaml()];
@@ -48,6 +49,7 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
 
   if (unref(isUpdate)) {
     templateId.value = data.record.id;
+    currentUserId.value = data.record.userId || data.record.UserID || null;
     const recordData = { ...data.record };
 
     if (recordData.treeNodeIds && Array.isArray(recordData.treeNodeIds)) {
@@ -111,7 +113,11 @@ async function handleSubmit() {
       await createMonitorPromScrapeJob(values);
       createMessage.success('采集任务创建成功');
     } else {
-      await updateMonitorPromScrapeJob({ ...values, id: templateId.value });
+      await updateMonitorPromScrapeJob({
+        ...values,
+        id: templateId.value,
+        ...(currentUserId.value ? { userId: currentUserId.value } : {}),
+      });
       createMessage.success('采集任务更新成功');
     }
 

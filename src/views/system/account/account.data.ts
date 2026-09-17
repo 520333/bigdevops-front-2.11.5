@@ -16,12 +16,17 @@ export const columns: BasicColumn[] = [
   {
     title: '昵称',
     dataIndex: 'realName',
-    width: 200,
+    width: 160,
+  },
+  {
+    title: '手机号',
+    dataIndex: 'mobile',
+    width: 150,
   },
   {
     title: '飞书userId',
     dataIndex: 'feiShuUserId',
-    width: 200,
+    width: 160,
   },
   {
     title: '角色列表',
@@ -42,21 +47,21 @@ export const columns: BasicColumn[] = [
         record.pendingStatus = false;
       }
       return h(Switch, {
-        checked: record.enable === 1, 
-        
+        checked: record.enable === 1,
+
         checkedChildren: '启用',
         unCheckedChildren: '禁用',
-        
+
         loading: record.pendingStatus,
         onChange(checked: boolean) {
           record.pendingStatus = true;
-          
+
           // 💡 修改 4：根据开关状态获取新的 enable 值 (1=开启，2=禁用)
-          const newEnable = checked ? 1 : 2; 
+          const newEnable = checked ? 1 : 2;
           const { createMessage } = useMessage();
-          
+
           // 💡 修改 5：这里调用你更新采集任务状态的 API
-          setAccountStatus(record.id, newEnable) 
+          setAccountStatus(record.id, newEnable)
             .then(() => {
               // 💡 修改 6：更新本地数据，使页面状态刷新
               record.enable = newEnable;
@@ -105,9 +110,9 @@ export const accountFormSchema: FormSchema[] = [
     field: 'userName',
     label: '用户名',
     component: 'Input',
-    helpMessage: [''],
-      componentProps: {
-      autocomplete: 'username', 
+    helpMessage: ['用户名不允许重复'],
+    componentProps: {
+      autocomplete: 'username',
     },
     rules: [
       {
@@ -134,10 +139,10 @@ export const accountFormSchema: FormSchema[] = [
     required: true,
     ifShow: true,
     componentProps: {
-      autocomplete: 'current-password', 
+      autocomplete: 'current-password',
       placeholder: '请输入密码',
     },
-    
+
   },
   {
     field: 'homePath',
@@ -184,10 +189,26 @@ export const accountFormSchema: FormSchema[] = [
     required: true,
   },
   {
+    field: 'mobile',
+    label: '手机号',
+    component: 'Input',
+    rules: [
+      {
+        pattern: /^1[3-9]\d{9}$/,
+        message: '请输入正确的11位手机号码',
+        trigger: 'blur',
+      },
+    ],
+    helpMessage: ['用于钉钉告警时@某人'],
+    componentProps: {
+      autocomplete: 'mobile',
+    },
+  },
+  {
     field: 'feiShuUserId',
     label: '飞书用户id',
     component: 'Input',
-    required: true,
+    // required: true,
   },
 
   {
@@ -216,6 +237,19 @@ export const baseSetSchemas: FormSchema[] = [
     label: '用户昵称/姓名',
     colProps: { span: 18 },
     required: true,
+  },
+  {
+    field: 'mobile',
+    component: 'Input',
+    label: '手机号码',
+    colProps: { span: 18 },
+    rules: [
+      {
+        pattern: /^1[3-9]\d{9}$/,
+        message: '请输入正确的11位手机号码',
+        trigger: 'blur',
+      },
+    ],
   },
   {
     field: 'email',
