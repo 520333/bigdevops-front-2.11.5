@@ -19,8 +19,8 @@ export const columns: BasicColumn[] = [
   },
   {
     title: '关联采集实例',
-    dataIndex: 'poolNames',
-    width: 200,
+    dataIndex: 'poolName',
+    width: 150,
   },
 
   {
@@ -200,33 +200,26 @@ export const formSchema: FormSchema[] = [
 
 
   {
-    field: 'poolIds',
+    field: 'poolId',
     label: '绑定采集实例',
     labelWidth: 130,
     component: 'ApiSelect',
-    defaultValue: [],
     componentProps: {
       api: getMonitorPromScrapePoolList,
-      mode: 'multiple',
       labelField: 'name',
       valueField: 'id',
       resultField: 'items',
       showSearch: true,
       optionFilterProp: 'label',
-      placeholder: '请选择关联采集实例(可多选)'
+      placeholder: '请选择关联采集实例'
     },
     rules: [
       {
         required: true,
-        validator: async (_, value) => {
-          if (!value || (Array.isArray(value) && value.length === 0)) {
-            return Promise.reject('请选择至少一个prometheus实例');
-          }
-          return Promise.resolve();
-        },
-        trigger: 'blur'
+        message: '请选择关联采集实例',
+        type: 'number'
       }
-    ],
+    ]
   },
   {
     field: 'treeNodeId',

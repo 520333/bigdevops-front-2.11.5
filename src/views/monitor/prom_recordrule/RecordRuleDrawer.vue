@@ -81,13 +81,6 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
     if (Array.isArray(recordData.labelsFront)) recordData.labelsFront = recordData.labelsFront.join('\n');
     if (Array.isArray(recordData.annotationsFront)) recordData.annotationsFront = recordData.annotationsFront.join('\n');
     if (recordData.treeNodeIds) recordData.treeNodeIds = recordData.treeNodeIds.map(Number);
-    if (Array.isArray(recordData.poolIds) && recordData.poolIds.length > 0) {
-      recordData.poolIds = recordData.poolIds.map(Number);
-    } else if (recordData.poolId) {
-      recordData.poolIds = [Number(recordData.poolId)];
-    } else {
-      recordData.poolIds = [];
-    }
     setFieldsValue(recordData);
   }
   await nextTick();
@@ -97,10 +90,6 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
 async function handleSubmit() {
   try {
     const values = await validate();
-    if (Array.isArray(values.poolIds)) {
-      values.poolId = values.poolIds.length > 0 ? Number(values.poolIds[0]) : 0;
-      values.poolIds = values.poolIds.map(String);
-    }
     setDrawerProps({ confirmLoading: true });
     if (!isUpdate.value) {
       await createMonitorPromRecordRule(values);
