@@ -2,7 +2,7 @@ import { BasicColumn, FormSchema } from '@/components/Table';
 import dayjs from 'dayjs';
 import { getLeafStreeNodes, getMonitorPromScrapePoolList, setMonitorPromScrapeJobStatus } from '@/api/demo/system';
 import { h } from 'vue';
-import { Switch } from 'ant-design-vue';
+import { Switch, Tag } from 'ant-design-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 
 // ================== 列表列配置 ==================
@@ -19,8 +19,21 @@ export const columns: BasicColumn[] = [
   },
   {
     title: '关联采集池',
-    dataIndex: 'poolName',
-    width: 200,
+    dataIndex: 'poolNames',
+    width: 220,
+    customRender: ({ record }) => {
+      const poolNames = (record.poolNames && record.poolNames.length > 0)
+        ? record.poolNames
+        : (record.poolName ? [record.poolName] : []);
+      if (!poolNames || poolNames.length === 0) {
+        return h('span', { class: 'text-gray-400' }, '未关联');
+      }
+      return h(
+        'div',
+        { class: 'flex flex-wrap gap-1' },
+        poolNames.map((name: string) => h(Tag, { color: 'blue' }, () => name)),
+      );
+    },
   },
   {
     title: '状态',
@@ -122,7 +135,7 @@ export const formSchema: FormSchema[] = [
     }
   },
   {
-    field: 'poolId',
+    field: 'poolIds',
     label: '绑定采集池',
     labelWidth: 120,
     component: 'ApiSelect',
@@ -130,12 +143,13 @@ export const formSchema: FormSchema[] = [
     defaultValue: [],
     componentProps: {
       api: getMonitorPromScrapePoolList,
+      mode: 'multiple',
       labelField: 'name',
       valueField: 'id',
       resultField: 'items',
       showSearch: true,
       optionFilterProp: 'label',
-      placeholder: '请选择关联采集池'
+      placeholder: '请选择关联采集池(可多选)'
     },
     rules: [
       {

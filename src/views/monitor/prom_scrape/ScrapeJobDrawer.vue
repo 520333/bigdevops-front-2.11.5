@@ -55,6 +55,14 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
     if (recordData.treeNodeIds && Array.isArray(recordData.treeNodeIds)) {
       recordData.treeNodeIds = recordData.treeNodeIds.map(id => Number(id));
     }
+    // 兼容 poolIds 回显：多选模式需提供数字数组
+    if (recordData.poolIds && Array.isArray(recordData.poolIds) && recordData.poolIds.length > 0) {
+      recordData.poolIds = recordData.poolIds.map(id => Number(id));
+    } else if (recordData.poolId) {
+      recordData.poolIds = [Number(recordData.poolId)];
+    } else {
+      recordData.poolIds = [];
+    }
     if (recordData.relabelConfigsYamlString) {
       if (!recordData.relabelConfigsYamlString.startsWith('\n')) {
         recordData.relabelConfigsYamlString = '\n' + recordData.relabelConfigsYamlString;
@@ -96,6 +104,12 @@ async function handleSubmit() {
     const values = await validate();
     if (values.treeNodeIds && Array.isArray(values.treeNodeIds)) {
       values.treeNodeIds = values.treeNodeIds.map(String);
+    }
+    if (values.poolIds && Array.isArray(values.poolIds)) {
+      values.poolIds = values.poolIds.map(String);
+      if (values.poolIds.length > 0) {
+        values.poolId = Number(values.poolIds[0]);
+      }
     }
     if (values.relabelConfigsYamlString) {
       values.relabelConfigsYamlString = '\n' + values.relabelConfigsYamlString.trim();

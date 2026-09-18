@@ -8,7 +8,7 @@
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        <span>原版登录页</span>
+        <span>旧版登录页</span>
       </a>
       <AppDarkModeToggle class="enter-x mr-2" v-if="!sessionTimeout" />
       <AppLocalePicker class="text-white enter-x xl:text-gray-600" :show-text="false"
@@ -30,7 +30,6 @@
             <!-- 顶部徽章 -->
             <div
               class="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full text-xs font-semibold tracking-wide border border-sky-400/30 bg-sky-500/10 text-sky-400 -enter-x">
-              <!-- <span>⚡</span> -->
               <span>BigDevOps Cloud-Native Platform v1.0</span>
             </div>
 
@@ -155,7 +154,7 @@
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
-                <span>企业 SSO 认证</span>
+                <span>SSO 认证</span>
               </button>
             </div>
 
@@ -214,12 +213,12 @@
               <div v-else class="sso-panel enter-x flex flex-col justify-between h-full">
                 <div class="sso-desc-card p-3 rounded-lg border mb-3">
                   <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-semibold text-sky-400">企业级 SSO 联合认证</span>
+                    <span class="text-xs font-semibold text-sky-400"> SSO 联合认证</span>
                     <span
                       class="text-[11px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">双通道已就绪</span>
                   </div>
                   <div class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                    支持通过钉钉企业免密扫码认证或 Keycloak 统一凭证通道快速安全接入。
+                    支持钉钉免密登录或 Keycloak 统一凭证通道快速安全接入。
                   </div>
                 </div>
 

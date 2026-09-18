@@ -14,8 +14,8 @@ export const columns: BasicColumn[] = [
   },
   {
     title: '关联采集实例',
-    dataIndex: 'poolName',
-    width: 150,
+    dataIndex: 'poolNames',
+    width: 200,
   },
   {
     title: '关联发送组',
@@ -226,19 +226,20 @@ export const formSchema: FormSchema[] = [
     component: 'Input'
   },
   {
-    field: 'poolId',
+    field: 'poolIds',
     label: '绑定采集实例',
     labelWidth: 130,
     component: 'ApiSelect',
     defaultValue: [],
     componentProps: {
       api: getMonitorPromScrapePoolList,
+      mode: 'multiple',
       labelField: 'name',
       valueField: 'id',
       resultField: 'items',
       showSearch: true,
       optionFilterProp: 'label',
-      placeholder: '请选择关联采集实例'
+      placeholder: '请选择关联采集实例(可多选)'
     },
     rules: [
       {

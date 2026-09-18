@@ -22,10 +22,19 @@
 
       <template #bodyCell="{ column, record }">
 
-        <template v-if="column.key === 'poolName'">
-          <a-button type="link" size="small" @click.stop="handleGoPrometheus()">
-            {{ record.poolName }}
-          </a-button>
+        <template v-if="column.key === 'poolNames' || column.key === 'poolName'">
+          <div class="flex flex-wrap gap-1">
+            <Tag
+              v-for="name in (record.poolNames?.length ? record.poolNames : (record.poolName ? [record.poolName] : []))"
+              :key="name"
+              color="blue"
+              class="cursor-pointer"
+              @click.stop="handleGoPrometheus()"
+            >
+              {{ name }}
+            </Tag>
+            <span v-if="!record.poolNames?.length && !record.poolName" class="text-gray-400">未关联</span>
+          </div>
         </template>
         <template v-if="column.key === 'sendGroupName'">
           <a-button type="link" size="small" @click.stop="handleGoSendGroup()">
