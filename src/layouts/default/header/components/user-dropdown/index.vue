@@ -99,9 +99,15 @@
 
   //  login out
   function handleLoginOut() {
-    localStorage.clear(); //清除缓存退出登录
+    const lastVersion = localStorage.getItem('sys_upgrade_last_version');
+    const lastDate = localStorage.getItem('sys_upgrade_last_date');
+
+    localStorage.clear(); // 清除用户登录与临时缓存
+
+    if (lastVersion) localStorage.setItem('sys_upgrade_last_version', lastVersion);
+    if (lastDate) localStorage.setItem('sys_upgrade_last_date', lastDate);
+
     userStore.confirmLoginOut();
-    
   }
 
   // open doc

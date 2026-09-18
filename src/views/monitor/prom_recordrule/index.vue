@@ -25,7 +25,7 @@
 
       <template #bodyCell="{ column, record }">
 
-        <template v-if="column.key === 'poolNames' || column.key === 'poolName'">
+        <template v-if="column.key === 'poolNames' || column.key === 'poolName' || column.dataIndex === 'poolNames' || column.dataIndex === 'poolName'">
           <div class="flex flex-wrap gap-1">
             <Tag
               v-for="name in (record.poolNames?.length ? record.poolNames : (record.poolName ? [record.poolName] : []))"

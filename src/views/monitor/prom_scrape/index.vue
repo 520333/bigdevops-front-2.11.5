@@ -8,7 +8,7 @@
       </template>
 
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'poolName'">
+        <template v-if="column.key === 'poolName' || column.dataIndex === 'poolName'">
           <a-button type="link" size="small" @click.stop="handleGoPrometheus()">
             {{ record.poolName }}
           </a-button>

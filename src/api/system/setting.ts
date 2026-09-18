@@ -8,6 +8,11 @@ enum Api {
 export interface SystemSetting {
   watermarkEnabled: boolean;
   watermarkText: string;
+  upgradePromptEnabled?: boolean;
+  upgradePromptTiming?: 'never' | 'every_login' | 'version_once' | 'day_once';
+  upgradePromptTitle?: string;
+  upgradePromptVersion?: string;
+  upgradePromptContent?: string;
 }
 
 export const getSystemSetting = () => {
