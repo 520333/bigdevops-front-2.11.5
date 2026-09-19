@@ -28,10 +28,14 @@ import { createMonitorPromScrapeJob, updateMonitorPromScrapeJob } from '@/api/de
 const emit = defineEmits(['success', 'register']);
 const { createMessage } = useMessage();
 const isUpdate = ref(true);
+const isCopy = ref(false);
 const templateId = ref<number | null>(null);
 const currentUserId = ref<number | null>(null);
 const renderEditor = ref(false);
-const getTitle = computed(() => (!unref(isUpdate) ? '新增采集任务' : '编辑采集任务'));
+const getTitle = computed(() => {
+  if (unref(isCopy)) return '复制采集任务';
+  return !unref(isUpdate) ? '新增采集任务' : '编辑采集任务';
+});
   const extensions = [oneDark, yaml()];
 const [registerForm, { resetFields, setFieldsValue, validate }] = useForm({
   labelWidth: 100,
@@ -46,11 +50,25 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
   resetFields();
   setDrawerProps({ confirmLoading: false });
   isUpdate.value = !!data?.isUpdate;
+  isCopy.value = !!data?.isCopy;
 
-  if (unref(isUpdate)) {
-    templateId.value = data.record.id;
-    currentUserId.value = data.record.userId || data.record.UserID || null;
+  if (unref(isUpdate) || unref(isCopy)) {
+    templateId.value = unref(isUpdate) ? data.record.id : null;
+    currentUserId.value = unref(isUpdate) ? (data.record.userId || data.record.UserID || null) : null;
     const recordData = { ...data.record };
+
+    if (unref(isCopy)) {
+      delete recordData.id;
+      if (recordData.name) {
+        const match = recordData.name.match(/^(.*_copy)(\d*)$/);
+        if (match) {
+          const num = match[2] ? parseInt(match[2], 10) + 1 : 2;
+          recordData.name = `${match[1]}${num}`;
+        } else {
+          recordData.name = `${recordData.name}_copy`;
+        }
+      }
+    }
 
     if (recordData.treeNodeIds && Array.isArray(recordData.treeNodeIds)) {
       recordData.treeNodeIds = recordData.treeNodeIds.map(id => Number(id));
@@ -111,7 +129,7 @@ async function handleSubmit() {
 
     if (!unref(isUpdate)) {
       await createMonitorPromScrapeJob(values);
-      createMessage.success('采集任务创建成功');
+      createMessage.success(unref(isCopy) ? '采集任务复制成功' : '采集任务创建成功');
     } else {
       await updateMonitorPromScrapeJob({
         ...values,

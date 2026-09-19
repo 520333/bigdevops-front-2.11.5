@@ -5,6 +5,14 @@
         <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/monitor/createMonitorPromRecordRule'">
           新增聚合规则
         </a-button>
+        <a-button
+          type="default"
+          preIcon="ant-design:copy-outlined"
+          @click="handleCopySelected"
+          v-auth="'POST:/api/monitor/createMonitorPromRecordRule'"
+        >
+          复制聚合规则
+        </a-button>
         <a-button @click="handleBatchStatus(1)" :disabled="!hasSelected"
           v-auth="'POST:/api/monitor/setMonitorPromRecordRuleStatusBatch'">
           批量启用
@@ -38,6 +46,12 @@
               onClick: handleEdit.bind(null, record),
               tooltip: '编辑聚合规则',
               auth: 'POST:/api/monitor/updateMonitorPromRecordRule'
+            },
+            {
+              icon: 'ant-design:copy-outlined',
+              onClick: handleCopy.bind(null, record),
+              tooltip: '复制聚合规则',
+              auth: 'POST:/api/monitor/createMonitorPromRecordRule'
             },
             {
               icon: 'ant-design:delete-outlined',
@@ -75,6 +89,7 @@ export default defineComponent({
   name: 'MonitorRecordRule',
   components: { BasicTable, RecordRuleDrawer, TableAction, Tag, Popover, AButton: Button, Icon },
   setup() {
+    const { createMessage } = useMessage();
     const go = useGo();
     const [registerDrawer, { openDrawer }] = useDrawer();
     const roleColorMap = ['blue', 'orange', 'orange', 'red', 'cyan', 'green'];
@@ -96,7 +111,7 @@ export default defineComponent({
       showIndexColumn: false,
       rowKey: 'id',
       actionColumn: {
-        width: 80,
+        width: 120,
         title: '操作',
         dataIndex: 'action',
       },
@@ -108,7 +123,7 @@ export default defineComponent({
       if (ids.length === 0) return;
 
       const actionText = enable === 1 ? '启用' : '禁用';
-      const { createMessage, createConfirm } = useMessage();
+      const { createConfirm } = useMessage();
 
       createConfirm({
         iconType: 'warning',
@@ -130,7 +145,7 @@ export default defineComponent({
       const ids = getSelectRowKeys().map((id) => Number(id));
       if (ids.length === 0) return;
 
-      const { createMessage, createConfirm } = useMessage();
+      const { createConfirm } = useMessage();
 
       createConfirm({
         iconType: 'error',
@@ -158,6 +173,7 @@ export default defineComponent({
     function handleCreate() {
       openDrawer(true, {
         isUpdate: false,
+        isCopy: false,
       });
     }
 
@@ -165,11 +181,32 @@ export default defineComponent({
       openDrawer(true, {
         record,
         isUpdate: true,
+        isCopy: false,
       });
     }
 
+    function handleCopy(record: Recordable) {
+      openDrawer(true, {
+        record,
+        isUpdate: false,
+        isCopy: true,
+      });
+    }
+
+    function handleCopySelected() {
+      const selected = getSelectRows();
+      if (!selected || selected.length === 0) {
+        createMessage.warning('请先在列表中勾选要复制的聚合规则');
+        return;
+      }
+      if (selected.length > 1) {
+        createMessage.warning('每次仅支持复制单条规则，请仅勾选一条聚合规则');
+        return;
+      }
+      handleCopy(selected[0]);
+    }
+
     async function handleDelete(record: Recordable) {
-      const { createMessage } = useMessage();
       try {
         await deleteMonitorPromRecordRule(record.id);
         createMessage.success('删除成功');
@@ -188,6 +225,8 @@ export default defineComponent({
       registerDrawer,
       handleCreate,
       handleEdit,
+      handleCopy,
+      handleCopySelected,
       handleDelete,
       handleSuccess,
       roleColorMap,

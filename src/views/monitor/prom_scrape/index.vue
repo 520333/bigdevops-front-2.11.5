@@ -5,6 +5,14 @@
         <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/monitor/createMonitorPromScrapeJob'">
           新增采集任务
         </a-button>
+        <a-button
+          type="default"
+          preIcon="ant-design:copy-outlined"
+          @click="handleCopySelected"
+          v-auth="'POST:/api/monitor/createMonitorPromScrapeJob'"
+        >
+          复制采集任务
+        </a-button>
       </template>
 
       <template #bodyCell="{ column, record }">
@@ -20,6 +28,12 @@
               onClick: handleEdit.bind(null, record),
               tooltip: '编辑采集任务',
               auth: 'POST:/api/monitor/updateMonitorPromScrapeJob'
+            },
+            {
+              icon: 'ant-design:copy-outlined',
+              onClick: handleCopy.bind(null, record),
+              tooltip: '复制采集任务',
+              auth: 'POST:/api/monitor/createMonitorPromScrapeJob'
             },
             {
               icon: 'ant-design:delete-outlined',
@@ -54,22 +68,28 @@ export default defineComponent({
   name: 'MonitorScrapePoolManagement',
   components: { BasicTable, ScrapeJobDrawer, TableAction },
   setup() {
+    const { createMessage } = useMessage();
     const [registerDrawer, { openDrawer }] = useDrawer();
     const go = useGo();
-    const [registerTable, { reload }] = useTable({
+    const [registerTable, { reload, getSelectRows }] = useTable({
       title: '采集任务列表',
       api: getMonitorPromScrapeJobList,
+      rowKey: 'id',
       columns,
       formConfig: {
         labelWidth: 100,
         schemas: searchFormSchema,
       },
+      rowSelection: {
+        type: 'checkbox',
+      },
+      clickToRowSelect: true,
       useSearchForm: true,
       showTableSetting: true,
       bordered: true,
       showIndexColumn: false,
       actionColumn: {
-        width: 80,
+        width: 120,
         title: '操作',
         dataIndex: 'action',
       },
@@ -81,6 +101,7 @@ export default defineComponent({
     function handleCreate() {
       openDrawer(true, {
         isUpdate: false,
+        isCopy: false,
       });
     }
 
@@ -88,11 +109,32 @@ export default defineComponent({
       openDrawer(true, {
         record,
         isUpdate: true,
+        isCopy: false,
       });
     }
 
+    function handleCopy(record: Recordable) {
+      openDrawer(true, {
+        record,
+        isUpdate: false,
+        isCopy: true,
+      });
+    }
+
+    function handleCopySelected() {
+      const selected = getSelectRows();
+      if (!selected || selected.length === 0) {
+        createMessage.warning('请先在列表中勾选要复制的采集任务');
+        return;
+      }
+      if (selected.length > 1) {
+        createMessage.warning('每次仅支持复制单条任务，请仅勾选一条采集任务');
+        return;
+      }
+      handleCopy(selected[0]);
+    }
+
     async function handleDelete(record: Recordable) {
-      const { createMessage } = useMessage();
       try {
         await deleteMonitorPromScrapeJob(record.id);
         createMessage.success('删除成功');
@@ -112,9 +154,10 @@ export default defineComponent({
       handleGoPrometheus,
       handleCreate,
       handleEdit,
+      handleCopy,
+      handleCopySelected,
       handleDelete,
       handleSuccess,
-
     };
   },
 });

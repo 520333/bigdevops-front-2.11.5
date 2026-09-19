@@ -53,7 +53,7 @@
                 placement: 'left',
                 confirm: handleReLing.bind(null, record),
               },
-              auth: 'POST:/api/monitor/alertManagerEventReLing'
+              auth: 'POST:/api/monitor/alertManagerEventReLing/:id'
             },
           ]" />
         </template>

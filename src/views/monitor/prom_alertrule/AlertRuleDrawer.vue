@@ -22,7 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, unref, nextTick } from 'vue';
 import { BasicForm, useForm } from '@/components/Form/index';
 import { BasicDrawer, useDrawerInner } from '@/components/Drawer';
 import { useMessage } from '@/hooks/web/useMessage';
@@ -36,9 +36,13 @@ import { yaml } from '@codemirror/lang-yaml';
 const emit = defineEmits(['success', 'register']);
 const { createMessage } = useMessage();
 const isUpdate = ref(true);
+const isCopy = ref(false);
 const templateId = ref<number | null>(null);
 const renderEditor = ref(false);
-const getTitle = computed(() => (!isUpdate.value ? '新增告警规则' : '编辑告警规则'));
+const getTitle = computed(() => {
+  if (unref(isCopy)) return '复制告警规则';
+  return !unref(isUpdate) ? '新增告警规则' : '编辑告警规则';
+});
 
 const extensions = [oneDark, yaml()];
 
@@ -75,9 +79,25 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
   resetFields();
   setDrawerProps({ confirmLoading: false });
   isUpdate.value = !!data?.isUpdate;
-  if (isUpdate.value) {
-    templateId.value = data.record.id;
+  isCopy.value = !!data?.isCopy;
+
+  if (unref(isUpdate) || unref(isCopy)) {
+    templateId.value = unref(isUpdate) ? data.record.id : null;
     const recordData = { ...data.record };
+
+    if (unref(isCopy)) {
+      delete recordData.id;
+      if (recordData.name) {
+        const match = recordData.name.match(/^(.*_copy)(\d*)$/);
+        if (match) {
+          const num = match[2] ? parseInt(match[2], 10) + 1 : 2;
+          recordData.name = `${match[1]}${num}`;
+        } else {
+          recordData.name = `${recordData.name}_copy`;
+        }
+      }
+    }
+
     if (Array.isArray(recordData.labelsFront)) recordData.labelsFront = recordData.labelsFront.join('\n');
     if (Array.isArray(recordData.annotationsFront)) recordData.annotationsFront = recordData.annotationsFront.join('\n');
     if (recordData.treeNodeIds) recordData.treeNodeIds = recordData.treeNodeIds.map(Number);
@@ -91,9 +111,9 @@ async function handleSubmit() {
   try {
     const values = await validate();
     setDrawerProps({ confirmLoading: true });
-    if (!isUpdate.value) {
+    if (!unref(isUpdate)) {
       await createMonitorPromAlertRule(values);
-      createMessage.success('创建成功');
+      createMessage.success(unref(isCopy) ? '告警规则复制成功' : '告警规则创建成功');
     } else {
       await updateMonitorPromAlertRule({ ...values, id: templateId.value });
       createMessage.success('更新成功');
