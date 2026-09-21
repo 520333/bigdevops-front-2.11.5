@@ -47,6 +47,7 @@ enum Api {
   createApi = "/api/system/createApi",
   updateApi = "/api/system/updateApi",
   getAuditLogList = "/api/system/getAuditLogList",
+  getLoginLogList = "/api/system/getLoginLogList",
   getOnlineUserList = "/api/system/getOnlineUserList",
   kickoutUser = "/api/system/kickoutUser",
 
@@ -392,6 +393,9 @@ export const deleteApi = (id: number) =>
 
 export const getAuditLogList = (params?: any) =>
   defHttp.get({ url: Api.getAuditLogList, params });
+
+export const getLoginLogList = (params?: any) =>
+  defHttp.get({ url: Api.getLoginLogList, params });
 
 export const getOnlineUserList = () =>
   defHttp.get({ url: Api.getOnlineUserList });

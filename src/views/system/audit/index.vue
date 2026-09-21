@@ -4,6 +4,7 @@
     <div class="bg-white dark:bg-[#151515] px-4 pt-2 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
       <Tabs v-model:activeKey="activeTab" :tabBarStyle="{ margin: 0 }">
         <TabPane key="auditLog" tab="操作日志" />
+        <TabPane key="loginLog" tab="登录日志" />
         <TabPane key="onlineUser">
           <template #tab>
             <span>
@@ -25,29 +26,29 @@
       <BasicTable v-show="activeTab === 'auditLog'" @register="registerTable" class="w-full">
         <template #bodyCell="{ column, record }">
           <!-- 业务模块彩色标签 -->
-          <template v-if="column.key === 'module'">
+          <template v-if="column.key === 'module' || column.dataIndex === 'module'">
             <Tag color="cyan">{{ record.module || '通用' }}</Tag>
           </template>
 
           <!-- 请求方法标签 -->
-          <template v-if="column.key === 'method'">
+          <template v-if="column.key === 'method' || column.dataIndex === 'method'">
             <Tag :color="getMethodColor(record.method)">{{ record.method }}</Tag>
           </template>
 
           <!-- 响应状态标签 -->
-          <template v-if="column.key === 'status'">
+          <template v-if="column.key === 'status' || column.dataIndex === 'status'">
             <Tag :color="record.status >= 200 && record.status < 300 ? 'green' : 'red'">
               {{ record.status }}
             </Tag>
           </template>
 
           <!-- 操作动作标签 -->
-          <template v-if="column.key === 'action'">
+          <template v-if="column.key === 'action' || column.dataIndex === 'action'">
             <Tag :color="getActionColor(record.action)">{{ record.action || '-' }}</Tag>
           </template>
 
           <!-- 最右侧操作按钮列 -->
-          <template v-if="column.key === 'operate'">
+          <template v-if="column.key === 'operate' || column.dataIndex === 'operate'">
             <TableAction
               :actions="[
                 {
@@ -61,7 +62,34 @@
         </template>
       </BasicTable>
 
-      <!-- 2. 在线用户表格 -->
+      <!-- 2. 登录日志表格 -->
+      <BasicTable v-show="activeTab === 'loginLog'" @register="registerLoginTable" class="w-full">
+        <template #bodyCell="{ column, record }">
+          <!-- 登录方式彩色标签 -->
+          <template v-if="column.key === 'loginType' || column.dataIndex === 'loginType'">
+            <Tag :color="getLoginTypeColor(record.loginType)">{{ record.loginType || '密码登录' }}</Tag>
+          </template>
+
+          <!-- 操作系统 -->
+          <template v-if="column.key === 'os' || column.dataIndex === 'os'">
+            <Tag color="geekblue">{{ record.os || '未知系统' }}</Tag>
+          </template>
+
+          <!-- 浏览器 -->
+          <template v-if="column.key === 'browser' || column.dataIndex === 'browser'">
+            <Tag color="purple">{{ record.browser || '未知浏览器' }}</Tag>
+          </template>
+
+          <!-- 登录状态标签 -->
+          <template v-if="column.key === 'status' || column.dataIndex === 'status'">
+            <Tag :color="record.status === 1 ? 'green' : 'red'">
+              {{ record.status === 1 ? '成功' : '失败' }}
+            </Tag>
+          </template>
+        </template>
+      </BasicTable>
+
+      <!-- 3. 在线用户表格 -->
       <BasicTable v-show="activeTab === 'onlineUser'" @register="registerOnlineTable" class="w-full">
         <template #toolbar>
           <a-button type="primary" preIcon="ant-design:reload-outlined" @click="handleReloadOnline">
@@ -119,8 +147,9 @@ import { BasicTable, useTable, TableAction } from '@/components/Table';
 import { useDrawer } from '@/components/Drawer';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useUserStore } from '@/store/modules/user';
-import { getAuditLogList, getOnlineUserList, kickoutUser } from '@/api/demo/system';
+import { getAuditLogList, getLoginLogList, getOnlineUserList, kickoutUser } from '@/api/demo/system';
 import { columns, searchFormSchema } from './audit.data';
+import { loginColumns, loginSearchFormSchema } from './login.data';
 import { onlineColumns } from './online.data';
 import AuditDetailDrawer from './AuditDetailDrawer.vue';
 
@@ -142,8 +171,8 @@ const { createMessage } = useMessage();
 // 操作审计抽屉
 const [registerDrawer, { openDrawer }] = useDrawer();
 
-// 操作审计日志表格
-const [registerTable] = useTable({
+// 1. 操作审计日志表格
+const [registerTable, { reload: reloadAuditTable }] = useTable({
   title: '系统操作审计日志',
   api: getAuditLogList,
   columns,
@@ -172,7 +201,32 @@ const [registerTable] = useTable({
   },
 });
 
-// 在线用户表格
+// 2. 登录日志表格
+const [registerLoginTable, { reload: reloadLoginTable }] = useTable({
+  title: '用户登录/登出历史日志',
+  api: getLoginLogList,
+  columns: loginColumns,
+  formConfig: {
+    labelWidth: 80,
+    schemas: loginSearchFormSchema,
+    autoSubmitOnEnter: true,
+  },
+  useSearchForm: true,
+  showTableSetting: true,
+  bordered: true,
+  showIndexColumn: false,
+  canResize: false,
+  beforeFetch(params) {
+    if (params.dateRange && Array.isArray(params.dateRange)) {
+      params.startDate = params.dateRange[0];
+      params.endDate = params.dateRange[1];
+      delete params.dateRange;
+    }
+    return params;
+  },
+});
+
+// 3. 在线用户表格
 const [registerOnlineTable, { reload: reloadOnlineTable }] = useTable({
   title: '当前在线活跃用户列表',
   api: getOnlineUserList,
@@ -197,7 +251,11 @@ function handleReloadOnline() {
 }
 
 watch(activeTab, (newTab) => {
-  if (newTab === 'onlineUser') {
+  if (newTab === 'auditLog') {
+    reloadAuditTable();
+  } else if (newTab === 'loginLog') {
+    reloadLoginTable();
+  } else if (newTab === 'onlineUser') {
     reloadOnlineTable();
   }
 });
@@ -207,6 +265,8 @@ async function handleKickout(record: Recordable) {
     await kickoutUser(record.userName);
     createMessage.success(`用户【${record.realName || record.userName}】已被成功强退下线`);
     reloadOnlineTable();
+    // 刷新登录日志查看强退记录
+    reloadLoginTable();
   } catch (err: any) {
     createMessage.error(err?.message || '强退操作失败');
   }
@@ -242,6 +302,23 @@ function getActionColor(action: string) {
     return 'purple';
   }
   return 'blue';
+}
+
+function getLoginTypeColor(type: string) {
+  switch (type) {
+    case '密码登录':
+      return 'blue';
+    case 'OIDC单点':
+      return 'purple';
+    case '钉钉扫码':
+      return 'cyan';
+    case '退出登录':
+      return 'orange';
+    case '强退下线':
+      return 'red';
+    default:
+      return 'blue';
+  }
 }
 
 function handleViewDetail(record: Recordable) {
