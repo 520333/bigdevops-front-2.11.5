@@ -2,6 +2,13 @@
   <PageWrapper dense contentFullHeight contentClass="flex">
     <BasicTable @register="registerTable" class="w-full" :searchInfo="searchInfo">
       <template #toolbar>
+        <a-button
+          :loading="syncLoading"
+          @click="handleSyncKeycloakUsers"
+          v-auth="'POST:/api/system/syncKeycloakUsers'"
+        >
+          同步 Keycloak 用户
+        </a-button>
         <a-button type="primary" @click="handleCreate" v-auth="'POST:/api/system/createAccount'">新增账号</a-button>
       </template>
       <template #bodyCell="{ column, record }">
@@ -52,10 +59,10 @@
   </PageWrapper>
 </template>
 <script lang="ts">
-  import { defineComponent, reactive } from 'vue';
+  import { defineComponent, reactive, ref } from 'vue';
   import { Tag } from 'ant-design-vue';
   import { BasicTable, useTable, TableAction } from '@/components/Table';
-  import { deleteAccount, getAccountList } from '@/api/demo/system';
+  import { deleteAccount, getAccountList, syncKeycloakUsers } from '@/api/demo/system';
   import { PageWrapper } from '@/components/Page';
   import DeptTree from './DeptTree.vue';
 
@@ -68,7 +75,7 @@
 
   export default defineComponent({
     name: 'AccountManagement',
-    components: { BasicTable, PageWrapper, DeptTree, AccountModal, TableAction, Tag, },
+    components: { BasicTable, PageWrapper, DeptTree, AccountModal, TableAction, Tag },
     setup() {
       const roleColorMap = {
         super: 'blue',   // 超级管理员
@@ -79,6 +86,8 @@
         prometheus_admin: 'green'     // 监控管理员
       };
       const go = useGo();
+      const { createMessage, notification } = useMessage();
+      const syncLoading = ref(false);
       const [registerModal, { openModal }] = useModal();
       const searchInfo = reactive<Recordable>({});
       const [registerTable, { reload }] = useTable({
@@ -120,7 +129,6 @@
       }
 
       function handleDelete(record: Recordable) {
-        const { createMessage } = useMessage();
         deleteAccount(record.id).then(() => {
           createMessage.success('用户删除成功');
         }).catch(() => {
@@ -128,6 +136,25 @@
         }).finally(() => {
           reload();
         });
+      }
+
+      function handleSyncKeycloakUsers() {
+        syncLoading.value = true;
+        syncKeycloakUsers()
+          .then((res: any) => {
+            notification.success({
+              message: 'Keycloak 用户同步完成',
+              description: res?.message || '已成功从 Keycloak 统一身份源完成全量同步',
+              duration: 4,
+            });
+            reload();
+          })
+          .catch((err) => {
+            createMessage.error(err?.message || '同步 Keycloak 用户失败');
+          })
+          .finally(() => {
+            syncLoading.value = false;
+          });
       }
 
       function handleSuccess({ isUpdate, values }) {
@@ -156,6 +183,8 @@
         handleSuccess,
         handleSelect,
         handleView,
+        handleSyncKeycloakUsers,
+        syncLoading,
         searchInfo,
         roleColorMap
       };

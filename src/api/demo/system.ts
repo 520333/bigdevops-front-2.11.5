@@ -23,6 +23,7 @@ enum Api {
   setAccountStatus = "/api/system/setAccountStatus",
   changePassword = "/api/system/changePassword",
   getAllUserAndRoles = "/api/system/getAllUserAndRoles",
+  syncKeycloakUsers = "/api/system/syncKeycloakUsers",
 
   DeptList = '/api/system/getDeptList',
   setRoleStatus = '/api/system/setRoleStatus',
@@ -334,6 +335,9 @@ export const changePassword = (data) =>
 
 export const getAllUserAndRoles = () =>
   defHttp.get({ url: Api.getAllUserAndRoles });
+
+export const syncKeycloakUsers = () =>
+  defHttp.post({ url: Api.syncKeycloakUsers });
 
 export const getDeptList = (params?: DeptListItem) =>
   defHttp.get<DeptListGetResultModel>({ url: Api.DeptList, params });
