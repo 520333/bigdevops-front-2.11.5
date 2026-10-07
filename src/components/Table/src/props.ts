@@ -19,6 +19,7 @@ import type { Key } from 'ant-design-vue/lib/table/interface';
 export const basicProps = {
   clickToRowSelect: { type: Boolean, default: true },
   isTreeTable: Boolean,
+  accordion: propTypes.bool,
   tableSetting: propTypes.shape<TableSetting>({}),
   inset: Boolean,
   sortFn: {

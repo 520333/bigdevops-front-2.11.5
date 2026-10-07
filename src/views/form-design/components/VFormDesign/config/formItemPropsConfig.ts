@@ -179,15 +179,33 @@ export const advanceFormItemColProps: IBaseFormAttrs[] = [
 ];
 // 控件属性面板的配置项
 export const baseFormItemProps: IBaseFormAttrs[] = [
+  // {
+  //   // 动态的切换控件的类型
+  //   name: 'component',
+  //   label: '控件-FormItem',
+  //   component: Select,
+  //   componentProps: {
+  //     options: baseComponents
+  //       .concat(customComponents)
+  //       .map((item) => ({ value: item.component, label: item.label })),
+  //   },
+  // },
   {
-    // 动态的切换控件的类型
     name: 'component',
     label: '控件-FormItem',
     component: Select,
     componentProps: {
-      options: baseComponents
-        .concat(customComponents)
-        .map((item) => ({ value: item.component, label: item.label })),
+      // 对 component 进行去重，确保每种基础组件类型在下拉框中唯一呈现
+      options: (() => {
+        const list = baseComponents.concat(customComponents);
+        const map = new Map<string, string>();
+        list.forEach((item) => {
+          if (!map.has(item.component)) {
+            map.set(item.component, item.label);
+          }
+        });
+        return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+      })(),
     },
   },
   {

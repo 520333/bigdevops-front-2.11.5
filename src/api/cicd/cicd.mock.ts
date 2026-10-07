@@ -231,22 +231,6 @@ export const getWorkorderDetail = (id: number | string) => {
   return Promise.resolve(mockWorkorderDetail);
 };
 
-// 服务基线接口
-export const getBaselineList = (params?: any) => {
-  return Promise.resolve({ items: mockBaselineList, total: mockBaselineList.length });
-};
-
-export const triggerJenkinsBuild = (data: { appName: string; jenkinsJob: string }) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ buildNo: Math.floor(Math.random() * 100) + 1, message: '构建已触发' });
-    }, 800);
-  });
-};
-
-export const getJenkinsBuildLog = (data: { jenkinsJob: string; buildNo: number }) => {
-  return Promise.resolve({ log: generateBuildLog(data.jenkinsJob, data.buildNo), finished: true });
-};
 
 // 环境配置接口
 export const getEnvList = (params?: any) => {

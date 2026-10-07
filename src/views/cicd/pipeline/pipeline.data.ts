@@ -1,6 +1,20 @@
 import { BasicColumn, FormSchema } from '@/components/Table';
 import { h } from 'vue';
 import { Tag } from 'ant-design-vue';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { Decoration, ViewPlugin, EditorView } from '@codemirror/view';
+import type { DecorationSet, ViewUpdate } from '@codemirror/view';
+import { RangeSetBuilder } from '@codemirror/state';
+import { foldService } from '@codemirror/language';
+import dayjs from 'dayjs';
+
+export const langOptions = [
+  { label: 'Vue/TS', value: 'Vue/TS' },
+  { label: 'Java', value: 'Java' },
+  { label: 'Go', value: 'Go' },
+  { label: 'Python', value: 'Python' },
+  { label: 'PHP', value: 'PHP' },
+];
 
 export const columns: BasicColumn[] = [
   {
@@ -27,17 +41,6 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '构建节点',
-    dataIndex: 'agentNode',
-    key: 'agentNode',
-    width: 130,
-    align: 'center',
-    customRender: ({ text }) => {
-      const node = text || 'master';
-      return h(Tag, { color: 'processing', class: 'font-mono text-xs rounded' }, () => `node: ${node}`);
-    },
-  },
-  {
     title: '描述说明',
     dataIndex: 'description',
     key: 'description',
@@ -50,14 +53,10 @@ export const columns: BasicColumn[] = [
   {
     title: '创建时间',
     dataIndex: 'CreatedAt',
-    key: 'CreatedAt',
-    width: 180,
-    align: 'center',
-    customRender: ({ text }) => {
-      if (!text) return h('span', { class: 'text-gray-400 text-xs' }, '-');
-      const date = new Date(text);
-      return h('span', { class: 'text-xs text-gray-500 font-mono' }, date.toLocaleString());
+    format: (text) => {
+      return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '';
     },
+    width: 150,
   },
 ];
 
@@ -70,14 +69,7 @@ export const searchFormSchema: FormSchema[] = [
     componentProps: {
       placeholder: '筛选适用语言',
       allowClear: true,
-      options: [
-        { label: '全部语言', value: '' },
-        { label: 'Java', value: 'Java' },
-        { label: 'Vue/TS', value: 'Vue/TS' },
-        { label: 'Go', value: 'Go' },
-        { label: 'Python', value: 'Python' },
-        { label: 'Shell', value: 'Shell' },
-      ],
+      options: [{ label: '全部语言', value: '' }, ...langOptions],
     },
   },
   {
@@ -111,23 +103,7 @@ export const formSchema: FormSchema[] = [
     defaultValue: 'Vue/TS',
     colProps: { span: 6 },
     componentProps: {
-      options: [
-        { label: 'Vue/TS', value: 'Vue/TS' },
-        { label: 'Java', value: 'Java' },
-        { label: 'Go', value: 'Go' },
-        { label: 'Python', value: 'Python' },
-        { label: 'Shell', value: 'Shell' },
-      ],
-    },
-  },
-  {
-    field: 'agentNode',
-    label: '构建节点 (Agent)',
-    component: 'Input',
-    defaultValue: 'master',
-    colProps: { span: 6 },
-    componentProps: {
-      placeholder: 'master / k8s-slave',
+      options: langOptions,
     },
   },
   {
@@ -148,3 +124,123 @@ export const formSchema: FormSchema[] = [
     slot: 'pipelineScriptSlot',
   },
 ];
+
+// 公共 CodeMirror 扩展（Groovy 语法高亮与折叠）
+const keywordTheme = EditorView.baseTheme({
+  '.cm-jenkins-keyword': { color: '#c678dd', fontWeight: 'bold' },
+  '.cm-jenkins-string': { color: '#98c379' },
+  '.cm-jenkins-comment': { color: '#5c6370', fontStyle: 'italic' },
+  '.cm-jenkins-step': { color: '#61afef' },
+});
+
+const jC = Decoration.mark({ class: 'cm-jenkins-comment' });
+const jS = Decoration.mark({ class: 'cm-jenkins-string' });
+const jK = Decoration.mark({ class: 'cm-jenkins-keyword' });
+const jT = Decoration.mark({ class: 'cm-jenkins-step' });
+
+const jenkinsHighlighter = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = this.getDeco(view);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = this.getDeco(update.view);
+      }
+    }
+    getDeco(view: EditorView) {
+      const builder = new RangeSetBuilder<Decoration>();
+      for (const { from, to } of view.visibleRanges) {
+        const text = view.state.doc.sliceString(from, to);
+        const regex =
+          /(\/\/.*)|(\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(\b(?:pipeline|agent|stages|stage|steps|environment|parameters|options|post|always|success|failure|any|none|when|expression|withCredentials|cleanWs|checkout|scmGit|groovyScript|booleanParam|string|choice)\b)|(\b(?:sh|echo|git|docker|curl|ansible|wrap|returnStdout|trim)\b)/g;
+        let match;
+        while ((match = regex.exec(text))) {
+          const start = from + match.index;
+          const end = start + match[0].length;
+          if (match[1] || match[2]) {
+            builder.add(start, end, jC);
+          } else if (match[3] || match[4]) {
+            builder.add(start, end, jS);
+          } else if (match[5]) {
+            builder.add(start, end, jK);
+          } else if (match[6]) {
+            builder.add(start, end, jT);
+          }
+        }
+      }
+      return builder.finish();
+    }
+  },
+  {
+    decorations: (v) => v.decorations,
+  },
+);
+
+const braceFolder = foldService.of((state, lineStart) => {
+  const line = state.doc.lineAt(lineStart);
+  const text = line.text;
+  const openBrace = text.indexOf('{');
+  if (openBrace === -1) return null;
+
+  let braceCount = 0;
+  const pos = lineStart + openBrace;
+  const docLength = state.doc.length;
+
+  for (let i = pos; i < docLength; i++) {
+    const char = state.doc.sliceString(i, i + 1);
+    if (char === '{') {
+      braceCount++;
+    } else if (char === '}') {
+      braceCount--;
+      if (braceCount === 0) {
+        return { from: pos + 1, to: i };
+      }
+    }
+  }
+  return null;
+});
+
+export const pipelineEditorExtensions = [oneDark, keywordTheme, jenkinsHighlighter, braceFolder];
+
+export const defaultTemplateScript = `pipeline {
+    agent any
+
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('拉取代码 (Checkout)') {
+            steps {
+                echo "1. 正在从 Git 仓库拉取最新发布分支..."
+            }
+        }
+
+        stage('编译构建 (Build & Compile)') {
+            steps {
+                echo "2. 执行依赖安装与编译构建打包..."
+            }
+        }
+
+        stage('镜像打包与推送 (Docker Push)') {
+            steps {
+                echo "3. 构建 Container 镜像并推送到云端镜像仓库..."
+            }
+        }
+
+        stage('云端发布部署 (Cloud Deploy)') {
+            steps {
+                echo "4. 执行 Kubernetes 零停机滚动更新集群应用..."
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}`;
