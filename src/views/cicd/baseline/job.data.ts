@@ -12,8 +12,8 @@ export const columns: BasicColumn[] = [
     title: '项目名称',
     dataIndex: 'projectName',
     key: 'projectName',
-    width: 140,
-    align: 'left',
+    width: 80,
+    align: 'center',
     customRender: ({ record }) => {
       const val = record.projectName || record.folder;
       if (!val) return h('span', { class: 'text-gray-400 text-xs italic' }, '/');
@@ -42,6 +42,29 @@ export const columns: BasicColumn[] = [
         'span',
         { class: 'font-bold font-mono text-gray-800 dark:text-gray-100' },
         name || '-',
+      );
+    },
+  },
+  {
+    title: '部署环境',
+    dataIndex: 'deployEnv',
+    key: 'deployEnv',
+    width: 80,
+    align: 'center',
+    customRender: ({ text }) => {
+      const env = text || '-';
+      const colorMap: Record<string, string> = {
+        dev: 'blue',
+        test: 'orange',
+        stage: 'yellow',
+        uat: 'purple',
+        pre: 'cyan',
+        prod: 'green',
+      };
+      return h(
+        Tag,
+        { color: colorMap[env] || 'default', class: 'font-semibold rounded px-2' },
+        () => env,
       );
     },
   },
@@ -94,17 +117,14 @@ export const columns: BasicColumn[] = [
     title: '最后构建号',
     dataIndex: 'count',
     key: 'count',
-    width: 60,
+    width: 80,
     align: 'center',
     customRender: ({ text }) => {
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '暂无构建');
       return h(
-        'span',
-        {
-          class:
-            'font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800',
-        },
-        `#${text}`,
+        Tag,
+        { color: 'processing', class: 'font-mono rounded px-2 font-semibold' },
+        () => `#${text}`,
       );
     },
   },

@@ -8,7 +8,7 @@
   >
     <template #title>
       <div class="flex items-center justify-between w-full pr-8 select-none">
-        <Space align="center" size="small">
+        <Space align="center" size="small" class="flex-wrap">
           <span
             v-if="isRunning || loading"
             class="w-4 h-4 rounded-full border-2 border-dashed border-blue-500 animate-spin inline-block shrink-0"
@@ -29,18 +29,94 @@
             v-else
             class="w-3.5 h-3.5 rounded-full border-2 border-gray-300 inline-block shrink-0"
           ></span>
-          <span class="font-bold text-gray-800 dark:text-gray-100"
-            >Jenkins Console [ {{ jobName }} #{{ buildNumber }} ]</span
+          <span class="font-bold text-gray-800 dark:text-gray-100 shrink-0">
+            {{ jobName }}
+          </span>
+
+          <!-- 历史构建选择下拉框 -->
+          <a-select
+            v-model:value="buildNumber"
+            size="small"
+            style="min-width: 140px; max-width: 220px"
+            :loading="historyLoading"
+            placeholder="历史构建期数"
+            @change="handleBuildNumberChange"
           >
+            <a-select-option
+              v-for="item in historyList"
+              :key="item.buildNumber"
+              :value="item.buildNumber"
+            >
+              <div class="flex items-center justify-between gap-1.5 text-xs font-mono">
+                <span>#{{ item.buildNumber }}</span>
+                <Tag
+                  :color="getBuildResultColor(item.result)"
+                  class="text-[10px] px-1 py-0 m-0 border-0"
+                >
+                  {{ item.result || 'BUILT' }}
+                </Tag>
+              </div>
+            </a-select-option>
+          </a-select>
+
+          <!-- 当前构建状态 Tag -->
           <Tag v-if="isRunning" color="processing">BUILDING</Tag>
           <Tag v-else-if="buildResult === 'SUCCESS'" color="success">SUCCESS</Tag>
           <Tag v-else-if="buildResult === 'FAILURE'" color="error">FAILURE</Tag>
           <Tag v-else-if="buildResult === 'ABORTED'" color="warning">ABORTED</Tag>
-          <Tag v-else-if="buildResult" color="warning">{{ buildResult }}</Tag>
-          <span class="text-xs text-gray-400 font-mono ml-2">Offset: {{ logOffset }} bytes</span>
+          <Tag v-else-if="buildResult" color="default">{{ buildResult }}</Tag>
+
+          <!-- 构建参数 Popover -->
+          <a-popover
+            trigger="click"
+            placement="bottomLeft"
+          >
+            <template #title>
+              <div class="flex items-center justify-between text-xs font-bold gap-4">
+                <span>第 #{{ buildNumber }} 期构建入参快照</span>
+                <span class="text-gray-400 font-normal">触发人: {{ currentBuildTriggerUser || '系统' }}</span>
+              </div>
+            </template>
+            <template #content>
+              <div class="max-w-md max-h-72 overflow-y-auto">
+                <div v-if="currentBuildParams.length === 0" class="py-4 text-center text-xs text-gray-400">
+                  该期任务无自定义构建入参
+                </div>
+                <table v-else class="w-full text-xs border-collapse">
+                  <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700 text-gray-500">
+                      <th class="py-1 text-left font-semibold pr-4">参数名 (Key)</th>
+                      <th class="py-1 text-left font-semibold">参数值 (Value)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="param in currentBuildParams"
+                      :key="param.name"
+                      class="border-b border-gray-100 dark:border-gray-800"
+                    >
+                      <td class="py-1 pr-3 font-mono text-blue-600 dark:text-blue-400 font-medium">
+                        {{ param.name }}
+                      </td>
+                      <td class="py-1 font-mono text-gray-800 dark:text-gray-200 break-all select-all">
+                        {{ param.value !== undefined && param.value !== '' ? param.value : '-' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+            <Button size="small" type="dashed" class="text-xs">
+              <template #icon>
+                <Icon icon="ant-design:profile-outlined" />
+              </template>
+              构建参数 ({{ currentBuildParams.length }})
+            </Button>
+          </a-popover>
         </Space>
 
-        <Space size="middle" align="center">
+        <Space size="middle" align="center" class="shrink-0">
+          <span class="text-xs text-gray-400 font-mono hidden md:inline">Offset: {{ logOffset }} bytes</span>
           <a-checkbox v-model:checked="autoScroll" class="text-xs">自动滚到底部</a-checkbox>
           <Button size="small" type="primary" ghost @click="fetchLogs(true)"> 手动刷新 </Button>
           <a-popconfirm
@@ -65,10 +141,26 @@
 
 <script lang="ts" setup>
   import { ref, onBeforeUnmount, nextTick } from 'vue';
-  import { Tag, Checkbox as ACheckbox, Popconfirm as APopconfirm, Space } from 'ant-design-vue';
+  import {
+    Tag,
+    Checkbox as ACheckbox,
+    Popconfirm as APopconfirm,
+    Space,
+    Select as ASelect,
+    SelectOption as ASelectOption,
+    Popover as APopover,
+  } from 'ant-design-vue';
   import { Button } from '@/components/Button';
+  import Icon from '@/components/Icon/Icon.vue';
   import { BasicDrawer, useDrawerInner } from '@/components/Drawer';
-  import { getJenkinsBuildLogs, triggerJenkinsBuild, stopJenkinsBuild } from '@/api/cicd';
+  import {
+    getJenkinsBuildLogs,
+    triggerJenkinsBuild,
+    stopJenkinsBuild,
+    getJenkinsJobBuildHistory,
+    type JobBuildHistoryItem,
+    type JobBuildParamKV,
+  } from '@/api/cicd';
   import { useMessage } from '@/hooks/web/useMessage';
 
   import { Terminal } from 'xterm';
@@ -90,6 +182,20 @@
   const autoScroll = ref<boolean>(true);
   const loading = ref<boolean>(false);
   const terminalRef = ref<HTMLElement | null>(null);
+
+  const historyLoading = ref<boolean>(false);
+  const historyList = ref<JobBuildHistoryItem[]>([]);
+  const currentBuildParams = ref<JobBuildParamKV[]>([]);
+  const currentBuildTriggerUser = ref<string>('');
+
+  function getBuildResultColor(res: string) {
+    const r = (res || '').toUpperCase();
+    if (r === 'SUCCESS') return 'green';
+    if (r === 'FAILURE' || r === 'FAILED') return 'red';
+    if (r === 'BUILDING' || r === 'IN_PROGRESS') return 'blue';
+    if (r === 'ABORTED') return 'orange';
+    return 'default';
+  }
 
   let term: Terminal | null = null;
   let fitAddon: FitAddon | null = null;
@@ -204,6 +310,54 @@
     }
   }
 
+  async function fetchBuildHistory() {
+    if (!instanceId.value || !jobName.value) return;
+    historyLoading.value = true;
+    try {
+      const res: any = await getJenkinsJobBuildHistory({
+        instanceId: instanceId.value,
+        jobName: jobName.value,
+        folder: folder.value,
+        projectName: projectName.value,
+        limit: 25,
+      });
+      historyList.value = res?.items || [];
+      if ((!buildNumber.value || buildNumber.value <= 0) && historyList.value.length > 0) {
+        buildNumber.value = historyList.value[0].buildNumber;
+      }
+      updateCurrentBuildMeta();
+    } catch {
+      // ignore
+    } finally {
+      historyLoading.value = false;
+    }
+  }
+
+  function handleBuildNumberChange(val: number) {
+    buildNumber.value = val;
+    updateCurrentBuildMeta();
+    fetchLogs(true);
+    if (isRunning.value) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+  }
+
+  function updateCurrentBuildMeta() {
+    const cur = historyList.value.find(
+      (item) => Number(item.buildNumber) === Number(buildNumber.value),
+    );
+    if (cur) {
+      currentBuildParams.value = cur.paramList || [];
+      currentBuildTriggerUser.value = cur.triggerUser || '';
+      buildResult.value = cur.result || '';
+      isRunning.value = cur.building || cur.result === 'BUILDING';
+    } else {
+      currentBuildParams.value = [];
+    }
+  }
+
   const [registerDrawer] = useDrawerInner(async (data) => {
     instanceId.value = data.instanceId;
     const rawJobName = data.jobName || '';
@@ -216,6 +370,9 @@
     buildResult.value = '';
     logOffset.value = 0;
     loading.value = true;
+    historyList.value = [];
+    currentBuildParams.value = [];
+    currentBuildTriggerUser.value = '';
     stopTimer();
     stopSpinnerAnimation();
 
@@ -249,6 +406,7 @@
       }
     }
 
+    await fetchBuildHistory();
     fetchLogs(true);
     startTimer();
   });
@@ -273,8 +431,9 @@
       });
 
       if (res) {
-        if (res.buildNumber) {
+        if (res.buildNumber && (!buildNumber.value || buildNumber.value <= 0)) {
           buildNumber.value = res.buildNumber;
+          updateCurrentBuildMeta();
         }
         if (res.content && term) {
           removeSpinner();

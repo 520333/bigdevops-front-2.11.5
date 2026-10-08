@@ -21,6 +21,7 @@ enum Api {
   validateJenkinsPipeline = '/api/cicd/validateJenkinsPipeline',
   getJenkinsJobStageView = '/api/cicd/getJenkinsJobStageView',
   getJenkinsJobParameters = '/api/cicd/getJenkinsJobParameters',
+  getJenkinsJobBuildHistory = '/api/cicd/getJenkinsJobBuildHistory',
 
   // Pipeline 模版管理
   getJenkinsPipelineList = '/api/cicd/getJenkinsPipelineList',
@@ -173,6 +174,36 @@ export const getJenkinsJobParameters = (params: {
   folder?: string;
   projectName?: string;
 }) => defHttp.get({ url: Api.getJenkinsJobParameters, params });
+
+export interface JobBuildParamKV {
+  name: string;
+  value: any;
+}
+
+export interface JobBuildHistoryItem {
+  buildNumber: number;
+  result: string;
+  building: boolean;
+  timestamp: number;
+  duration: number;
+  durationFormatted: string;
+  triggerUser: string;
+  parameters: Record<string, any>;
+  paramList: JobBuildParamKV[];
+}
+
+// 获取远端 Jenkins 任务历史构建列表与实际运行参数快照
+export const getJenkinsJobBuildHistory = (params: {
+  instanceId: number;
+  jobName: string;
+  folder?: string;
+  projectName?: string;
+  limit?: number;
+}) =>
+  defHttp.get<{ items: JobBuildHistoryItem[]; total: number }>({
+    url: Api.getJenkinsJobBuildHistory,
+    params,
+  });
 
 // Pipeline 模版管理
 export const getJenkinsPipelineList = (params?: { lang?: string; keyword?: string }) =>
