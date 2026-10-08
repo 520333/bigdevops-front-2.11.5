@@ -34,6 +34,11 @@ enum Api {
   createJenkinsEnv = '/api/cicd/createJenkinsEnv',
   updateJenkinsEnv = '/api/cicd/updateJenkinsEnv',
   deleteJenkinsEnv = '/api/cicd/deleteJenkinsEnv',
+
+  // 服务基线数据权限管理
+  getRoleJobPermissions = '/api/cicd/getRoleJobPermissions',
+  saveRoleJobPermissions = '/api/cicd/saveRoleJobPermissions',
+  getJobProjectOptions = '/api/cicd/getJobProjectOptions',
 }
 
 export const getJenkinsInstanceList = (params?: any) =>
@@ -228,3 +233,13 @@ export const updateJenkinsEnv = (data: any) => defHttp.post({ url: Api.updateJen
 
 export const deleteJenkinsEnv = (id: number) =>
   defHttp.delete({ url: `${Api.deleteJenkinsEnv}?id=${id}` });
+
+// 服务基线角色数据权限
+export const getRoleJobPermissions = (params: { roleId: number }) =>
+  defHttp.get<any[]>({ url: Api.getRoleJobPermissions, params });
+
+export const saveRoleJobPermissions = (data: { roleId: number; permissions: any[] }) =>
+  defHttp.post({ url: Api.saveRoleJobPermissions, data });
+
+export const getJobProjectOptions = () =>
+  defHttp.get<{ projects: string[]; envs: string[] }>({ url: Api.getJobProjectOptions });

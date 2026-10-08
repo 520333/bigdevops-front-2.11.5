@@ -40,12 +40,20 @@
             :actions="[
               {
                 icon: 'clarity:note-edit-line',
+                tooltip: '编辑角色',
                 onClick: handleEdit.bind(null, record),
                 auth: 'POST:/api/system/updateRole'
               },
               {
+                icon: 'ant-design:safety-certificate-outlined',
+                tooltip: '服务基线数据权限',
+                onClick: handleOpenJobPerm.bind(null, record),
+                auth: 'POST:/api/system/updateRole',
+              },
+              {
                 icon: 'ant-design:delete-outlined',
                 color: 'error',
+                tooltip: '删除角色',
                 popConfirm: {
                   title: '是否确认删除',
                   placement: 'left',
@@ -59,6 +67,7 @@
       </template>
     </BasicTable>
     <RoleDrawer @register="registerDrawer" @success="handleSuccess" />
+    <JobPermissionDrawer @register="registerJobPermDrawer" />
   </div>
 </template>
 <script lang="ts">
@@ -74,10 +83,12 @@
 
   import { columns, searchFormSchema } from './role.data';
   import { useMessage } from '@/hooks/web/useMessage';
+  import JobPermissionDrawer from './JobPermissionDrawer.vue';
+
   export default defineComponent({
     name: 'RoleManagement',
     components: { 
-      BasicTable, RoleDrawer, TableAction, Tag, Popover, AButton: Button, Icon
+      BasicTable, RoleDrawer, JobPermissionDrawer, TableAction, Tag, Popover, AButton: Button, Icon
     },
     setup() {
       const roleColorMap = {
@@ -89,6 +100,8 @@
         prometheus_admin: 'green'     // 监控管理员
       };
       const [registerDrawer, { openDrawer }] = useDrawer();
+      const [registerJobPermDrawer, { openDrawer: openJobPermDrawer }] = useDrawer();
+
       const [registerTable, { reload }] = useTable({
         title: '角色列表',
         api: getRoleListByPage,
@@ -102,7 +115,7 @@
         bordered: true,
         showIndexColumn: false,
         actionColumn: {
-          width: 80,
+          width: 120,
           title: '操作',
           dataIndex: 'action',
         },
@@ -118,6 +131,12 @@
         openDrawer(true, {
           record,
           isUpdate: true,
+        });
+      }
+
+      function handleOpenJobPerm(record: Recordable) {
+        openJobPermDrawer(true, {
+          record,
         });
       }
 
@@ -142,8 +161,10 @@
       return {
         registerTable,
         registerDrawer,
+        registerJobPermDrawer,
         handleCreate,
         handleEdit,
+        handleOpenJobPerm,
         handleDelete,
         handleSuccess,
         roleColorMap,

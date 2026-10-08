@@ -7,6 +7,7 @@
           新建服务基线
         </a-button>
         <a-button :disabled="!selectedInstanceId" :loading="syncLoading" preIcon="ant-design:sync-outlined"
+          v-auth="['POST:/api/cicd/createJenkinsJob', 'POST:/api/cicd/updateJenkinsJob']"
           @click="handleManualSync">
           同步远程任务
         </a-button>
@@ -20,8 +21,12 @@
               {
                 icon: 'ant-design:play-circle-outlined',
                 tooltip:
-                  record.status === 'BUILDING' ? '当前任务正在构建中，不可重复发起' : '构建部署',
-                disabled: record.status === 'BUILDING',
+                  record.canBuild === false
+                    ? '当前环境仅具有只读权限，不可触发构建'
+                    : record.status === 'BUILDING'
+                      ? '当前任务正在构建中，不可重复发起'
+                      : '构建部署',
+                disabled: record.status === 'BUILDING' || record.canBuild === false,
                 auth: 'POST:/api/cicd/triggerJenkinsBuild',
                 onClick: () => handleOpenBuildModal(record),
               },
