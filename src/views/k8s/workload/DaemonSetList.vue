@@ -258,8 +258,7 @@ spec:
         }));
         return { items: list, total: res?.total || 0 };
       } catch (e: any) {
-        console.error(e);
-        createMessage.error('获取 DaemonSet 列表失败: ' + (e.message || e));
+        // Axios 响应拦截器已统一进行异常提示，此处捕获异常并返回空数据兜底
         return { items: [], total: 0 };
       }
     },
@@ -267,6 +266,7 @@ spec:
     pagination: {
       showQuickJumper: false,
     },
+    immediate: false,
     bordered: true,
     showIndexColumn: false,
     useSearchForm: false,
@@ -332,6 +332,7 @@ spec:
   });
 
   async function loadNamespaceList(clusterName: string) {
+    if (!clusterName) return;
     try {
       const res = await getK8sNamespaceList({ clusterName });
       const nsList = Array.isArray(res) ? res : res?.items || res?.result || [];
@@ -345,6 +346,7 @@ spec:
   }
 
   async function handleClusterChange(val: string) {
+    if (!val || val === selectedCluster.value) return;
     selectedCluster.value = val;
     checkedKeys.value = [];
     await loadNamespaceList(val);
@@ -352,6 +354,7 @@ spec:
   }
 
   async function handleNamespaceChange(val: string) {
+    if (val === selectedNamespace.value) return;
     selectedNamespace.value = val;
     checkedKeys.value = [];
     await reload();

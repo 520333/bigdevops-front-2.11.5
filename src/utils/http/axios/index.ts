@@ -91,7 +91,7 @@ const transform: AxiosTransform = {
     if (options.errorMessageMode === 'modal') {
       createErrorModal({ title: t('sys.api.errorTip'), content: timeoutMsg });
     } else if (options.errorMessageMode === 'message') {
-      createMessage.error(timeoutMsg);
+      createMessage.error({ content: timeoutMsg, key: timeoutMsg });
     }
 
     throw new Error(timeoutMsg || t('sys.api.apiRequestFailed'));

@@ -269,8 +269,7 @@ spec:
           total: res?.total || 0,
         };
       } catch (e: any) {
-        console.error(e);
-        createMessage.error('获取 Deployment 列表失败: ' + (e.message || e));
+        // Axios 响应拦截器已统一进行异常提示，此处捕获异常并返回空数据兜底
         return { items: [], total: 0 };
       }
     },
@@ -282,6 +281,7 @@ spec:
     pagination: {
       showQuickJumper: false,
     },
+    immediate: false,
     bordered: true,
     showIndexColumn: false,
     useSearchForm: true,
@@ -300,8 +300,11 @@ spec:
     checkedKeys.value = keys;
   }
 
+  let isInitializing = false;
+
   // 1. 初始化加载集群列表
   onMounted(async () => {
+    isInitializing = true;
     try {
       const res = await getClusterForSelect();
       const list = Array.isArray(res) ? res : res?.items || res?.result || [];
@@ -319,9 +322,13 @@ spec:
             componentProps: {
               options: clusterOptions.value,
               onChange: async (val: string) => {
+                if (isInitializing) return;
+                if (!val || val === selectedCluster.value) return;
+                selectedCluster.value = val;
+                selectedNamespace.value = '';
+                checkedKeys.value = [];
                 await loadNamespaceList(val);
                 getForm().setFieldsValue({ namespace: '' });
-                checkedKeys.value = [];
                 await reload();
                 initDeploymentWatch();
               },
@@ -329,18 +336,21 @@ spec:
           },
         ]);
         
-        await getForm().setFieldsValue({ clusterName: selectedCluster.value });
         await loadNamespaceList(selectedCluster.value);
+        await getForm().setFieldsValue({ clusterName: selectedCluster.value });
         await reload();
         initDeploymentWatch();
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      isInitializing = false;
     }
   });
 
   // 2. 加载指定集群的 Namespace 列表
   async function loadNamespaceList(clusterName: string) {
+    if (!clusterName) return;
     try {
       const res = await getK8sNamespaceList({ clusterName });
       const nsList = Array.isArray(res) ? res : res?.items || res?.result || [];
@@ -356,6 +366,8 @@ spec:
           componentProps: {
             options: namespaceOptions.value,
             onChange: async (val: string) => {
+              if (isInitializing) return;
+              if (val === selectedNamespace.value) return;
               selectedNamespace.value = val;
               checkedKeys.value = [];
               await reload();

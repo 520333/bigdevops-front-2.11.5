@@ -243,3 +243,4 @@ export const saveRoleJobPermissions = (data: { roleId: number; permissions: any[
 
 export const getJobProjectOptions = () =>
   defHttp.get<{ projects: string[]; envs: string[] }>({ url: Api.getJobProjectOptions });
+

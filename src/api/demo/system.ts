@@ -862,7 +862,7 @@ export const getK8sYamlTaskLogList = (params?: any) =>
   defHttp.get({ url: Api.getK8sYamlTaskLogList, params });
 
 export const getK8sNamespaceList = (params?: any) =>
-  defHttp.get({ url: Api.getK8sNamespaceList, params });
+  defHttp.get({ url: Api.getK8sNamespaceList, params }, { errorMessageMode: 'none' });
 
 export const getK8sPodList = (params?: any) =>
   defHttp.get({ url: Api.getK8sPodList, params });

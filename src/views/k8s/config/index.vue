@@ -6,10 +6,10 @@
         <a-tab-pane key="secret" tab="Secret (密钥凭据)" />
       </a-tabs>
     </div>
-    <div v-show="activeTab === 'configmap'">
+    <div v-if="activeTab === 'configmap'">
       <ConfigMapList />
     </div>
-    <div v-show="activeTab === 'secret'">
+    <div v-if="activeTab === 'secret'">
       <SecretList />
     </div>
   </div>

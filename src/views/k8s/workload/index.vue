@@ -7,13 +7,13 @@
         <a-tab-pane key="daemonset" tab="DaemonSet (守护进程集)" />
       </a-tabs>
     </div>
-    <div v-show="activeTab === 'deployment'">
+    <div v-if="activeTab === 'deployment'">
       <DeploymentList />
     </div>
-    <div v-show="activeTab === 'statefulset'">
+    <div v-if="activeTab === 'statefulset'">
       <StatefulSetList />
     </div>
-    <div v-show="activeTab === 'daemonset'">
+    <div v-if="activeTab === 'daemonset'">
       <DaemonSetList />
     </div>
   </div>

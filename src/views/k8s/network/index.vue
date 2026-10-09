@@ -6,10 +6,10 @@
         <a-tab-pane key="ingress" tab="Ingress (7层应用路由)" />
       </a-tabs>
     </div>
-    <div v-show="activeTab === 'service'">
+    <div v-if="activeTab === 'service'">
       <ServiceList />
     </div>
-    <div v-show="activeTab === 'ingress'">
+    <div v-if="activeTab === 'ingress'">
       <IngressList />
     </div>
   </div>

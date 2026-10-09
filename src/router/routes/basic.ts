@@ -73,28 +73,6 @@ export const ERROR_LOG_ROUTE: AppRouteRecordRaw = {
   ],
 };
 
-export const CICD_WORKORDER_DETAIL_ROUTE: AppRouteRecordRaw = {
-  path: '/cicd/workorder/detail/:id',
-  name: 'CicdWorkOrderDetail',
-  component: LAYOUT,
-  meta: {
-    title: '工单详情',
-    hideMenu: true,
-  },
-  children: [
-    {
-      path: '',
-      name: 'CicdWorkOrderDetailPage',
-      component: () => import('@/views/cicd/workorder/detail/index.vue'),
-      meta: {
-        title: '工单详情',
-        hideMenu: true,
-        currentActiveMenu: '/cicd/workorder',
-      },
-    },
-  ],
-};
-
 export const OAUTH_CALLBACK_ROUTE = {
   path: '/oauth/callback',
   name: 'OauthCallback',
