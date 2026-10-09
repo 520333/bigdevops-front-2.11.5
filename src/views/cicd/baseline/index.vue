@@ -37,6 +37,11 @@
                 onClick: () => handleOpenLogDrawer(record),
               },
               {
+                icon: 'ant-design:file-text-outlined',
+                tooltip: '实时应用日志 (bin/docker/k8s 按需拉取)',
+                onClick: () => handleOpenRealtimeLogModal(record),
+              },
+              {
                 icon: 'ant-design:edit-outlined',
                 tooltip: '编辑配置',
                 auth: 'POST:/api/cicd/updateJenkinsJob',
@@ -213,6 +218,9 @@
 
     <!-- Real-time log drawer -->
     <JobLogDrawer @register="registerLogDrawer" @close="reload" />
+
+    <!-- Service baseline live log modal (bin/docker/k8s) -->
+    <BaselineRealtimeLogModal ref="realtimeLogModalRef" />
   </div>
 </template>
 
@@ -236,6 +244,7 @@ import { columns, searchFormSchema } from './job.data';
 import JobDrawer from './JobDrawer.vue';
 import BuildModal from './BuildModal.vue';
 import JobLogDrawer from './JobLogDrawer.vue';
+import BaselineRealtimeLogModal from './BaselineRealtimeLogModal.vue';
 
 defineOptions({ name: 'JenkinsJobManagement' });
 
@@ -525,6 +534,12 @@ function handleOpenLogDrawer(record: Recordable) {
     buildNumber: record.count || 0,
     triggerBuild: false,
   });
+}
+
+const realtimeLogModalRef = ref<any>(null);
+
+function handleOpenRealtimeLogModal(record: Recordable) {
+  realtimeLogModalRef.value?.open(record, selectedInstanceId.value);
 }
 
 async function handleDeleteJob(record: Recordable) {

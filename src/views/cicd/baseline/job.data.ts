@@ -571,6 +571,28 @@ export function getJobFormSchema(callbacks?: JobFormCallbacks): FormSchema[] {
       }),
     },
     {
+      field: 'logPath',
+      label: '日志文件路径',
+      component: 'Input',
+      ifShow: ({ values }) => values.deployType === 'bin',
+      colProps: { span: 24 },
+      helpMessage: ['二进制进程的日志绝对路径，用于 Agent 服务端实时拉取展示'],
+      componentProps: {
+        placeholder: '例如: /data/logs/app/app.log 或 /var/log/syslog',
+      },
+    },
+    {
+      field: 'containerName',
+      label: '容器名称',
+      component: 'Input',
+      ifShow: ({ values }) => values.deployType === 'docker',
+      colProps: { span: 24 },
+      helpMessage: ['宿主机上的 Docker 容器名或容器 ID'],
+      componentProps: {
+        placeholder: '例如: my-service-app',
+      },
+    },
+    {
       field: 'k8sCluster',
       label: '目标集群',
       component: 'ApiSelect',
