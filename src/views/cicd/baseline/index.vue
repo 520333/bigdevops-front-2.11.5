@@ -7,8 +7,7 @@
           新建服务基线
         </a-button>
         <a-button :disabled="!selectedInstanceId" :loading="syncLoading" preIcon="ant-design:sync-outlined"
-          v-auth="['POST:/api/cicd/createJenkinsJob', 'POST:/api/cicd/updateJenkinsJob']"
-          @click="handleManualSync">
+          v-auth="['POST:/api/cicd/createJenkinsJob', 'POST:/api/cicd/updateJenkinsJob']" @click="handleManualSync">
           同步远程任务
         </a-button>
       </template>
@@ -38,7 +37,7 @@
               },
               {
                 icon: 'ant-design:file-text-outlined',
-                tooltip: '实时应用日志 (bin/docker/k8s 按需拉取)',
+                tooltip: '实时日志',
                 onClick: () => handleOpenRealtimeLogModal(record),
               },
               {
@@ -96,10 +95,10 @@
                 <li class="flex items-center justify-between">
                   <span>部署环境 (deployEnv):</span>
                   <Tag :color="record.deployEnv === 'prod'
-                      ? 'red'
-                      : record.deployEnv === 'uat'
-                        ? 'purple'
-                        : 'cyan'
+                    ? 'red'
+                    : record.deployEnv === 'uat'
+                      ? 'purple'
+                      : 'cyan'
                     ">
                     {{ record.deployEnv || 'dev' }}
                   </Tag>
@@ -115,6 +114,12 @@
                   <span
                     class="font-mono bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded border border-green-300 font-semibold">
                     {{ record.gitBranch || 'main' }}
+                  </span>
+                </li>
+                <li class="flex items-center justify-between" v-if="record.logPath">
+                  <span>日志路径 (logPath):</span>
+                  <span class="font-mono text-blue-600 dark:text-cyan-400 text-xs font-semibold truncate max-w-[200px]" :title="record.logPath">
+                    {{ record.logPath }}
                   </span>
                 </li>
                 <li class="flex items-center justify-between" v-if="record.lastBuildTime">
@@ -189,13 +194,13 @@
                         class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
                         <span class="font-bold text-gray-800 dark:text-gray-200">{{
                           stg.name
-                          }}</span>
+                        }}</span>
                         <Tag :color="getStageTagColor(stg.status)"
                           class="text-[11px] font-semibold px-1.5 py-0 border-0 rounded">
                           {{ stg.status }}
                         </Tag>
                         <span class="text-gray-500 text-[11px] font-mono">⏱ {{ formatDuration(stg.durationMillis)
-                          }}</span>
+                        }}</span>
                       </div>
                     </a-timeline-item>
                   </a-timeline>

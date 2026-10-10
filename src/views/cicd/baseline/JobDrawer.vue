@@ -429,6 +429,7 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
       lang: record.lang || 'Java',
       deployEnv: record.deployEnv || 'dev',
       deployType: record.deployType || 'bin',
+      logPath: record.logPath || '',
       enableDelete: record.enableDelete === 1 ? 1 : 2,
     });
 
@@ -484,6 +485,7 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
       gitBranch: 'main',
       deployEnv: 'dev',
       deployType: 'bin',
+      logPath: '',
       enableDelete: 2,
     });
   }
@@ -526,6 +528,7 @@ async function handleSubmit() {
       gitRepo: values.gitRepo || '',
       gitBranch: values.gitBranch || 'main',
       lang: values.lang || 'Java',
+      logPath: values.deployType === 'bin' ? (values.logPath || '') : '',
       enableDelete: Number(values.enableDelete) === 1 ? 1 : 2,
       pipelineScript: finalScript,
     };
