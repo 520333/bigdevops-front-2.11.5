@@ -227,7 +227,13 @@ function syncScriptParams(customValues?: any) {
       /string\s+defaultValue:\s*['"][^'"]*['"],\s*name:\s*['"](GIT仓库|gitRepo|git_repo)['"]/gi,
       `string defaultValue: '${gitRepo}', name: '$1'`,
     );
-    script = script.replace(/url:\s*['"][^'"]*['"]/g, `url: '${gitRepo}'`);
+    // 保护动态变量引用：仅当原 url 不是 ${...} 动态变量引用时才替换硬编码的 Git 地址
+    script = script.replace(/url:\s*['"]([^'"]*)['"]/g, (match, urlVal) => {
+      if (urlVal.includes('${')) {
+        return match;
+      }
+      return `url: '${gitRepo}'`;
+    });
     script = script.replace(/git ls-remote -t -h [^\s"'\\]+/g, `git ls-remote -t -h ${gitRepo}`);
   }
 
@@ -237,7 +243,13 @@ function syncScriptParams(customValues?: any) {
       /string\s+defaultValue:\s*['"][^'"]*['"],\s*name:\s*['"](分支名|GIT分支|gitBranch|branch)['"]/gi,
       `string defaultValue: '${branch}', name: '$1'`,
     );
-    script = script.replace(/branch:\s*['"][^'"]*['"]/g, `branch: '${branch}'`);
+    // 保护动态变量引用：仅当原 branch 不是 ${...} 动态变量引用时才替换硬编码的分支
+    script = script.replace(/branch:\s*['"]([^'"]*)['"]/g, (match, branchVal) => {
+      if (branchVal.includes('${')) {
+        return match;
+      }
+      return `branch: '${branch}'`;
+    });
   }
 
   // 3. 同步目标主机（主机部署 / docker 部署）
