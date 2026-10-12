@@ -2,25 +2,15 @@
   <BasicDrawer v-bind="$attrs" @register="registerDrawer" showFooter :title="getTitle" width="500px" @ok="handleSubmit">
     <BasicForm @register="registerForm">
       <template #menus="{ model, field }">
-        <BasicTree v-model:value="model[field]" :treeData="treeData" :fieldNames="{ title: 'title', key: 'id' }" ref="menuTreeRef"
-          checkable toolbar title="菜单分配" />
+        <BasicTree v-model:value="model[field]" :treeData="treeData" :fieldNames="{ title: 'title', key: 'id' }"
+          ref="menuTreeRef" checkable toolbar title="菜单分配" />
       </template>
       <template #apis="{ model, field }">
-        <BasicTree
-          v-model:value="model[field]"
-          :treeData="treeDataApi"
-          :fieldNames="{ title: 'title', key: 'id' }"
-          ref="apiTreeRef"
-          checkable
-          toolbar
-          title="接口分配"
-        >
+        <BasicTree v-model:value="model[field]" :treeData="treeDataApi" :fieldNames="{ title: 'title', key: 'id' }"
+          ref="apiTreeRef" checkable toolbar title="接口分配">
           <template #title="item">
-            <Tooltip
-              v-if="item.path"
-              :title="`${item.method ? `[${item.method}] ` : ''}${item.path}`"
-              placement="topLeft"
-            >
+            <Tooltip v-if="item.path" :title="`${item.method ? `[${item.method}] ` : ''}${item.path}`"
+              placement="topLeft">
               <span>{{ item.title }}</span>
             </Tooltip>
             <span v-else>{{ item.title }}</span>
@@ -44,7 +34,6 @@ import { listToTree } from '@/utils/helper/treeHelper';
 
 import { createRole, getMenuListAll, updateRole, getApiList } from '@/api/demo/system';
 import { useMessage } from '@/hooks/web/useMessage';
-import { nextTick } from 'vue';
 const emit = defineEmits(['success', 'register']);
 const isUpdate = ref(true);
 const treeData = ref<TreeItem[]>([]);
@@ -55,10 +44,9 @@ const [registerForm, { resetFields, setFieldsValue, getFieldsValue, validate }] 
   baseColProps: { span: 24 },
   schemas: formSchema,
   showActionButtonGroup: false,
-  
+
 });
-const menuTreeRef = ref();
-const apiTreeRef = ref();
+
 const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (data) => {
   resetFields();
   setDrawerProps({ confirmLoading: false });
