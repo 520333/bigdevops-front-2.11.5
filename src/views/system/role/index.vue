@@ -45,6 +45,12 @@
                 auth: 'POST:/api/system/updateRole'
               },
               {
+                icon: 'ant-design:usergroup-add-outlined',
+                tooltip: '分配用户',
+                onClick: handleAssignUsers.bind(null, record),
+                auth: 'POST:/api/system/updateRole',
+              },
+              {
                 icon: 'ant-design:safety-certificate-outlined',
                 tooltip: '服务基线数据权限',
                 onClick: handleOpenJobPerm.bind(null, record),
@@ -68,6 +74,7 @@
     </BasicTable>
     <RoleDrawer @register="registerDrawer" @success="handleSuccess" />
     <JobPermissionDrawer @register="registerJobPermDrawer" />
+    <RoleUserModal @register="registerRoleUserModal" @success="reload" />
   </div>
 </template>
 <script lang="ts">
@@ -79,7 +86,9 @@
   import { deleteRole, getRoleListByPage } from '@/api/demo/system';
   import Icon from '@/components/Icon/Icon.vue';
   import { useDrawer } from '@/components/Drawer';
+  import { useModal } from '@/components/Modal';
   import RoleDrawer from './RoleDrawer.vue';
+  import RoleUserModal from './RoleUserModal.vue';
 
   import { columns, searchFormSchema } from './role.data';
   import { useMessage } from '@/hooks/web/useMessage';
@@ -88,7 +97,7 @@
   export default defineComponent({
     name: 'RoleManagement',
     components: { 
-      BasicTable, RoleDrawer, JobPermissionDrawer, TableAction, Tag, Popover, AButton: Button, Icon
+      BasicTable, RoleDrawer, JobPermissionDrawer, RoleUserModal, TableAction, Tag, Popover, AButton: Button, Icon
     },
     setup() {
       const roleColorMap = {
@@ -101,6 +110,7 @@
       };
       const [registerDrawer, { openDrawer }] = useDrawer();
       const [registerJobPermDrawer, { openDrawer: openJobPermDrawer }] = useDrawer();
+      const [registerRoleUserModal, { openModal: openRoleUserModal }] = useModal();
 
       const [registerTable, { reload }] = useTable({
         title: '角色列表',
@@ -115,7 +125,7 @@
         bordered: true,
         showIndexColumn: false,
         actionColumn: {
-          width: 120,
+          width: 160,
           title: '操作',
           dataIndex: 'action',
         },
@@ -131,6 +141,12 @@
         openDrawer(true, {
           record,
           isUpdate: true,
+        });
+      }
+
+      function handleAssignUsers(record: Recordable) {
+        openRoleUserModal(true, {
+          record,
         });
       }
 
@@ -162,11 +178,14 @@
         registerTable,
         registerDrawer,
         registerJobPermDrawer,
+        registerRoleUserModal,
         handleCreate,
         handleEdit,
+        handleAssignUsers,
         handleOpenJobPerm,
         handleDelete,
         handleSuccess,
+        reload,
         roleColorMap,
       };
     },

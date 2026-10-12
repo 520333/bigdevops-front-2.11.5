@@ -41,6 +41,7 @@ enum Api {
   // RolePageList = '/api/system/getRoleListByPage',
   RolePageList = '/api/system/getRoleListAll',
   GetAllRoleList = '/api/system/getRoleListAll',
+  setRoleUsers = '/api/system/setRoleUsers',
 
 
   getApiList = "/api/system/getApiList",
@@ -371,6 +372,9 @@ export const createRole = (data) =>
 
 export const updateRole = (data) =>
   defHttp.post({ url: Api.updateRole, data });
+
+export const setRoleUsers = (data: { roleId: number; userIds: number[] }) =>
+  defHttp.post({ url: Api.setRoleUsers, data });
 
 export const deleteRole = (id: number) =>
   defHttp.delete({ url: Api.deleteRole + "/" + id });
