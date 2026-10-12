@@ -6,8 +6,26 @@
           checkable toolbar title="菜单分配" />
       </template>
       <template #apis="{ model, field }">
-        <BasicTree v-model:value="model[field]" :treeData="treeDataApi" :fieldNames="{ title: 'title', key: 'id' }" ref="apiTreeRef"
-          checkable toolbar title="接口分配"/>
+        <BasicTree
+          v-model:value="model[field]"
+          :treeData="treeDataApi"
+          :fieldNames="{ title: 'title', key: 'id' }"
+          ref="apiTreeRef"
+          checkable
+          toolbar
+          title="接口分配"
+        >
+          <template #title="item">
+            <Tooltip
+              v-if="item.path"
+              :title="`${item.method ? `[${item.method}] ` : ''}${item.path}`"
+              placement="topLeft"
+            >
+              <span>{{ item.title }}</span>
+            </Tooltip>
+            <span v-else>{{ item.title }}</span>
+          </template>
+        </BasicTree>
       </template>
     </BasicForm>
   </BasicDrawer>
@@ -15,6 +33,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, unref } from 'vue';
+import { Tooltip } from 'ant-design-vue';
 import { BasicForm, useForm } from '@/components/Form/index';
 import { formSchema } from './role.data';
 import { BasicDrawer, useDrawerInner } from '@/components/Drawer';
