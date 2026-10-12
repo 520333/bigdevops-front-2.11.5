@@ -1,7 +1,7 @@
 import { BasicColumn, FormSchema } from '@/components/Table';
 import { h } from 'vue';
 import { Tag } from 'ant-design-vue';
-import { getJenkinsPipelineList } from '@/api/cicd';
+import { getJenkinsPipelineList, getJobProjectOptions } from '@/api/cicd';
 import { getCodeGitServerList } from '@/api/code/server';
 import { getCodeGitRepoList, getRepoBranches } from '@/api/code/repo';
 import { getResourceEcsList, getK8sClusterList } from '@/api/demo/system';
@@ -9,11 +9,31 @@ import dayjs from 'dayjs';
 
 export const columns: BasicColumn[] = [
   {
-    title: '项目名称',
+    title: '服务名',
+    dataIndex: 'name',
+    key: 'name',
+    width: 180,
+    // align: 'center',
+    // customRender: ({ record }) => {
+    //   let name = record?.name || '';
+    //   const proj = record?.projectName || record?.folder || '';
+    //   if (proj && name.startsWith(proj + '/')) {
+    //     name = name.substring(proj.length + 1);
+    //   } else if (name.includes('/')) {
+    //     name = name.substring(name.lastIndexOf('/') + 1);
+    //   }
+    //   return h(
+    //     'span',
+    //     { class: 'font-bold font-mono text-gray-800 dark:text-gray-100' },
+    //     name || '-',
+    //   );
+    // },
+  },
+  {
+    title: '所属项目',
     dataIndex: 'projectName',
     key: 'projectName',
     width: 80,
-    align: 'center',
     customRender: ({ record }) => {
       const val = record.projectName || record.folder;
       if (!val) return h('span', { class: 'text-gray-400 text-xs italic' }, '/');
@@ -24,56 +44,12 @@ export const columns: BasicColumn[] = [
       );
     },
   },
-  {
-    title: '服务名',
-    dataIndex: 'name',
-    key: 'name',
-    width: 180,
-    align: 'left',
-    customRender: ({ record }) => {
-      let name = record?.name || '';
-      const proj = record?.projectName || record?.folder || '';
-      if (proj && name.startsWith(proj + '/')) {
-        name = name.substring(proj.length + 1);
-      } else if (name.includes('/')) {
-        name = name.substring(name.lastIndexOf('/') + 1);
-      }
-      return h(
-        'span',
-        { class: 'font-bold font-mono text-gray-800 dark:text-gray-100' },
-        name || '-',
-      );
-    },
-  },
-  {
-    title: '部署环境',
-    dataIndex: 'deployEnv',
-    key: 'deployEnv',
-    width: 80,
-    align: 'center',
-    customRender: ({ text }) => {
-      const env = text || '-';
-      const colorMap: Record<string, string> = {
-        dev: 'blue',
-        test: 'orange',
-        stage: 'yellow',
-        uat: 'purple',
-        pre: 'cyan',
-        prod: 'green',
-      };
-      return h(
-        Tag,
-        { color: colorMap[env] || 'default', class: 'font-semibold rounded px-2' },
-        () => env,
-      );
-    },
-  },
+
   {
     title: '语言',
     dataIndex: 'lang',
     key: 'lang',
     width: 80,
-    align: 'center',
     customRender: ({ text }) => {
       const lang = text || 'Java';
       const colorMap: Record<string, string> = {
@@ -91,7 +67,45 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: 'git地址',
+    title: '部署环境',
+    dataIndex: 'deployEnv',
+    key: 'deployEnv',
+    width: 80,
+    customRender: ({ text }) => {
+      const env = text || '';
+      if (!env) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
+      const colorMap: Record<string, string> = {
+        dev: 'blue',
+        test: 'orange',
+        stage: 'yellow',
+        uat: 'purple',
+        pre: 'cyan',
+        prod: 'green',
+      };
+      return h(
+        Tag,
+        { color: colorMap[env] || 'default', class: 'font-semibold rounded px-2' },
+        () => env,
+      );
+    },
+  },
+  {
+    title: '部署类型',
+    dataIndex: 'deployType',
+    key: 'deployType',
+    width: 80,
+    customRender: ({ record }) => {
+      const type = (record?.deployType || 'bin').toLowerCase();
+      const label = type === 'k8s' ? 'k8s' : type === 'docker' ? 'docker' : '主机';
+      return h(
+        Tag,
+        { color: 'default', class: 'font-medium rounded px-2 text-gray-700 dark:text-gray-200' },
+        () => label,
+      );
+    },
+  },
+  {
+    title: '代码仓库',
     dataIndex: 'gitRepo',
     key: 'gitRepo',
     width: 300,
@@ -103,7 +117,6 @@ export const columns: BasicColumn[] = [
     dataIndex: 'gitBranch',
     key: 'gitBranch',
     width: 130,
-    align: 'center',
     customRender: ({ text }) => {
       const branch = text || 'main';
       return h(
@@ -118,7 +131,6 @@ export const columns: BasicColumn[] = [
     dataIndex: 'count',
     key: 'count',
     width: 80,
-    align: 'center',
     customRender: ({ text }) => {
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '暂无构建');
       return h(
@@ -133,7 +145,6 @@ export const columns: BasicColumn[] = [
     dataIndex: 'status',
     key: 'status',
     width: 80,
-    align: 'center',
     customRender: ({ text }) => {
       const status = text || 'NOT_BUILT';
       const colorMap: Record<string, string> = {
@@ -154,7 +165,7 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '最后构建时间',
+    title: '构建时间',
     dataIndex: 'lastBuildTime',
     format: (text) => {
       return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '';
@@ -165,7 +176,7 @@ export const columns: BasicColumn[] = [
     title: '构建人',
     dataIndex: 'createUserName',
     key: 'createUserName',
-    width: 50,
+    width: 80,
     align: 'center',
   },
 ];
@@ -194,19 +205,39 @@ export const searchFormSchema: FormSchema[] = [
   {
     field: 'projectName',
     label: '项目名称',
-    component: 'Input',
+    component: 'ApiSelect',
     colProps: { span: 5 },
-    componentProps: {
-      placeholder: '搜索项目空间名称',
+    componentProps: ({ formActionType }) => ({
+      api: async () => {
+        try {
+          const res: any = await getJobProjectOptions();
+          const list: string[] = res?.projects || res?.result?.projects || [];
+          return list.map((item: string) => ({ label: item, value: item }));
+        } catch (e) {
+          console.error('[getJobProjectOptions error]', e);
+          return [];
+        }
+      },
+
+      labelField: 'label',
+      valueField: 'value',
+      placeholder: '选择项目空间',
+      showSearch: true,
       allowClear: true,
-    },
+      optionFilterProp: 'label',
+      onChange: () => {
+        if (formActionType && formActionType.submit) {
+          formActionType.submit();
+        }
+      },
+    }),
   },
   {
     field: 'status',
     label: '构建状态',
     component: 'Select',
     colProps: { span: 4 },
-    componentProps: {
+    componentProps: ({ formActionType }) => ({
       placeholder: '状态筛选',
       allowClear: true,
       options: [
@@ -217,14 +248,19 @@ export const searchFormSchema: FormSchema[] = [
         { label: 'ABORTED (中断)', value: 'ABORTED' },
         { label: 'NOT_BUILT (未构建)', value: 'NOT_BUILT' },
       ],
-    },
+      onChange: () => {
+        if (formActionType && formActionType.submit) {
+          formActionType.submit();
+        }
+      },
+    }),
   },
   {
     field: 'deployEnv',
     label: '部署环境',
     component: 'Select',
     colProps: { span: 4 },
-    componentProps: {
+    componentProps: ({ formActionType }) => ({
       placeholder: '选择部署环境',
       allowClear: true,
       options: [
@@ -235,7 +271,12 @@ export const searchFormSchema: FormSchema[] = [
         { label: 'pre | 灰度环境', value: 'pre' },
         { label: 'prod | 生产环境', value: 'prod' },
       ],
-    },
+      onChange: () => {
+        if (formActionType && formActionType.submit) {
+          formActionType.submit();
+        }
+      },
+    }),
   },
   {
     field: 'gitRepo',

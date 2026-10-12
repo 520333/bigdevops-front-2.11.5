@@ -1,6 +1,7 @@
 <template>
   <div>
-    <BasicTable @register="registerTable" class="w-full cicd-baseline-table">
+    <BasicTable @register="registerTable" class="w-full cicd-baseline-table" :expandIconColumnIndex="-1"
+      @expanded-rows-change="handleExpandedRowsChange">
       <template #toolbar>
         <a-button type="primary" preIcon="ant-design:plus-outlined" :disabled="!selectedInstanceId"
           v-auth="'POST:/api/cicd/createJenkinsJob'" @click="handleCreateJob">
@@ -18,7 +19,7 @@
           <div @click.stop>
             <TableAction :actions="[
               {
-                icon: 'ant-design:play-circle-outlined',
+                icon: 'ant-design:caret-right-outlined',
                 tooltip:
                   record.canBuild === false
                     ? '当前环境仅具有只读权限，不可触发构建'
@@ -118,7 +119,8 @@
                 </li>
                 <li class="flex items-center justify-between" v-if="record.logPath">
                   <span>日志路径 (logPath):</span>
-                  <span class="font-mono text-blue-600 dark:text-cyan-400 text-xs font-semibold truncate max-w-[200px]" :title="record.logPath">
+                  <span class="font-mono text-blue-600 dark:text-cyan-400 text-xs font-semibold truncate max-w-[200px]"
+                    :title="record.logPath">
                     {{ record.logPath }}
                   </span>
                 </li>
@@ -194,13 +196,13 @@
                         class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
                         <span class="font-bold text-gray-800 dark:text-gray-200">{{
                           stg.name
-                        }}</span>
+                          }}</span>
                         <Tag :color="getStageTagColor(stg.status)"
                           class="text-[11px] font-semibold px-1.5 py-0 border-0 rounded">
                           {{ stg.status }}
                         </Tag>
                         <span class="text-gray-500 text-[11px] font-mono">⏱ {{ formatDuration(stg.durationMillis)
-                        }}</span>
+                          }}</span>
                       </div>
                     </a-timeline-item>
                   </a-timeline>
@@ -275,7 +277,29 @@ const [registerCreateDrawer, { openDrawer: openCreateDrawer }] = useDrawer();
 const [registerBuildModal, { openModal: openBuildModal }] = useModal();
 const [registerLogDrawer, { openDrawer: openLogDrawer }] = useDrawer();
 
-const [registerTable, { reload, getForm, getDataSource }] = useTable({
+function handleExpandedRowsChange(keys: any[]) {
+  const currentKey = keys && keys.length > 0 ? String(keys[keys.length - 1]) : '';
+  expandedRowKey.value = currentKey;
+  if (keys.length > 1 && currentKey) {
+    collapseAll?.();
+    nextTick(() => {
+      expandRows?.([currentKey]);
+    });
+  }
+  if (currentKey) {
+    if (
+      !stageViewMap.value[currentKey]?.loading &&
+      (!stageViewMap.value[currentKey]?.stages ||
+        stageViewMap.value[currentKey]?.stages.length === 0)
+    ) {
+      const list = getDataSource?.() || [];
+      const targetRecord = list.find((item: any) => String(item.id) === currentKey);
+      fetchStageView(currentKey, true, targetRecord);
+    }
+  }
+}
+
+const [registerTable, { reload, getForm, getDataSource, collapseAll, expandRows }] = useTable({
   title: '服务基线列表',
   api: async (params) => {
     if (!params?.instanceId) return [];
@@ -312,32 +336,19 @@ const [registerTable, { reload, getForm, getDataSource }] = useTable({
   showIndexColumn: false,
   accordion: true,
   expandRowByClick: true,
+  expandIconColumnIndex: -1,
   canResize: false,
   rowKey: 'id',
   rowClassName: (record: Recordable) => {
     return String(record.id) === expandedRowKey.value ? 'ant-table-row-selected' : '';
   },
-  onExpandedRowsChange: (keys: any[]) => {
-    const currentKey = keys && keys.length > 0 ? String(keys[keys.length - 1]) : '';
-    expandedRowKey.value = currentKey;
-    if (currentKey) {
-      if (
-        !stageViewMap.value[currentKey]?.loading &&
-        (!stageViewMap.value[currentKey]?.stages ||
-          stageViewMap.value[currentKey]?.stages.length === 0)
-      ) {
-        const list = getDataSource?.() || [];
-        const targetRecord = list.find((item: any) => String(item.id) === currentKey);
-        fetchStageView(currentKey, true, targetRecord);
-      }
-    }
-  },
+  onExpandedRowsChange: handleExpandedRowsChange,
   pagination: {
     pageSize: 20,
     showQuickJumper: true,
   },
   actionColumn: {
-    width: 140,
+    width: 180,
     title: '操作',
     dataIndex: 'action',
     key: 'action',
@@ -589,15 +600,13 @@ async function handleManualSync() {
 .cicd-baseline-table {
   :deep(.ant-table-tbody) {
 
-    // Vben 官方规范：通过主题主色 @primary-color 透明度渐变高亮当前展开/选中行，深浅模式及自定义主色自动平滑适配
-    >tr.ant-table-row-selected>td,
-    >tr:has(.ant-table-row-expand-icon-expanded)>td {
+    // Vben 官方规范：仅高亮当前唯一选中的展开行，切换到其他行时之前行的颜色自动清除
+    >tr.ant-table-row-selected>td {
       background-color: fade(@primary-color, 8%) !important;
       transition: background-color 0.2s ease;
     }
 
-    >tr.ant-table-row-selected:hover>td,
-    >tr:has(.ant-table-row-expand-icon-expanded):hover>td {
+    >tr.ant-table-row-selected:hover>td {
       background-color: fade(@primary-color, 14%) !important;
     }
   }
