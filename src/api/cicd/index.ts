@@ -185,6 +185,14 @@ export interface JobBuildParamKV {
   value: any;
 }
 
+export interface JobCommitItem {
+  commitId: string;
+  shortId: string;
+  message: string;
+  author: string;
+  date: string;
+}
+
 export interface JobBuildHistoryItem {
   buildNumber: number;
   result: string;
@@ -195,6 +203,8 @@ export interface JobBuildHistoryItem {
   triggerUser: string;
   parameters: Record<string, any>;
   paramList: JobBuildParamKV[];
+  commitCount?: number;
+  commits?: JobCommitItem[];
 }
 
 // 获取远端 Jenkins 任务历史构建列表与实际运行参数快照

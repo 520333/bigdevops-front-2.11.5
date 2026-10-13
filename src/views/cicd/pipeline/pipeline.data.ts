@@ -21,7 +21,7 @@ export const columns: BasicColumn[] = [
     title: '模版名称',
     dataIndex: 'name',
     key: 'name',
-    width: 200,
+    width: 300,
     align: 'left',
     customRender: ({ record }) => {
       return h('span', { class: 'font-bold text-gray-800 dark:text-gray-100 font-mono text-sm' }, record.name || '-');
