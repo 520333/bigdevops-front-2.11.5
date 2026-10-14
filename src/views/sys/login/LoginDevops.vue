@@ -243,7 +243,7 @@
             </div>
 
             <!-- 底部安全说明 -->
-            <div class="form-footer mt-6 pt-3 border-t text-center enter-x">
+            <!-- <div class="form-footer mt-6 pt-3 border-t text-center enter-x">
               <div class="text-xs text-gray-500 flex items-center justify-center gap-1 mb-1">
                 <svg viewBox="0 0 24 24" width="12" height="12" stroke="#10B981" stroke-width="2" fill="none">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -253,7 +253,7 @@
               <div class="text-[11px] text-gray-400">
                 © {{ currentYear }} BigDevOps Platform. All Rights Reserved.
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>

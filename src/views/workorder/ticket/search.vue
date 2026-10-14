@@ -129,7 +129,19 @@
   
   const route = useRoute();
   const { createMessage } = useMessage();
-  const currentQueryModel = ref((route.query.queryModel as string) || 'mine');
+
+  function getModelFromQuery(query: Record<string, any>): string {
+    const raw = (query.queryModel as string) || (query.tab as string) || '';
+    if (!raw) return 'mine';
+    const lower = raw.toLowerCase();
+    if (lower === 'approval') return 'Approval';
+    if (lower === 'action') return 'Action';
+    if (lower === 'all') return 'all';
+    if (lower === 'mine') return 'mine';
+    return raw;
+  }
+
+  const currentQueryModel = ref(getModelFromQuery(route.query));
 
   // 声明子组件 Ref
   const detailDrawerRef = ref<any>(null);
@@ -153,7 +165,7 @@
 
   function handleRouteQuery() {
     const query = route.query;
-    const newModel = (query.queryModel as string) || 'mine';
+    const newModel = getModelFromQuery(query);
 
     if (currentQueryModel.value !== newModel) {
       currentQueryModel.value = newModel;

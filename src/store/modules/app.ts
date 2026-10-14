@@ -16,7 +16,6 @@ import { Persistent } from '@/utils/cache/persistent';
 import { darkMode } from '@/settings/designSetting';
 import { resetRouter } from '@/router';
 import { deepMerge } from '@/utils';
-import setting from '@/settings/projectSetting';
 
 interface AppState {
   darkMode?: ThemeEnum;
@@ -44,7 +43,6 @@ export const useAppStore = defineStore({
       return (
         state.darkMode ||
         localStorage.getItem(APP_DARK_MODE_KEY) ||
-        setting.menuSetting.theme ||
         darkMode
       );
     },

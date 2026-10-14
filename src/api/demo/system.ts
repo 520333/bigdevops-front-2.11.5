@@ -196,6 +196,7 @@ enum Api {
 
   // k8s集群
   getK8sClusterList = "/api/k8s/getK8sClusterList",
+  getK8sClusterDetail = "/api/k8s/getK8sClusterDetail",
   createK8sCluster = "/api/k8s/createK8sCluster",
   updateK8sCluster = "/api/k8s/updateK8sCluster",
   deleteK8sCluster = "/api/k8s/deleteK8sCluster",
@@ -795,6 +796,9 @@ export const alertManagerEventBatchUnSilence = (params: any) =>
 // k8s集群
 export const getK8sClusterList = (params?: any) =>
   defHttp.get({ url: Api.getK8sClusterList, params });
+
+export const getK8sClusterDetail = (params: { id: number | string }) =>
+  defHttp.get({ url: Api.getK8sClusterDetail, params });
 
 export const createK8sCluster = (data?: any) =>
   defHttp.post({ url: Api.createK8sCluster, data });

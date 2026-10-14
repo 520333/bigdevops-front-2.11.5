@@ -23,7 +23,7 @@ import { BasicForm, useForm } from '@/components/Form/index';
 import { formSchema } from './cluster.data';
 import { BasicDrawer, useDrawerInner } from '@/components/Drawer';
 import { useMessage } from '@/hooks/web/useMessage';
-import { createK8sCluster, updateK8sCluster } from '@/api/demo/system';
+import { createK8sCluster, updateK8sCluster, getK8sClusterDetail } from '@/api/demo/system';
 
 import { Codemirror } from 'vue-codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -53,11 +53,24 @@ const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (
   setDrawerProps({ confirmLoading: false });
   isUpdate.value = !!data?.isUpdate;
 
-  if (unref(isUpdate)) {
+  if (unref(isUpdate) && data?.record) {
     clusterId.value = data.record.id;
-    setFieldsValue({
-      ...data.record,
-    });
+    let formData = { ...data.record };
+
+    // 🚀 参考 Git 实例与 Jenkins 实例处理逻辑：编辑模式下精准拉取单条详情，获取明文 KubeConfig 进行表单与编辑器回显
+    try {
+      setDrawerProps({ loading: true });
+      const detail = await getK8sClusterDetail({ id: data.record.id });
+      if (detail) {
+        formData = { ...formData, ...detail };
+      }
+    } catch (err) {
+      console.warn('获取集群详情失败，降级使用列表行数据', err);
+    } finally {
+      setDrawerProps({ loading: false });
+    }
+
+    setFieldsValue(formData);
   } else {
     clusterId.value = null;
   }

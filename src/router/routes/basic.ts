@@ -112,3 +112,107 @@ export const ACCOUNT_SETTING_ROUTE: AppRouteRecordRaw = {
     },
   ],
 };
+
+// 兼容访问 /workorder/instance (小写)
+export const WORKORDER_INSTANCE_ROUTE: AppRouteRecordRaw = {
+  path: '/workorder/instance',
+  name: 'WorkOrderInstanceStatic',
+  component: LAYOUT,
+  meta: {
+    title: '工单管理',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderInstancePageStatic',
+      component: () => import('@/views/workorder/ticket/search.vue'),
+      meta: {
+        title: '工单管理',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/search',
+      },
+    },
+  ],
+};
+
+// 兼容访问 /workOrder/instance (驼峰)
+export const WORKORDER_INSTANCE_UPPER_ROUTE: AppRouteRecordRaw = {
+  path: '/workOrder/instance',
+  name: 'WorkOrderInstanceUpperStatic',
+  component: LAYOUT,
+  meta: {
+    title: '工单管理',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderInstanceUpperPageStatic',
+      component: () => import('@/views/workorder/ticket/search.vue'),
+      meta: {
+        title: '工单管理',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/search',
+      },
+    },
+  ],
+};
+
+// 兼容访问 /workorder/search (小写)
+export const WORKORDER_SEARCH_LOWER_ROUTE: AppRouteRecordRaw = {
+  path: '/workorder/search',
+  name: 'WorkOrderSearchLowerStatic',
+  component: LAYOUT,
+  meta: {
+    title: '我的工单',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderSearchLowerPageStatic',
+      component: () => import('@/views/workorder/ticket/search.vue'),
+      meta: {
+        title: '我的工单',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/search',
+      },
+    },
+  ],
+};
+
+// 兼容访问 /workorder/detail (小写)
+export const WORKORDER_DETAIL_LOWER_ROUTE: AppRouteRecordRaw = {
+  path: '/workorder/detail',
+  name: 'WorkOrderDetailLowerStatic',
+  component: LAYOUT,
+  meta: {
+    title: '工单详情',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderDetailLowerPageStatic',
+      component: () => import('@/views/workorder/detail/index.vue'),
+      meta: {
+        title: '工单详情',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/search',
+      },
+    },
+  ],
+};
+
+// 兼容访问 /resource/ecs，重定向到资产管理 CMDB 服务树 /serviceTree/streeAsync
+export const RESOURCE_ECS_REDIRECT_ROUTE: AppRouteRecordRaw = {
+  path: '/resource/ecs',
+  name: 'ResourceEcsRedirect',
+  redirect: '/serviceTree/streeAsync',
+  meta: {
+    title: '资产管理',
+    hideMenu: true,
+  },
+};
+
