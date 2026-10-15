@@ -17,8 +17,17 @@ const artifactory: AppRouteModule = {
       name: 'ArtifactoryManageIndex',
       component: () => import('@/views/artifactory/index.vue'),
       meta: {
-        title: '制品与配置在线管理',
+        title: '构件与配置 (Artifactory)',
         icon: 'ant-design:code-outlined',
+      },
+    },
+    {
+      path: 'harbor',
+      name: 'HarborIndex',
+      component: () => import('@/views/artifactory/harbor/index.vue'),
+      meta: {
+        title: '镜像仓库 (Harbor)',
+        icon: 'ant-design:cloud-server-outlined',
       },
     },
   ],

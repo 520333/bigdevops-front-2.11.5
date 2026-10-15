@@ -2,6 +2,7 @@ import { defHttp } from '@/utils/http/axios';
 
 enum Api {
   Repos = '/api/artifactory/repos',
+  CreateRepo = '/api/artifactory/createRepo',
   Info = '/api/artifactory/info',
   Tree = '/api/artifactory/tree',
   Content = '/api/artifactory/content',
@@ -67,6 +68,14 @@ export interface ArtifactoryStorageResponse {
 
 export const getArtifactoryReposApi = () => {
   return defHttp.get<ArtifactoryRepoInfo[]>({ url: Api.Repos });
+};
+
+export const createArtifactoryRepoApi = (data: {
+  repoKey: string;
+  packageType?: string;
+  description?: string;
+}) => {
+  return defHttp.post<void>({ url: Api.CreateRepo, data });
 };
 
 export const getArtifactoryTreeApi = (params: { project: string; path?: string }) => {

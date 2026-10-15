@@ -216,3 +216,49 @@ export const RESOURCE_ECS_REDIRECT_ROUTE: AppRouteRecordRaw = {
   },
 };
 
+// 兼容访问 /workorder/archery (小写)
+export const WORKORDER_ARCHERY_LOWER_ROUTE: AppRouteRecordRaw = {
+  path: '/workorder/archery',
+  name: 'WorkOrderArcheryLowerStatic',
+  component: LAYOUT,
+  meta: {
+    title: 'SQL工单 (Archery)',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderArcheryLowerPageStatic',
+      component: () => import('@/views/workorder/archery/index.vue'),
+      meta: {
+        title: 'SQL工单 (Archery)',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/archery',
+      },
+    },
+  ],
+};
+
+// 兼容访问 /workOrder/archery (驼峰)
+export const WORKORDER_ARCHERY_UPPER_ROUTE: AppRouteRecordRaw = {
+  path: '/workOrder/archery',
+  name: 'WorkOrderArcheryUpperStatic',
+  component: LAYOUT,
+  meta: {
+    title: 'SQL工单 (Archery)',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderArcheryUpperPageStatic',
+      component: () => import('@/views/workorder/archery/index.vue'),
+      meta: {
+        title: 'SQL工单 (Archery)',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/archery',
+      },
+    },
+  ],
+};
+

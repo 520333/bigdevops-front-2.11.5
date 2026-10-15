@@ -8,6 +8,10 @@
         <Button type="primary" preIcon="ant-design:reload-outlined" @click="fetchTree" :loading="loadingTree">
           刷新
         </Button>
+        <Button type="primary" preIcon="ant-design:plus-outlined" @click="handleOpenCreateRepo"
+          v-auth="'POST:/api/artifactory/createRepo'">
+          新建项目/仓库
+        </Button>
         <Button type="primary" preIcon="ant-design:upload-outlined" @click="handleOpenUpload"
           v-auth="'POST:/api/artifactory/upload'">
           上传文件/构件
@@ -146,6 +150,8 @@
     <DiffModal @register="registerDiffModal" @confirm="executeSaveFile" />
     <!-- 高危删除二次输入文件名强校验 Modal -->
     <DeleteConfirmModal @register="registerDeleteModal" @confirm="executeDeleteFile" />
+    <!-- 新建项目/仓库 Modal -->
+    <CreateRepoModal @register="registerCreateRepoModal" @success="handleCreateRepoSuccess" />
   </PageWrapper>
 </template>
 
@@ -183,6 +189,7 @@ import { useModal } from '@/components/Modal';
 import UploadModal from './UploadModal.vue';
 import DiffModal from './DiffModal.vue';
 import DeleteConfirmModal from './DeleteConfirmModal.vue';
+import CreateRepoModal from './CreateRepoModal.vue';
 import {
   getArtifactoryReposApi,
   getArtifactoryFileInfoApi,
@@ -219,6 +226,7 @@ export default defineComponent({
     UploadModal,
     DiffModal,
     DeleteConfirmModal,
+    CreateRepoModal,
   },
   setup() {
     const { createMessage } = useMessage();
@@ -239,6 +247,7 @@ export default defineComponent({
     const [registerUploadModal, { openModal: openUploadModal }] = useModal();
     const [registerDiffModal, { openModal: openDiffModal }] = useModal();
     const [registerDeleteModal, { openModal: openDeleteModal }] = useModal();
+    const [registerCreateRepoModal, { openModal: openCreateRepoModal }] = useModal();
 
     // 根据当前文件匹配多语言语法高亮扩展 (Dockerfile, Shell, Nginx, YAML)
     const editorExtensions = computed(() => {
@@ -455,6 +464,16 @@ export default defineComponent({
       });
     };
 
+    // 打开新建仓库/项目弹窗
+    const handleOpenCreateRepo = () => {
+      openCreateRepoModal(true);
+    };
+
+    // 新建仓库成功后刷新并自动选中
+    const handleCreateRepoSuccess = async (newRepoKey: string) => {
+      await fetchRepos(newRepoKey);
+    };
+
     // 格式化文件大小
     const formatSize = (bytes: number) => {
       if (!bytes || bytes === 0) return '0 B';
@@ -465,17 +484,22 @@ export default defineComponent({
     };
 
     // 自动获取全量仓库列表
-    const fetchRepos = async () => {
+    const fetchRepos = async (targetRepo?: string) => {
       loadingRepos.value = true;
       try {
         const list = await getArtifactoryReposApi();
         if (list && Array.isArray(list)) {
           repoOptions.value = list.map((item) => ({
-            label: item.key,
+            label: item.description ? `${item.key} (${item.description})` : item.key,
             value: item.key,
           }));
-          if (repoOptions.value.length > 0) {
-            selectedProject.value = repoOptions.value[0].value;
+          if (targetRepo) {
+            selectedProject.value = targetRepo;
+            fetchTree();
+          } else if (repoOptions.value.length > 0) {
+            if (!selectedProject.value || !repoOptions.value.some((r) => r.value === selectedProject.value)) {
+              selectedProject.value = repoOptions.value[0].value;
+            }
             fetchTree();
           }
         }
@@ -511,9 +535,12 @@ export default defineComponent({
       handleOpenDeleteModal,
       executeDeleteFile,
       handleOpenUpload,
+      handleOpenCreateRepo,
+      handleCreateRepoSuccess,
       registerUploadModal,
       registerDiffModal,
       registerDeleteModal,
+      registerCreateRepoModal,
       executeSaveFile,
       formatSize,
     };
