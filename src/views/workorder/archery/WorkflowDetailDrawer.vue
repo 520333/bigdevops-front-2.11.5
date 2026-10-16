@@ -4,13 +4,7 @@
     <!-- Vben 规范: 抽屉顶部操作栏 -->
     <template #titleToolbar>
       <Space>
-        <Tooltip v-if="detail?.workflow?.status === 'workflow_manreviewing' && isSelfAuditBlocked(detail?.workflow)"
-          title="【合规限制】生产环境工单需由他人复核，发起人禁止自审自批">
-          <Button type="primary" disabled style="background-color: #d9d9d9; border-color: #d9d9d9; color: #8c8c8c;">
-            审批通过 (生产禁自审)
-          </Button>
-        </Tooltip>
-        <Button v-else-if="detail?.workflow?.status === 'workflow_manreviewing'" type="primary"
+        <Button v-if="canShowPassAction(detail?.workflow)" type="primary"
           style="background-color: #52c41a; border-color: #52c41a;" :loading="operating" @click="handleAudit('pass')">
           审批通过
         </Button>
@@ -234,31 +228,63 @@ const operating = ref(false);
 const activeDrawerTab = ref<'detail' | 'logs'>('detail');
 const rawJsonModalVisible = ref(false);
 
-// 判断工单是否属于生产环境
+// 判断工单是否属于生产环境（优先以所属资源组 group_name 为权威判断基准）
 const isProdWorkflow = (workflow: any) => {
   if (!workflow) return false;
-  const str = `${workflow.group_name || ''} ${workflow.instance_name || ''} ${workflow.workflow_name || ''} ${workflow.db_name || ''} ${workflow.audit_auth_groups || ''}`.toLowerCase();
-  if (str.includes('prod') || str.includes('prd') || str.includes('生产') || str.includes('release') || str.includes('online')) {
+  const groupName = (workflow.group_name || '').toLowerCase();
+  if (
+    groupName.includes('prod') ||
+    groupName.includes('prd') ||
+    groupName.includes('生产') ||
+    groupName.includes('release') ||
+    groupName.includes('online')
+  ) {
     return true;
   }
-  if (str.includes('test') || str.includes('dev') || str.includes('uat') || str.includes('qa') || str.includes('测试') || str.includes('开发')) {
+  if (
+    groupName.includes('test') ||
+    groupName.includes('dev') ||
+    groupName.includes('uat') ||
+    groupName.includes('qa') ||
+    groupName.includes('测试') ||
+    groupName.includes('开发')
+  ) {
     return false;
+  }
+
+  const otherInfo = `${workflow.instance_name || ''} ${workflow.db_name || ''} ${workflow.audit_auth_groups || ''} ${workflow.workflow_name || ''}`.toLowerCase();
+  if (
+    otherInfo.includes('prod') ||
+    otherInfo.includes('prd') ||
+    otherInfo.includes('生产') ||
+    otherInfo.includes('release') ||
+    otherInfo.includes('online')
+  ) {
+    return true;
   }
   return false;
 };
 
-// 检查是否受生产防自批限制（测试环境允许自审自批，生产环境发起人禁止自审）
-const isSelfAuditBlocked = (workflow: any) => {
-  if (!workflow) return false;
-  const currentUser = userStore.getUserInfo?.username || '';
-  const isCreator = workflow.engineer && currentUser && workflow.engineer.toLowerCase() === currentUser.toLowerCase();
-  if (!isCreator) return false;
-
+// 检查是否显示【通过】审批操作：
+// 1. 工单必须处于待审核状态 (workflow_manreviewing)
+// 2. 超级管理员 (super/admin/bot_super) 具备特权可见
+// 3. 非管理员：生产环境彻底隐藏审批按钮，避免误导；非生产环境正常显示
+const canShowPassAction = (workflow: any) => {
+  if (workflow?.status !== 'workflow_manreviewing') {
+    return false;
+  }
   const roles = (userStore.getRoleList as string[]) || [];
   const isPrivileged = roles.some((r: string) => ['super', 'admin', 'bot_super'].includes(r.toLowerCase()));
-  if (isPrivileged) return false;
+  if (isPrivileged) {
+    return true;
+  }
 
-  return isProdWorkflow(workflow);
+  // 非管理员在生产环境下，绝不展示审批通过按钮
+  if (isProdWorkflow(workflow)) {
+    return false;
+  }
+
+  return true;
 };
 
 const expandedSqlIds = ref<number[]>([]);

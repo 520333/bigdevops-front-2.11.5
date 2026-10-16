@@ -25,7 +25,7 @@ export const columns: BasicColumn[] = [
       if (!val) return h('span', { class: 'text-gray-400 text-xs italic' }, '/');
       return h(
         Tag,
-        { color: 'cyan', class: 'font-mono text-xs px-2 py-0.5 rounded shadow-xs' },
+        { color: 'success', class: 'font-semibold' },
         () => `${val}`,
       );
     },
@@ -38,15 +38,15 @@ export const columns: BasicColumn[] = [
     customRender: ({ text }) => {
       const lang = text || 'Java';
       const colorMap: Record<string, string> = {
-        Java: 'orange',
-        'Vue/TS': 'green',
-        Go: 'blue',
+        Java: 'warning',
+        'Vue/TS': 'success',
+        Go: 'processing',
         Python: 'purple',
         Shell: 'cyan',
       };
       return h(
         Tag,
-        { color: colorMap[lang] || 'default', class: 'font-semibold rounded px-2' },
+        { color: colorMap[lang] || 'default', class: 'font-semibold' },
         () => lang,
       );
     },
@@ -60,16 +60,16 @@ export const columns: BasicColumn[] = [
       const env = text || '';
       if (!env) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
       const colorMap: Record<string, string> = {
-        dev: 'blue',
-        test: 'orange',
-        stage: 'yellow',
+        dev: 'processing',
+        test: 'warning',
+        stage: 'gold',
         uat: 'purple',
         pre: 'cyan',
-        prod: 'green',
+        prod: 'success',
       };
       return h(
         Tag,
-        { color: colorMap[env] || 'default', class: 'font-semibold rounded px-2' },
+        { color: colorMap[env] || 'default', class: 'font-semibold' },
         () => env,
       );
     },
@@ -110,7 +110,7 @@ export const columns: BasicColumn[] = [
       const branch = text || 'main';
       return h(
         Tag,
-        { color: 'processing', class: 'font-mono rounded px-2 font-semibold' },
+        { color: 'default' },
         () => `${branch}`,
       );
     },
@@ -124,7 +124,7 @@ export const columns: BasicColumn[] = [
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '暂无构建');
       return h(
         Tag,
-        { color: 'processing', class: 'font-mono rounded px-2 font-semibold' },
+        { color: 'default' },
         () => `#${text}`,
       );
     },
@@ -165,11 +165,15 @@ export const columns: BasicColumn[] = [
     title: '构建人',
     dataIndex: 'createUserName',
     key: 'createUserName',
-    width: 95,
+    width: 110,
     align: 'center',
     customRender: ({ text }) => {
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
-      return text;
+      return h(
+        Tag,
+        { color: 'default' },
+        () => text,
+      );
     },
   },
 ];

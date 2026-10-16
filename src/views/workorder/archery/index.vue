@@ -63,17 +63,11 @@
                   label: '通过',
                   icon: 'ant-design:check-outlined',
                   color: 'success',
-                  ifShow: record.workflow?.status === 'workflow_manreviewing',
-                  disabled: isSelfAuditBlocked(record.workflow),
-                  tooltip: isSelfAuditBlocked(record.workflow)
-                    ? '【合规限制】生产环境工单需由他人复核，发起人禁止自审自批'
-                    : undefined,
-                  popConfirm: isSelfAuditBlocked(record.workflow)
-                    ? undefined
-                    : {
-                        title: '确认审批通过该工单？',
-                        confirm: handleAuditConfirm.bind(null, record, 'pass'),
-                      },
+                  ifShow: (record) => canShowPassAction(record.workflow),
+                  popConfirm: {
+                    title: '确认审批通过该工单？',
+                    confirm: handleAuditConfirm.bind(null, record, 'pass'),
+                  },
                 },
                 {
                   label: '执行',
@@ -132,31 +126,65 @@ import {
 const userStore = useUserStore();
 const archeryConfig = ref<ArcheryConfig>({ enable: false, baseUrl: '' });
 
-// 判断工单是否属于生产环境
+// 判断工单是否属于生产环境（优先以所属资源组 group_name 为权威判断基准）
 const isProdWorkflow = (workflow: any) => {
   if (!workflow) return false;
-  const str = `${workflow.group_name || ''} ${workflow.instance_name || ''} ${workflow.workflow_name || ''} ${workflow.db_name || ''} ${workflow.audit_auth_groups || ''}`.toLowerCase();
-  if (str.includes('prod') || str.includes('prd') || str.includes('生产') || str.includes('release') || str.includes('online')) {
+  const groupName = (workflow.group_name || '').toLowerCase();
+  if (
+    groupName.includes('prod') ||
+    groupName.includes('prd') ||
+    groupName.includes('生产') ||
+    groupName.includes('release') ||
+    groupName.includes('online')
+  ) {
     return true;
   }
-  if (str.includes('test') || str.includes('dev') || str.includes('uat') || str.includes('qa') || str.includes('测试') || str.includes('开发')) {
+  if (
+    groupName.includes('test') ||
+    groupName.includes('dev') ||
+    groupName.includes('uat') ||
+    groupName.includes('qa') ||
+    groupName.includes('测试') ||
+    groupName.includes('开发')
+  ) {
     return false;
+  }
+
+  const otherInfo = `${workflow.instance_name || ''} ${workflow.db_name || ''} ${workflow.audit_auth_groups || ''} ${workflow.workflow_name || ''}`.toLowerCase();
+  if (
+    otherInfo.includes('prod') ||
+    otherInfo.includes('prd') ||
+    otherInfo.includes('生产') ||
+    otherInfo.includes('release') ||
+    otherInfo.includes('online')
+  ) {
+    return true;
   }
   return false;
 };
 
-// 检查是否受生产防自批合规限制（测试环境允许自批；生产环境非特权发起人禁止自审）
-const isSelfAuditBlocked = (workflow: any) => {
-  if (!workflow) return false;
-  const currentUser = userStore.getUserInfo?.username || '';
-  const isCreator = workflow.engineer && currentUser && workflow.engineer.toLowerCase() === currentUser.toLowerCase();
-  if (!isCreator) return false;
-
+// 检查是否显示【通过】审批操作：
+// 1. 工单必须处于待审核状态 (workflow_manreviewing)
+// 2. 超级管理员 (super/admin/bot_super) 具备审批权限并始终可见
+// 3. 非管理员：
+//    - 生产环境工单：禁止发起人自审自批，彻底隐藏【通过】审批按钮，杜绝误点与越权
+//    - 测试/非生产环境：允许发起人自审自批，正常显示【通过】按钮
+const canShowPassAction = (workflow: any) => {
+  if (workflow?.status !== 'workflow_manreviewing') {
+    return false;
+  }
   const roles = (userStore.getRoleList as string[]) || [];
   const isPrivileged = roles.some((r: string) => ['super', 'admin', 'bot_super'].includes(r.toLowerCase()));
-  if (isPrivileged) return false;
+  if (isPrivileged) {
+    return true;
+  }
 
-  return isProdWorkflow(workflow);
+  // 非管理员在生产环境下，绝不展示审批通过按钮
+  if (isProdWorkflow(workflow)) {
+    return false;
+  }
+
+  return true;
 };
 
 // Vben 规范 useTable 注册
