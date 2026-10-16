@@ -64,10 +64,16 @@
                   icon: 'ant-design:check-outlined',
                   color: 'success',
                   ifShow: record.workflow?.status === 'workflow_manreviewing',
-                  popConfirm: {
-                    title: '确认审批通过该工单？',
-                    confirm: handleAuditConfirm.bind(null, record, 'pass'),
-                  },
+                  disabled: isSelfAuditBlocked(record.workflow),
+                  tooltip: isSelfAuditBlocked(record.workflow)
+                    ? '【合规限制】生产环境工单需由他人复核，发起人禁止自审自批'
+                    : undefined,
+                  popConfirm: isSelfAuditBlocked(record.workflow)
+                    ? undefined
+                    : {
+                        title: '确认审批通过该工单？',
+                        confirm: handleAuditConfirm.bind(null, record, 'pass'),
+                      },
                 },
                 {
                   label: '执行',
@@ -114,6 +120,7 @@ import { useDrawer } from '@/components/Drawer';
 import CreateWorkflowDrawer from './CreateWorkflowDrawer.vue';
 import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue';
 import { columns, searchFormSchema } from './archery.data';
+import { useUserStore } from '@/store/modules/user';
 import {
   getArcheryConfigApi,
   getArcheryWorkflowsApi,
@@ -122,7 +129,35 @@ import {
   type ArcheryConfig,
 } from '@/api/workorder/archery';
 
+const userStore = useUserStore();
 const archeryConfig = ref<ArcheryConfig>({ enable: false, baseUrl: '' });
+
+// 判断工单是否属于生产环境
+const isProdWorkflow = (workflow: any) => {
+  if (!workflow) return false;
+  const str = `${workflow.group_name || ''} ${workflow.instance_name || ''} ${workflow.workflow_name || ''} ${workflow.db_name || ''} ${workflow.audit_auth_groups || ''}`.toLowerCase();
+  if (str.includes('prod') || str.includes('prd') || str.includes('生产') || str.includes('release') || str.includes('online')) {
+    return true;
+  }
+  if (str.includes('test') || str.includes('dev') || str.includes('uat') || str.includes('qa') || str.includes('测试') || str.includes('开发')) {
+    return false;
+  }
+  return false;
+};
+
+// 检查是否受生产防自批合规限制（测试环境允许自批；生产环境非特权发起人禁止自审）
+const isSelfAuditBlocked = (workflow: any) => {
+  if (!workflow) return false;
+  const currentUser = userStore.getUserInfo?.username || '';
+  const isCreator = workflow.engineer && currentUser && workflow.engineer.toLowerCase() === currentUser.toLowerCase();
+  if (!isCreator) return false;
+
+  const roles = (userStore.getRoleList as string[]) || [];
+  const isPrivileged = roles.some((r: string) => ['super', 'admin', 'bot_super'].includes(r.toLowerCase()));
+  if (isPrivileged) return false;
+
+  return isProdWorkflow(workflow);
+};
 
 // Vben 规范 useTable 注册
 const [registerTable, { reload: reloadTable }] = useTable({

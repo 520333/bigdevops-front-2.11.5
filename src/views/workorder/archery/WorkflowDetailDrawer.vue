@@ -4,7 +4,13 @@
     <!-- Vben 规范: 抽屉顶部操作栏 -->
     <template #titleToolbar>
       <Space>
-        <Button v-if="detail?.workflow?.status === 'workflow_manreviewing'" type="primary"
+        <Tooltip v-if="detail?.workflow?.status === 'workflow_manreviewing' && isSelfAuditBlocked(detail?.workflow)"
+          title="【合规限制】生产环境工单需由他人复核，发起人禁止自审自批">
+          <Button type="primary" disabled style="background-color: #d9d9d9; border-color: #d9d9d9; color: #8c8c8c;">
+            审批通过 (生产禁自审)
+          </Button>
+        </Tooltip>
+        <Button v-else-if="detail?.workflow?.status === 'workflow_manreviewing'" type="primary"
           style="background-color: #52c41a; border-color: #52c41a;" :loading="operating" @click="handleAudit('pass')">
           审批通过
         </Button>
@@ -205,9 +211,11 @@ import {
   TabPane,
   Collapse,
   CollapsePanel,
+  Tooltip,
 } from 'ant-design-vue';
 import { Codemirror } from 'vue-codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { useUserStore } from '@/store/modules/user';
 import {
   auditArcheryWorkflowApi,
   executeArcheryWorkflowApi,
@@ -220,10 +228,38 @@ import { copyText } from '@/utils/copyTextToClipboard';
 
 const emit = defineEmits(['register', 'success']);
 
+const userStore = useUserStore();
 const detail = ref<ArcheryWorkflowItem | null>(null);
 const operating = ref(false);
 const activeDrawerTab = ref<'detail' | 'logs'>('detail');
 const rawJsonModalVisible = ref(false);
+
+// 判断工单是否属于生产环境
+const isProdWorkflow = (workflow: any) => {
+  if (!workflow) return false;
+  const str = `${workflow.group_name || ''} ${workflow.instance_name || ''} ${workflow.workflow_name || ''} ${workflow.db_name || ''} ${workflow.audit_auth_groups || ''}`.toLowerCase();
+  if (str.includes('prod') || str.includes('prd') || str.includes('生产') || str.includes('release') || str.includes('online')) {
+    return true;
+  }
+  if (str.includes('test') || str.includes('dev') || str.includes('uat') || str.includes('qa') || str.includes('测试') || str.includes('开发')) {
+    return false;
+  }
+  return false;
+};
+
+// 检查是否受生产防自批限制（测试环境允许自审自批，生产环境发起人禁止自审）
+const isSelfAuditBlocked = (workflow: any) => {
+  if (!workflow) return false;
+  const currentUser = userStore.getUserInfo?.username || '';
+  const isCreator = workflow.engineer && currentUser && workflow.engineer.toLowerCase() === currentUser.toLowerCase();
+  if (!isCreator) return false;
+
+  const roles = (userStore.getRoleList as string[]) || [];
+  const isPrivileged = roles.some((r: string) => ['super', 'admin', 'bot_super'].includes(r.toLowerCase()));
+  if (isPrivileged) return false;
+
+  return isProdWorkflow(workflow);
+};
 
 const expandedSqlIds = ref<number[]>([]);
 const toggleSql = (id: number) => {
