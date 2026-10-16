@@ -338,11 +338,41 @@ async function handleManualSync() {
     white-space: nowrap !important;
   }
 
+  // 1. 安全隐蔽选择列，避免破坏 Ant Design 内部 colgroup 布局与 DOM 同步
   :deep(.ant-table-selection-column),
   :deep(.ant-table-selection-col) {
-    display: none !important;
     width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
     padding: 0 !important;
+    border-right: none !important;
+    visibility: hidden !important;
+    overflow: hidden !important;
+  }
+
+  // 2. 跨浏览器 100% 稳定的选中行淡蓝色高亮 (包含常规单元格与固定操作列)
+  :deep(.ant-table-tbody > tr.ant-table-row-selected > td),
+  :deep(.ant-table-tbody > tr.ant-table-row-selected td) {
+    background-color: #e6f7ff !important;
+    transition: background-color 0.2s ease;
+  }
+
+  :deep(.ant-table-tbody > tr.ant-table-row-selected:hover > td),
+  :deep(.ant-table-tbody > tr.ant-table-row-selected:hover td) {
+    background-color: #bae7ff !important;
+  }
+
+  // 3. 暗色模式兼容适配
+  :global([data-theme='dark']) & {
+    :deep(.ant-table-tbody > tr.ant-table-row-selected > td),
+    :deep(.ant-table-tbody > tr.ant-table-row-selected td) {
+      background-color: #111d2c !important;
+    }
+
+    :deep(.ant-table-tbody > tr.ant-table-row-selected:hover > td),
+    :deep(.ant-table-tbody > tr.ant-table-row-selected:hover td) {
+      background-color: #172d47 !important;
+    }
   }
 }
 </style>

@@ -63,7 +63,7 @@
                   label: '通过',
                   icon: 'ant-design:check-outlined',
                   color: 'success',
-                  ifShow: (record) => canShowPassAction(record.workflow),
+                  ifShow: canShowPassAction(record.workflow),
                   popConfirm: {
                     title: '确认审批通过该工单？',
                     confirm: handleAuditConfirm.bind(null, record, 'pass'),
@@ -163,19 +163,37 @@ const isProdWorkflow = (workflow: any) => {
   return false;
 };
 
+// 检查当前登录用户是否具备全局特权（超级管理员 / 平台管理员）
+const isPrivilegedUser = () => {
+  const userInfo: any = userStore.getUserInfo || {};
+  const username = String(userInfo.username || '').toLowerCase();
+  if (['admin', 'super', 'bot_super'].includes(username)) {
+    return true;
+  }
+  const roleList = (userStore.getRoleList || []) as any[];
+  const userRoles = (userInfo.roles || []) as any[];
+  const allRoleStrs = [
+    ...roleList,
+    ...userRoles.map((r: any) => (typeof r === 'string' ? r : r.roleValue || r.value || r.roleName)),
+  ]
+    .filter(Boolean)
+    .map((r: any) => String(r).toLowerCase());
+
+  return allRoleStrs.some((r: string) => ['super', 'admin', 'bot_super', '超级管理员'].includes(r));
+};
+
 // 检查是否显示【通过】审批操作：
 // 1. 工单必须处于待审核状态 (workflow_manreviewing)
 // 2. 超级管理员 (super/admin/bot_super) 具备审批权限并始终可见
 // 3. 非管理员：
 //    - 生产环境工单：禁止发起人自审自批，彻底隐藏【通过】审批按钮，杜绝误点与越权
 //    - 测试/非生产环境：允许发起人自审自批，正常显示【通过】按钮
-const canShowPassAction = (workflow: any) => {
-  if (workflow?.status !== 'workflow_manreviewing') {
+const canShowPassAction = (target: any) => {
+  const workflow = target?.workflow || target;
+  if (!workflow || workflow.status !== 'workflow_manreviewing') {
     return false;
   }
-  const roles = (userStore.getRoleList as string[]) || [];
-  const isPrivileged = roles.some((r: string) => ['super', 'admin', 'bot_super'].includes(r.toLowerCase()));
-  if (isPrivileged) {
+  if (isPrivilegedUser()) {
     return true;
   }
 

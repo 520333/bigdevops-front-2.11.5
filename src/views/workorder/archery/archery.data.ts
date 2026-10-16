@@ -51,11 +51,11 @@ export const getStatusColor = (status?: string): string => {
     case 'workflow_executing':
       return 'processing';
     case 'workflow_review_pass':
-      return 'cyan';
+      return 'processing';
     case 'workflow_timingtask':
-      return 'purple';
+      return 'processing';
     case 'workflow_queuing':
-      return 'gold';
+      return 'warning';
     case 'workflow_manreviewing':
       return 'warning';
     case 'workflow_autoreviewwrong':
@@ -79,7 +79,7 @@ export const columns: BasicColumn[] = [
   },
   {
     title: '工单标题',
-    dataIndex: 'workflow_name',
+    dataIndex: `workflow_name + '-' + workflow_id`,
     minWidth: 200,
     ellipsis: true,
     customRender: ({ record }) => {
@@ -98,7 +98,7 @@ export const columns: BasicColumn[] = [
       const dbName = record.workflow?.db_name;
       const groupName = record.workflow?.group_name;
       return h('div', { class: 'flex items-center gap-1.5 flex-wrap' }, [
-        h(Tag, { color: 'cyan', class: 'font-mono' }, () => dbName || '-'),
+        h(Tag, { color: 'processing', class: 'font-mono' }, () => dbName || '-'),
         groupName ? h('span', { class: 'text-xs text-gray-400 dark:text-gray-500' }, `(${groupName})`) : null,
       ]);
     },
@@ -111,7 +111,7 @@ export const columns: BasicColumn[] = [
       const isDdl = record.workflow?.syntax_type === 1;
       return h(
         Tag,
-        { color: isDdl ? 'purple' : 'blue' },
+        { color: isDdl ? 'warning' : 'processing' },
         () => (isDdl ? 'DDL 结构' : 'DML 数据'),
       );
     },
@@ -132,7 +132,10 @@ export const columns: BasicColumn[] = [
       const status = record.workflow?.status;
       return h(
         Tag,
-        { color: getStatusColor(status) },
+        {
+          color: getStatusColor(status),
+          class: status === 'workflow_executing' ? 'animate-pulse' : undefined,
+        },
         () => getStatusText(status),
       );
     },
@@ -145,7 +148,7 @@ export const columns: BasicColumn[] = [
       const isBackup = record.workflow?.is_backup;
       return h(
         Tag,
-        { color: isBackup ? 'green' : 'default' },
+        { color: isBackup ? 'success' : 'default' },
         () => (isBackup ? '是' : '否'),
       );
     },
@@ -283,7 +286,7 @@ export const workflowDescSchema: DescItem[] = [
     label: '目标数据库',
     render: (val, data) => {
       return h('span', [
-        h(Tag, { color: 'blue' }, () => val || '-'),
+        h(Tag, { color: 'processing', class: 'font-mono' }, () => val || '-'),
         h('span', { class: 'text-xs text-gray-400 ml-1' }, `(ID: ${data?.workflow?.instance || '-'})`),
       ]);
     },
@@ -301,7 +304,7 @@ export const workflowDescSchema: DescItem[] = [
   {
     field: 'workflow.syntax_type',
     label: '工单类型',
-    render: (val) => h(Tag, { color: 'purple' }, () => val === 1 ? 'DDL 结构变更' : 'DML 数据变更'),
+    render: (val) => h(Tag, { color: val === 1 ? 'warning' : 'processing' }, () => val === 1 ? 'DDL 结构变更' : 'DML 数据变更'),
   },
   {
     field: 'workflow.create_time',
@@ -316,7 +319,7 @@ export const workflowDescSchema: DescItem[] = [
   {
     field: 'workflow.is_backup',
     label: '备份策略',
-    render: (val) => h(Tag, { color: val ? 'green' : 'default' }, () => val ? '自动备份' : '不备份'),
+    render: (val) => h(Tag, { color: val ? 'success' : 'default' }, () => val ? '自动备份' : '不备份'),
   },
 ];
 
