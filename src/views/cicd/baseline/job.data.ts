@@ -12,28 +12,14 @@ export const columns: BasicColumn[] = [
     title: '服务名',
     dataIndex: 'name',
     key: 'name',
-    width: 180,
-    // align: 'center',
-    // customRender: ({ record }) => {
-    //   let name = record?.name || '';
-    //   const proj = record?.projectName || record?.folder || '';
-    //   if (proj && name.startsWith(proj + '/')) {
-    //     name = name.substring(proj.length + 1);
-    //   } else if (name.includes('/')) {
-    //     name = name.substring(name.lastIndexOf('/') + 1);
-    //   }
-    //   return h(
-    //     'span',
-    //     { class: 'font-bold font-mono text-gray-800 dark:text-gray-100' },
-    //     name || '-',
-    //   );
-    // },
+    width: 350,
+    ellipsis: true,
   },
   {
     title: '所属项目',
     dataIndex: 'projectName',
     key: 'projectName',
-    width: 80,
+    width: 110,
     customRender: ({ record }) => {
       const val = record.projectName || record.folder;
       if (!val) return h('span', { class: 'text-gray-400 text-xs italic' }, '/');
@@ -44,12 +30,11 @@ export const columns: BasicColumn[] = [
       );
     },
   },
-
   {
     title: '语言',
     dataIndex: 'lang',
     key: 'lang',
-    width: 80,
+    width: 85,
     customRender: ({ text }) => {
       const lang = text || 'Java';
       const colorMap: Record<string, string> = {
@@ -70,7 +55,7 @@ export const columns: BasicColumn[] = [
     title: '部署环境',
     dataIndex: 'deployEnv',
     key: 'deployEnv',
-    width: 80,
+    width: 100,
     customRender: ({ text }) => {
       const env = text || '';
       if (!env) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
@@ -93,7 +78,7 @@ export const columns: BasicColumn[] = [
     title: '部署类型',
     dataIndex: 'deployType',
     key: 'deployType',
-    width: 80,
+    width: 100,
     customRender: ({ record }) => {
       const type = (record?.deployType || 'bin').toLowerCase();
       const label = type === 'k8s' ? 'k8s' : type === 'docker' ? 'docker' : '主机';
@@ -108,9 +93,13 @@ export const columns: BasicColumn[] = [
     title: '代码仓库',
     dataIndex: 'gitRepo',
     key: 'gitRepo',
-    width: 300,
+    minWidth: 220,
     align: 'left',
     ellipsis: true,
+    customRender: ({ text }) => {
+      if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
+      return text;
+    },
   },
   {
     title: '最后构建分支',
@@ -130,7 +119,7 @@ export const columns: BasicColumn[] = [
     title: '最后构建号',
     dataIndex: 'count',
     key: 'count',
-    width: 80,
+    width: 110,
     customRender: ({ text }) => {
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '暂无构建');
       return h(
@@ -144,7 +133,7 @@ export const columns: BasicColumn[] = [
     title: '构建状态',
     dataIndex: 'status',
     key: 'status',
-    width: 80,
+    width: 105,
     customRender: ({ text }) => {
       const status = text || 'NOT_BUILT';
       const colorMap: Record<string, string> = {
@@ -168,16 +157,20 @@ export const columns: BasicColumn[] = [
     title: '构建时间',
     dataIndex: 'lastBuildTime',
     format: (text) => {
-      return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '';
+      return text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-';
     },
-    width: 100,
+    width: 170,
   },
   {
     title: '构建人',
     dataIndex: 'createUserName',
     key: 'createUserName',
-    width: 80,
+    width: 95,
     align: 'center',
+    customRender: ({ text }) => {
+      if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
+      return text;
+    },
   },
 ];
 
@@ -671,5 +664,3 @@ export function getJobFormSchema(callbacks?: JobFormCallbacks): FormSchema[] {
     },
   ];
 }
-
-export const formSchema: FormSchema[] = getJobFormSchema();

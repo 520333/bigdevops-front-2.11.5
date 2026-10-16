@@ -1,5 +1,5 @@
 <template>
-  <BasicDrawer v-bind="$attrs" @register="registerDrawer" title="Jenkins 实时编译与部署日志" width="75%" @close="handleClose">
+  <BasicDrawer v-bind="$attrs" @register="registerDrawer" title="Jenkins 实时编译与部署日志" width="75%" @close="handleClose" @visible-change="(vis: boolean) => !vis && handleClose()">
     <template #title>
       <div class="flex items-center justify-between w-full pr-8 select-none">
         <Space align="center" size="small" class="flex-wrap">
@@ -23,7 +23,8 @@
               <div class="flex items-center justify-between gap-2 text-xs font-mono">
                 <div class="flex items-center gap-1.5 truncate">
                   <span class="font-bold">#{{ item.buildNumber }}</span>
-                  <span v-if="item.commitCount && item.commitCount > 0" class="text-[11px] text-cyan-600 dark:text-cyan-400 font-sans font-medium">
+                  <span v-if="item.commitCount && item.commitCount > 0"
+                    class="text-[11px] text-cyan-600 dark:text-cyan-400 font-sans font-medium">
                     {{ item.commitCount }} commits
                   </span>
                   <span v-else class="text-[11px] text-gray-400 font-sans">
@@ -45,7 +46,8 @@
           <Tag v-else-if="buildResult" color="default">{{ buildResult }}</Tag>
 
           <!-- 代码变更 Popover (Jenkins Stage View 风格) -->
-          <a-popover v-if="currentBuildCommits.length > 0" trigger="hover" placement="bottomLeft" :overlayStyle="{ width: '520px', maxWidth: '90vw' }">
+          <a-popover v-if="currentBuildCommits.length > 0" trigger="hover" placement="bottomLeft"
+            :overlayStyle="{ width: '520px', maxWidth: '90vw' }">
             <template #title>
               <div class="flex items-center justify-between text-xs font-bold gap-3 py-0.5">
                 <div class="flex items-center gap-1.5 text-gray-800 dark:text-gray-100">
@@ -68,7 +70,8 @@
                       {{ c.author || '未知作者' }}
                     </span>
                   </div>
-                  <div class="text-xs text-gray-700 dark:text-gray-200 mt-1 break-words select-text font-sans leading-relaxed">
+                  <div
+                    class="text-xs text-gray-700 dark:text-gray-200 mt-1 break-words select-text font-sans leading-relaxed">
                     {{ c.message || '无提交注释' }}
                   </div>
                   <div v-if="c.date" class="text-[10px] text-gray-400 mt-0.5 font-mono">
@@ -87,6 +90,121 @@
           <Tag v-else color="default" class="text-gray-400 m-0 px-2 py-0 text-xs">
             No Changes
           </Tag>
+
+          <!-- Stage 阶段视图 Popover (跟构建参数一样需要点击展开) -->
+          <a-popover trigger="click" placement="bottomLeft" :overlayStyle="{ maxWidth: '90vw' }">
+            <template #title>
+              <div class="flex items-center justify-between text-xs font-bold gap-3 py-0.5">
+                <div class="flex items-center gap-1.5 text-gray-800 dark:text-gray-100">
+                  <Icon icon="ant-design:branches-outlined" class="text-blue-500" />
+                  <span>流水线阶段</span>
+                </div>
+                <div class="font-normal text-gray-500 text-[11px]">
+                  共 {{ stageList.length }} 个阶段
+                </div>
+              </div>
+            </template>
+            <template #content>
+              <div v-if="stageList.length === 0" class="py-6 px-10 text-center text-xs text-gray-400">
+                该期任务暂无 Stage 流水线阶段信息
+              </div>
+              <div v-else class="p-1 overflow-x-auto max-w-[85vw]">
+                <div class="inline-flex flex-col border border-gray-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                  <!-- 表头：Stage 阶段名称 (原生 Jenkins 阶段视图表头) -->
+                  <div class="flex items-center bg-gray-50/90 dark:bg-zinc-800/90 border-b border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-100">
+                    <div class="w-32 shrink-0 px-3 py-2 text-center text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-zinc-800">
+                      构建期数
+                    </div>
+                    <div
+                      v-for="stg in stageList"
+                      :key="'th-' + stg.id"
+                      class="w-32 shrink-0 px-3 py-2 text-center truncate border-r last:border-r-0 border-gray-200 dark:border-zinc-800"
+                      :title="stg.name"
+                    >
+                      {{ stg.name }}
+                    </div>
+                  </div>
+
+                  <!-- 内容行：原生 Jenkins 阶段视图卡片 (大绿块/大红块/运行中块) -->
+                  <div class="flex items-stretch bg-white dark:bg-zinc-900 text-xs">
+                    <!-- 左侧构建元信息 -->
+                    <div class="w-32 shrink-0 p-2 border-r border-gray-200 dark:border-zinc-800 flex flex-col justify-center items-center gap-1 bg-gray-50/40 dark:bg-zinc-900/40">
+                      <div class="flex items-center gap-1.5 font-mono">
+                        <span class="font-bold text-sm text-blue-600 dark:text-blue-400">#{{ buildNumber }}</span>
+                        <Tag :color="getBuildResultColor(buildResult)" class="text-[10px] px-1 py-0 m-0 border-0 leading-tight">
+                          {{ buildResult || 'RUNNING' }}
+                        </Tag>
+                      </div>
+                      <span v-if="currentBuildCommits.length > 0" class="text-[11px] text-cyan-600 dark:text-cyan-400 font-sans">
+                        {{ currentBuildCommits.length }} commits
+                      </span>
+                      <span v-else class="text-[11px] text-gray-400 font-sans">
+                        No Changes
+                      </span>
+                    </div>
+
+                    <!-- 各阶段单元格 -->
+                    <div
+                      v-for="stg in stageList"
+                      :key="'td-' + stg.id"
+                      class="w-32 shrink-0 p-2 border-r last:border-r-0 border-gray-200 dark:border-zinc-800 flex items-center justify-center bg-gray-50/20 dark:bg-zinc-900/20"
+                    >
+                      <div
+                        class="w-full h-16 rounded flex flex-col items-center justify-center p-1 border transition-colors select-none"
+                        :class="getStageCardClass(stg.status)"
+                      >
+                        <!-- 运行中 -->
+                        <template v-if="stg.status === 'IN_PROGRESS' || stg.status === 'BUILDING'">
+                          <div class="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                            <span class="w-3 h-3 rounded-full border-2 border-dashed border-blue-500 animate-spin inline-block"></span>
+                            <span>运行中</span>
+                          </div>
+                          <span v-if="stg.durationMillis" class="text-xs text-blue-600 dark:text-blue-400 font-mono mt-0.5 font-medium">
+                            {{ formatDuration(stg.durationMillis) }}
+                          </span>
+                        </template>
+
+                        <!-- 成功 (原生 Jenkins 经典大号耗时绿块) -->
+                        <template v-else-if="stg.status === 'SUCCESS'">
+                          <span class="text-base font-bold font-mono tracking-tight text-emerald-800 dark:text-emerald-300">
+                            {{ formatDuration(stg.durationMillis) || '0s' }}
+                          </span>
+                        </template>
+
+                        <!-- 失败 -->
+                        <template v-else-if="stg.status === 'FAILED' || stg.status === 'FAILURE'">
+                          <span class="text-base font-bold font-mono tracking-tight text-red-700 dark:text-red-300">
+                            {{ formatDuration(stg.durationMillis) || '0s' }}
+                          </span>
+                          <span class="text-[10px] text-red-500/80 leading-none mt-0.5">failed</span>
+                        </template>
+
+                        <!-- 中止 -->
+                        <template v-else-if="stg.status === 'ABORTED'">
+                          <span class="text-sm font-medium font-mono text-gray-600 dark:text-gray-300">
+                            {{ formatDuration(stg.durationMillis) || '-' }}
+                          </span>
+                          <span class="text-[10px] text-gray-400 leading-none mt-0.5">aborted</span>
+                        </template>
+
+                        <!-- 未执行 -->
+                        <template v-else>
+                          <span class="text-xs text-gray-400 font-mono">-</span>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <Button size="small" type="dashed" class="text-xs">
+              <template #icon>
+                <Icon v-if="stageList.some((s) => s.status === 'IN_PROGRESS' || s.status === 'BUILDING')"
+                  icon="ant-design:loading-outlined" class="animate-spin text-blue-500" />
+              </template>
+              Stage视图 ({{ stageList.length }})
+            </Button>
+          </a-popover>
 
           <!-- 构建参数 Popover (保持轻量尺寸，加宽至 680px，支持复制) -->
           <a-popover trigger="click" placement="bottomLeft" :overlayStyle="{ width: '1200px', maxWidth: '90vw' }">
@@ -116,10 +234,6 @@
                   该期任务无自定义构建参数
                 </div>
                 <table v-else class="w-full text-xs border-collapse">
-                  <thead>
-                    <!-- <tr class="border-b border-gray-200 dark:border-gray-700 text-gray-500 text-[11px]">
-                    </tr> -->
-                  </thead>
                   <tbody>
                     <tr v-for="(param, idx) in currentBuildParams" :key="param.name"
                       class="border-b border-gray-100 dark:border-gray-800/80 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
@@ -164,7 +278,7 @@
     </template>
 
     <div class="bg-gray-950 p-2 h-[85vh] w-full flex flex-col box-border overflow-hidden">
-      <!-- xterm 终端黑框 -->
+      <!-- xterm 终端纯黑框 -->
       <div ref="terminalRef" class="w-full h-full flex-1 min-h-0"></div>
     </div>
   </BasicDrawer>
@@ -190,6 +304,7 @@ import {
   triggerJenkinsBuild,
   stopJenkinsBuild,
   getJenkinsJobBuildHistory,
+  getJenkinsJobStageView,
   type JobBuildHistoryItem,
   type JobBuildParamKV,
   type JobCommitItem,
@@ -201,13 +316,52 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 
-const emit = defineEmits(['close', 'register']);
+const emit = defineEmits(['close', 'register', 'success']);
 const { createMessage } = useMessage();
 
 const instanceId = ref<number>(0);
 const jobName = ref<string>('');
 const folder = ref<string>('');
 const projectName = ref<string>('');
+const stageList = ref<any[]>([]);
+
+function getStageCardClass(status: string) {
+  if (status === 'SUCCESS') {
+    return 'bg-[#e2f0d9] dark:bg-emerald-950/60 border-[#c3e6cb] dark:border-emerald-800/60 text-[#2b542c] dark:text-emerald-200';
+  }
+  if (status === 'IN_PROGRESS' || status === 'BUILDING') {
+    return 'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-200 animate-pulse';
+  }
+  if (status === 'FAILED' || status === 'FAILURE') {
+    return 'bg-[#fce8e6] dark:bg-red-950/60 border-[#f5c6cb] dark:border-red-800/60 text-[#c5221f] dark:text-red-200';
+  }
+  if (status === 'ABORTED') {
+    return 'bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300';
+  }
+  return 'bg-white dark:bg-zinc-900 border-dashed border-gray-200 dark:border-zinc-800 text-gray-400';
+}
+
+function formatDuration(ms: number) {
+  if (!ms || ms <= 0) return '';
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+async function fetchStages() {
+  if (!instanceId.value || !jobName.value) return;
+  try {
+    const res: any = await getJenkinsJobStageView({
+      instanceId: instanceId.value,
+      jobName: jobName.value,
+      folder: folder.value,
+      projectName: projectName.value || folder.value,
+      buildNumber: buildNumber.value > 0 ? buildNumber.value : undefined,
+    });
+    stageList.value = res?.stages || [];
+  } catch {
+    stageList.value = [];
+  }
+}
 const buildNumber = ref<number>(0);
 const isRunning = ref<boolean>(false);
 const canceling = ref<boolean>(false);
@@ -394,6 +548,7 @@ async function fetchBuildHistory() {
 function handleBuildNumberChange(val: number) {
   buildNumber.value = val;
   updateCurrentBuildMeta();
+  fetchStages();
   fetchLogs(true);
   if (isRunning.value) {
     startTimer();
@@ -433,6 +588,8 @@ const [registerDrawer] = useDrawerInner(async (data) => {
   historyList.value = [];
   currentBuildParams.value = [];
   currentBuildTriggerUser.value = '';
+  stageList.value = [];
+  fetchStages();
   stopTimer();
   stopSpinnerAnimation();
 
@@ -494,6 +651,7 @@ async function fetchLogs(reset = false) {
       if (res.buildNumber && (!buildNumber.value || buildNumber.value <= 0)) {
         buildNumber.value = res.buildNumber;
         updateCurrentBuildMeta();
+        fetchStages();
       }
       if (res.content && term) {
         removeSpinner();
@@ -503,8 +661,13 @@ async function fetchLogs(reset = false) {
 
       const finishedStatuses = ['SUCCESS', 'FAILURE', 'ABORTED', 'UNSTABLE', 'CANCELLED'];
       if (res.result && finishedStatuses.includes(String(res.result).toUpperCase())) {
+        const wasRunning = isRunning.value;
         isRunning.value = false;
         buildResult.value = String(res.result).toUpperCase();
+        if (wasRunning) {
+          fetchStages();
+          emit('success');
+        }
       } else {
         isRunning.value = res.isRunning ?? res.building ?? true;
         buildResult.value = res.result || 'BUILDING';
@@ -564,6 +727,7 @@ function startTimer() {
   timer = setInterval(() => {
     if (isRunning.value || logOffset.value === 0) {
       fetchLogs(false);
+      fetchStages();
     } else {
       stopTimer();
     }

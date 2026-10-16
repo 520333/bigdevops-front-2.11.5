@@ -215,7 +215,7 @@ import {
   type ArcheryWorkflowItem,
   type ArcheryWorkflowLogItem,
 } from '@/api/workorder/archery';
-import { getStatusColor, getStatusText, workflowDescSchema } from './archery.data';
+import { workflowDescSchema } from './archery.data';
 import { copyText } from '@/utils/copyTextToClipboard';
 
 const emit = defineEmits(['register', 'success']);
@@ -354,20 +354,20 @@ const unifiedTableData = computed(() => {
 const unifiedColumns = computed(() => {
   if (hasExecuted.value) {
     return [
-      { title: '#', dataIndex: 'id', key: 'id', width: 45, align: 'center' },
+      { title: '#', dataIndex: 'id', key: 'id', width: 45, align: 'center' as const },
       { title: '状态', key: 'status', width: 140 },
       { title: 'SQL 语句', dataIndex: 'sql', key: 'sql', width: 480 },
       { title: '执行反馈 / 错误详情', dataIndex: 'errormessage', key: 'errormessage' },
-      { title: '影响行数', key: 'rows', width: 90, align: 'center' },
-      { title: '耗时', key: 'execute_time', width: 85, align: 'center' },
+      { title: '影响行数', key: 'rows', width: 90, align: 'center' as const },
+      { title: '耗时', key: 'execute_time', width: 85, align: 'center' as const },
     ];
   }
   return [
-    { title: '#', dataIndex: 'id', key: 'id', width: 45, align: 'center' },
+    { title: '#', dataIndex: 'id', key: 'id', width: 45, align: 'center' as const },
     { title: '状态', key: 'status', width: 140 },
     { title: 'SQL 语句', dataIndex: 'sql', key: 'sql', width: 480 },
     { title: '审查提示 / 错误信息', dataIndex: 'errormessage', key: 'errormessage' },
-    { title: '预估行数', dataIndex: 'affected_rows', key: 'rows', width: 90, align: 'center' },
+    { title: '预估行数', dataIndex: 'affected_rows', key: 'rows', width: 90, align: 'center' as const },
   ];
 });
 

@@ -170,6 +170,7 @@ export const getJenkinsJobStageView = (params: {
   jobName: string;
   folder?: string;
   projectName?: string;
+  buildNumber?: number;
 }) => defHttp.get({ url: Api.getJenkinsJobStageView, params });
 
 // 获取远端 Jenkins 任务定义的真实构建参数列表（实现动态渲染与参数透传）

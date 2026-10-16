@@ -391,9 +391,16 @@
         border-bottom: none;
       }
 
-      //.ant-table-tbody > tr.ant-table-row-selected td {
-      //background-color: fade(@primary-color, 8%) !important;
-      //}
+      .ant-table-tbody > tr.ant-table-row-selected > td,
+      .ant-table-tbody > tr.ant-table-row-selected td {
+        background-color: fade(@primary-color, 18%) !important;
+        transition: background-color 0.2s ease;
+      }
+
+      .ant-table-tbody > tr.ant-table-row-selected:hover > td,
+      .ant-table-tbody > tr.ant-table-row-selected:hover td {
+        background-color: fade(@primary-color, 26%) !important;
+      }
     }
 
     .ant-table-wrapper .ant-pagination {

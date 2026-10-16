@@ -1,20 +1,58 @@
 <template>
   <div class="p-4 bg-gray-50 dark:bg-zinc-950 h-full flex flex-col overflow-hidden">
-    <div class="flex justify-between items-center pb-3 border-b dark:border-zinc-800 mb-4 bg-white dark:bg-[#151515] p-4 rounded shadow-sm border border-gray-100 dark:border-zinc-800">
+    <div
+      class="flex justify-between items-center pb-3 border-b dark:border-zinc-800 mb-4 bg-white dark:bg-[#151515] p-4 rounded shadow-sm border border-gray-100 dark:border-zinc-800"
+    >
       <span class="text-lg font-bold text-gray-800 dark:text-gray-200">工单服务门户：请选择要办理的业务</span>
+      <a-space>
+        <a-button type="default" @click="go('/workorder/archery')">
+          <template #icon><Icon icon="ant-design:history-outlined" /></template>
+          SQL 工单列表
+        </a-button>
+      </a-space>
     </div>
 
     <div class="flex-1 overflow-y-auto px-2">
       <a-row :gutter="[16, 16]">
+        <!-- 数据库 SQL 变更工单 (格式与系统模板卡片保持完全统一) -->
+        <a-col :span="8">
+          <a-card
+            :bordered="false"
+            class="hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900/40 dark:border-zinc-800"
+            @click="openSqlDrawer(true)"
+          >
+            <template #title>
+              <span class="font-bold text-base text-gray-700 dark:text-gray-300">
+                <Icon icon="ant-design:console-sql-outlined" class="mr-2 text-blue-500" />
+                数据库 SQL 变更申请
+              </span>
+            </template>
+
+            <div class="text-gray-500 dark:text-gray-400 space-y-1 mb-4 text-sm">
+              <div><span class="font-semibold text-gray-600 dark:text-gray-400">关联审批：</span>Archery 多级资源组审批流</div>
+              <div><span class="font-semibold text-gray-600 dark:text-gray-400">创建人员：</span>系统内置(Archery)</div>
+            </div>
+
+            <a-button type="primary" block>
+              发起申请
+            </a-button>
+          </a-card>
+        </a-col>
+
+        <!-- 常规模板卡片 -->
         <a-col :span="8" v-for="item in cardContents" :key="item.id">
-          <a-card :bordered="false" class="hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900/40 dark:border-zinc-800" @click="clickCard(item)">
+          <a-card
+            :bordered="false"
+            class="hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900/40 dark:border-zinc-800"
+            @click="clickCard(item)"
+          >
             <template #title>
               <span class="font-bold text-base text-gray-700 dark:text-gray-300">
                 <Icon icon="ant-design:layout-outlined" class="mr-2 text-blue-500" />
                 {{ item.name }}
               </span>
             </template>
-            
+
             <div class="text-gray-500 dark:text-gray-400 space-y-1 mb-4 text-sm">
               <div><span class="font-semibold text-gray-600 dark:text-gray-400">关联审批：</span>{{ item.processName || '暂无' }}</div>
               <div><span class="font-semibold text-gray-600 dark:text-gray-400">创建人员：</span>{{ item.createUserName || '系统管理员' }}</div>
@@ -26,26 +64,33 @@
           </a-card>
         </a-col>
       </a-row>
-      
+
       <div v-if="cardContents.length === 0" class="text-center py-20 text-gray-400 dark:text-gray-500">
         暂无可用工单模板，请先去【工单模板管理】中创建。
       </div>
     </div>
+
+    <!-- SQL 变更申请抽屉 -->
+    <CreateWorkflowDrawer @register="registerSqlDrawer" @success="handleSqlSuccess" />
   </div>
 </template>
 
 <script setup lang="ts">
   import { ref, onMounted } from 'vue';
-  import { Row as ARow, Col as ACol, Card as ACard, Button as AButton } from 'ant-design-vue';
+  import { Row as ARow, Col as ACol, Card as ACard, Button as AButton, Space as ASpace, Modal } from 'ant-design-vue';
   import { useGo } from '@/hooks/web/usePage';
   import { useMessage } from '@/hooks/web/useMessage';
+  import { useDrawer } from '@/components/Drawer';
   import Icon from '@/components/Icon/Icon.vue';
-  
+  import CreateWorkflowDrawer from '../archery/CreateWorkflowDrawer.vue';
   import { getWorkOrderTemplateList } from '@/api/demo/system';
 
   const go = useGo();
   const { createMessage } = useMessage();
-  const cardContents = ref<any[]>([]); 
+  const cardContents = ref<any[]>([]);
+
+  // 注册 SQL 变更抽屉
+  const [registerSqlDrawer, { openDrawer: openSqlDrawer }] = useDrawer();
 
   onMounted(async () => {
     try {
@@ -59,5 +104,18 @@
   // 🚨 核心逻辑：点击卡片，携带 templateId 跳转到 create 页面
   function clickCard(item: any) {
     go(`create?templateId=${item.id}`);
+  }
+
+  // SQL 工单提交成功后的提示与跳转联动
+  function handleSqlSuccess() {
+    Modal.confirm({
+      title: 'SQL 变更工单提交成功！',
+      content: '工单已进入 Archery 审批流，您可以前往【SQL 工单列表】查看工单详情、审批进度与执行状态。',
+      okText: '查看工单列表',
+      cancelText: '留在本页',
+      onOk: () => {
+        go('/workorder/archery');
+      },
+    });
   }
 </script>
