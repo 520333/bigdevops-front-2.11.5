@@ -23,11 +23,7 @@ export const columns: BasicColumn[] = [
     customRender: ({ record }) => {
       const val = record.projectName || record.folder;
       if (!val) return h('span', { class: 'text-gray-400 text-xs italic' }, '/');
-      return h(
-        Tag,
-        { color: 'success', class: 'font-semibold' },
-        () => `${val}`,
-      );
+      return h(Tag, { color: 'cyan', class: 'font-semibold' }, () => `${val}`);
     },
   },
   {
@@ -44,11 +40,7 @@ export const columns: BasicColumn[] = [
         Python: 'purple',
         Shell: 'cyan',
       };
-      return h(
-        Tag,
-        { color: colorMap[lang] || 'default', class: 'font-semibold' },
-        () => lang,
-      );
+      return h(Tag, { color: colorMap[lang] || 'default', class: 'font-semibold' }, () => lang);
     },
   },
   {
@@ -56,6 +48,21 @@ export const columns: BasicColumn[] = [
     dataIndex: 'deployEnv',
     key: 'deployEnv',
     width: 100,
+    sorter: (a: any, b: any) => {
+      // 按照环境生命周期权重排序 (dev -> test -> stage -> uat -> pre -> prod)，其余按字母序排
+      const envWeight: Record<string, number> = {
+        dev: 1,
+        test: 2,
+        stage: 3,
+        uat: 4,
+        pre: 5,
+        prod: 6,
+      };
+      const orderA = envWeight[(a.deployEnv || '').toLowerCase()] || 99;
+      const orderB = envWeight[(b.deployEnv || '').toLowerCase()] || 99;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.deployEnv || '').localeCompare(b.deployEnv || '');
+    },
     customRender: ({ text }) => {
       const env = text || '';
       if (!env) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
@@ -67,11 +74,7 @@ export const columns: BasicColumn[] = [
         pre: 'cyan',
         prod: 'success',
       };
-      return h(
-        Tag,
-        { color: colorMap[env] || 'default', class: 'font-semibold' },
-        () => env,
-      );
+      return h(Tag, { color: colorMap[env] || 'default', class: 'font-semibold' }, () => env);
     },
   },
   {
@@ -108,11 +111,7 @@ export const columns: BasicColumn[] = [
     width: 130,
     customRender: ({ text }) => {
       const branch = text || 'main';
-      return h(
-        Tag,
-        { color: 'default' },
-        () => `${branch}`,
-      );
+      return h(Tag, { color: 'default' }, () => `${branch}`);
     },
   },
   {
@@ -122,11 +121,7 @@ export const columns: BasicColumn[] = [
     width: 110,
     customRender: ({ text }) => {
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '暂无构建');
-      return h(
-        Tag,
-        { color: 'default' },
-        () => `#${text}`,
-      );
+      return h(Tag, { color: 'default' }, () => `#${text}`);
     },
   },
   {
@@ -169,11 +164,7 @@ export const columns: BasicColumn[] = [
     align: 'center',
     customRender: ({ text }) => {
       if (!text) return h('span', { class: 'text-gray-400 text-xs italic' }, '-');
-      return h(
-        Tag,
-        { color: 'default' },
-        () => text,
-      );
+      return h(Tag, { color: 'default' }, () => text);
     },
   },
 ];
@@ -263,9 +254,9 @@ export const searchFormSchema: FormSchema[] = [
       options: [
         { label: 'dev | 开发环境', value: 'dev' },
         { label: 'test | 测试环境', value: 'test' },
-        { label: 'stage | 预发布环境', value: 'stage' },
-        { label: 'uat | UAT环境', value: 'uat' },
-        { label: 'pre | 灰度环境', value: 'pre' },
+        { label: 'stage | 预发环境', value: 'stage' },
+        { label: 'uat | 验收环境', value: 'uat' },
+        { label: 'pre | 预生产环境', value: 'pre' },
         { label: 'prod | 生产环境', value: 'prod' },
       ],
       onChange: () => {

@@ -262,3 +262,49 @@ export const WORKORDER_ARCHERY_UPPER_ROUTE: AppRouteRecordRaw = {
   ],
 };
 
+// 兼容访问 /workorder/release (小写)
+export const WORKORDER_RELEASE_LOWER_ROUTE: AppRouteRecordRaw = {
+  path: '/workorder/release',
+  name: 'WorkOrderReleaseLowerStatic',
+  component: LAYOUT,
+  meta: {
+    title: '发布工单',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderReleaseLowerPageStatic',
+      component: () => import('@/views/workorder/release/index.vue'),
+      meta: {
+        title: '发布工单',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/release',
+      },
+    },
+  ],
+};
+
+// 兼容访问 /workOrder/release (驼峰)
+export const WORKORDER_RELEASE_UPPER_ROUTE: AppRouteRecordRaw = {
+  path: '/workOrder/release',
+  name: 'WorkOrderReleaseUpperStatic',
+  component: LAYOUT,
+  meta: {
+    title: '发布工单',
+    hideMenu: true,
+  },
+  children: [
+    {
+      path: '',
+      name: 'WorkOrderReleaseUpperPageStatic',
+      component: () => import('@/views/workorder/release/index.vue'),
+      meta: {
+        title: '发布工单',
+        hideMenu: true,
+        currentActiveMenu: '/workOrder/release',
+      },
+    },
+  ],
+};
+

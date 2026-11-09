@@ -1,6 +1,11 @@
 <template>
   <div>
-    <BasicTable @register="registerTable" class="w-full cicd-baseline-table">
+    <BasicTable
+      @register="registerTable"
+      :row-class-name="getRowClassName"
+      @row-click="handleRowClick"
+      class="w-full cicd-baseline-table"
+    >
       <template #toolbar>
         <a-button type="primary" preIcon="ant-design:plus-outlined" :disabled="!selectedInstanceId"
           v-auth="'POST:/api/cicd/createJenkinsJob'" @click="handleCreateJob">
@@ -15,10 +20,10 @@
       <!-- Custom Body Cells: Action Column -->
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'action'">
-          <div @click.stop>
+          <div @click="highlightRow(record)">
             <TableAction :actions="[
               {
-                icon: 'ant-design:caret-right-outlined',
+                label: '构建部署',
                 tooltip:
                   record.canBuild === false
                     ? '当前环境仅具有只读权限，不可触发构建'
@@ -30,14 +35,12 @@
                 onClick: () => handleOpenBuildModal(record),
               },
               {
-                icon: 'ant-design:code-outlined',
-                tooltip: '构建日志',
+                label: '构建日志',
                 auth: 'GET:/api/cicd/getJenkinsBuildLogs',
                 onClick: () => handleOpenLogDrawer(record),
               },
               {
-                icon: 'ant-design:file-text-outlined',
-                tooltip: '实时日志',
+                label: '实时日志',
                 onClick: () => handleOpenRealtimeLogModal(record),
               },
               {
@@ -84,11 +87,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { BasicTable, useTable, TableAction } from '@/components/Table';
 import { useDrawer } from '@/components/Drawer';
 import { useModal } from '@/components/Modal';
-import {
-  getJenkinsInstanceList,
-  getJenkinsJobList,
-  deleteJenkinsJob,
-} from '@/api/cicd';
+import { getJenkinsInstanceList, getJenkinsJobList, deleteJenkinsJob } from '@/api/cicd';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useUserStore } from '@/store/modules/user';
 import { columns, searchFormSchema } from './job.data';
@@ -135,7 +134,7 @@ const [registerCreateDrawer, { openDrawer: openCreateDrawer }] = useDrawer();
 const [registerBuildModal, { openModal: openBuildModal }] = useModal();
 const [registerLogDrawer, { openDrawer: openLogDrawer }] = useDrawer();
 
-const [registerTable, { reload, getForm }] = useTable({
+const [registerTable, { reload, getForm, setSelectedRowKeys }] = useTable({
   title: '服务基线列表',
   api: async (params) => {
     if (!params?.instanceId) return [];
@@ -172,6 +171,7 @@ const [registerTable, { reload, getForm }] = useTable({
   showIndexColumn: false,
   canResize: false,
   rowKey: 'id',
+  rowClassName: getRowClassName,
   rowSelection: {
     type: 'radio',
   },
@@ -222,6 +222,34 @@ onMounted(async () => {
   }
 });
 
+const activeRowId = ref<string>('');
+
+function getRowClassName(record: any) {
+  const currentKey = record?.id
+    ? String(record.id)
+    : `${record?.projectName || record?.folder || 'root'}/${record?.name || ''}`;
+  return currentKey && currentKey === activeRowId.value
+    ? 'active-row-highlight ant-table-row-selected'
+    : '';
+}
+
+function highlightRow(record: Recordable) {
+  if (!record) return;
+  const key = record.id
+    ? String(record.id)
+    : `${record.projectName || record.folder || 'root'}/${record.name || ''}`;
+  activeRowId.value = key;
+  try {
+    setSelectedRowKeys([key]);
+  } catch {
+    // ignore
+  }
+}
+
+function handleRowClick(record: Recordable) {
+  highlightRow(record);
+}
+
 function handleCreateJob() {
   if (!selectedInstanceId.value) {
     createMessage.warning('请先选择 Jenkins 实例');
@@ -234,6 +262,7 @@ function handleCreateJob() {
 }
 
 function handleEditJob(record: Recordable) {
+  highlightRow(record);
   if (!selectedInstanceId.value) return;
   openCreateDrawer(true, {
     isUpdate: true,
@@ -243,6 +272,7 @@ function handleEditJob(record: Recordable) {
 }
 
 function handleOpenBuildModal(record: Recordable) {
+  highlightRow(record);
   if (!selectedInstanceId.value) return;
   openBuildModal(true, {
     instanceId: selectedInstanceId.value,
@@ -254,6 +284,7 @@ function handleConfirmBuild(data: any) {
   if (!selectedInstanceId.value) return;
   const record = data.record;
   if (record) {
+    highlightRow(record);
     record.status = 'BUILDING';
     if (data.branch) {
       record.gitBranch = data.branch;
@@ -274,6 +305,7 @@ function handleConfirmBuild(data: any) {
 }
 
 function handleOpenLogDrawer(record: Recordable) {
+  highlightRow(record);
   if (!selectedInstanceId.value) return;
   openLogDrawer(true, {
     instanceId: selectedInstanceId.value,
@@ -288,10 +320,12 @@ function handleOpenLogDrawer(record: Recordable) {
 const realtimeLogModalRef = ref<any>(null);
 
 function handleOpenRealtimeLogModal(record: Recordable) {
+  highlightRow(record);
   realtimeLogModalRef.value?.open(record, selectedInstanceId.value);
 }
 
 async function handleDeleteJob(record: Recordable) {
+  highlightRow(record);
   if (!selectedInstanceId.value) return;
   try {
     const jobNameKey = record.name || '';
@@ -341,36 +375,52 @@ async function handleManualSync() {
   // 1. 安全隐蔽选择列，避免破坏 Ant Design 内部 colgroup 布局与 DOM 同步
   :deep(.ant-table-selection-column),
   :deep(.ant-table-selection-col) {
+    visibility: hidden !important;
     width: 0 !important;
     min-width: 0 !important;
     max-width: 0 !important;
     padding: 0 !important;
-    border-right: none !important;
-    visibility: hidden !important;
     overflow: hidden !important;
+    border-right: none !important;
   }
 
   // 2. 跨浏览器 100% 稳定的选中行淡蓝色高亮 (包含常规单元格与固定操作列)
+  :deep(.ant-table-tbody > tr.active-row-highlight > td),
+  :deep(.ant-table-tbody > tr.active-row-highlight td),
   :deep(.ant-table-tbody > tr.ant-table-row-selected > td),
-  :deep(.ant-table-tbody > tr.ant-table-row-selected td) {
-    background-color: #e6f7ff !important;
+  :deep(.ant-table-tbody > tr.ant-table-row-selected td),
+  :deep(.ant-table-tbody > tr.active-row-highlight .ant-table-cell),
+  :deep(.ant-table-tbody > tr.ant-table-row-selected .ant-table-cell) {
     transition: background-color 0.2s ease;
+    background-color: #e6f7ff !important;
   }
 
+  :deep(.ant-table-tbody > tr.active-row-highlight:hover > td),
+  :deep(.ant-table-tbody > tr.active-row-highlight:hover td),
   :deep(.ant-table-tbody > tr.ant-table-row-selected:hover > td),
-  :deep(.ant-table-tbody > tr.ant-table-row-selected:hover td) {
+  :deep(.ant-table-tbody > tr.ant-table-row-selected:hover td),
+  :deep(.ant-table-tbody > tr.active-row-highlight:hover .ant-table-cell),
+  :deep(.ant-table-tbody > tr.ant-table-row-selected:hover .ant-table-cell) {
     background-color: #bae7ff !important;
   }
 
   // 3. 暗色模式兼容适配
   :global([data-theme='dark']) & {
+    :deep(.ant-table-tbody > tr.active-row-highlight > td),
+    :deep(.ant-table-tbody > tr.active-row-highlight td),
     :deep(.ant-table-tbody > tr.ant-table-row-selected > td),
-    :deep(.ant-table-tbody > tr.ant-table-row-selected td) {
+    :deep(.ant-table-tbody > tr.ant-table-row-selected td),
+    :deep(.ant-table-tbody > tr.active-row-highlight .ant-table-cell),
+    :deep(.ant-table-tbody > tr.ant-table-row-selected .ant-table-cell) {
       background-color: #111d2c !important;
     }
 
+    :deep(.ant-table-tbody > tr.active-row-highlight:hover > td),
+    :deep(.ant-table-tbody > tr.active-row-highlight:hover td),
     :deep(.ant-table-tbody > tr.ant-table-row-selected:hover > td),
-    :deep(.ant-table-tbody > tr.ant-table-row-selected:hover td) {
+    :deep(.ant-table-tbody > tr.ant-table-row-selected:hover td),
+    :deep(.ant-table-tbody > tr.active-row-highlight:hover .ant-table-cell),
+    :deep(.ant-table-tbody > tr.ant-table-row-selected:hover .ant-table-cell) {
       background-color: #172d47 !important;
     }
   }

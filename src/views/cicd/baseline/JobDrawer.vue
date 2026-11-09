@@ -105,6 +105,11 @@ const envNameMap: Record<string, string> = {
 /** 从脚本中解析当前配置的分支名 */
 function parseBranchFromScript(script: string): string {
   if (!script) return '';
+  // 1. 优先匹配 gitParameter 形式的分支参数
+  const gitParamMatch = script.match(/gitParameter\b[\s\S]*?defaultValue:\s*['"]([^'"]+)['"]/i);
+  if (gitParamMatch) return gitParamMatch[1].trim();
+
+  // 2. 匹配传统 string 形式的分支参数
   const match = script.match(
     /string\s+defaultValue:\s*['"]([^'"]+)['"],\s*name:\s*['"](?:分支名|GIT分支|gitBranch|branch)['"]/i,
   );
@@ -239,6 +244,15 @@ function syncScriptParams(customValues?: any) {
 
   // 2. 同步分支
   if (branch) {
+    // 2.1 同步 gitParameter 中的 defaultValue 分支
+    if (/gitParameter/i.test(script)) {
+      script = script.replace(
+        /(gitParameter\b[\s\S]*?defaultValue:\s*['"])[^'"]*(['"])/i,
+        `$1${branch}$2`,
+      );
+    }
+
+    // 2.2 同步传统 string defaultValue 形式的分支
     script = script.replace(
       /string\s+defaultValue:\s*['"][^'"]*['"],\s*name:\s*['"](分支名|GIT分支|gitBranch|branch)['"]/gi,
       `string defaultValue: '${branch}', name: '$1'`,
