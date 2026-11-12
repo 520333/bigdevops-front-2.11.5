@@ -41,15 +41,17 @@
         <template v-if="runtimeType === 'k8s'">
           <div class="flex items-center gap-1.5">
             <span class="text-gray-400">集群:</span>
-            <a-input v-model:value="k8sCluster" size="small" style="width: 110px" @pressEnter="connectLogStream" />
+            <a-input v-model:value="k8sCluster" size="small" style="width: 110px" @pressEnter="refreshK8sPodsAndConnect" />
           </div>
           <div class="flex items-center gap-1.5">
             <span class="text-gray-400">命名空间:</span>
-            <a-input v-model:value="k8sNamespace" size="small" style="width: 100px" @pressEnter="connectLogStream" />
+            <a-input v-model:value="k8sNamespace" size="small" style="width: 100px" @pressEnter="refreshK8sPodsAndConnect" />
           </div>
           <div class="flex items-center gap-1.5">
             <span class="text-gray-400">Pod 名:</span>
-            <a-input v-model:value="k8sPodName" size="small" placeholder="Pod 模糊或完整名" style="width: 180px"
+            <a-select v-if="k8sPodOptions.length > 0" v-model:value="k8sPodName" size="small" style="min-width: 240px"
+              :loading="k8sPodLoading" :options="k8sPodOptions" show-search @change="connectLogStream" />
+            <a-input v-else v-model:value="k8sPodName" size="small" placeholder="Pod 模糊或完整名" style="width: 180px"
               @pressEnter="connectLogStream" />
           </div>
         </template>
@@ -131,6 +133,7 @@ import 'xterm/css/xterm.css';
 import { useGlobSetting } from '@/hooks/setting';
 import { getToken } from '@/utils/auth';
 import { getJenkinsJobParameters } from '@/api/cicd';
+import { getK8sPodList } from '@/api/demo/system';
 
 const globSetting = useGlobSetting();
 
@@ -163,6 +166,9 @@ const customContainerName = ref('');
 const k8sCluster = ref('');
 const k8sNamespace = ref('default');
 const k8sPodName = ref('');
+const k8sPodOptions = ref<Array<{ label: string; value: string }>>([]);
+const k8sPodLoading = ref(false);
+const k8sServiceKeyword = ref('');
 
 let ws: WebSocket | null = null;
 
@@ -325,6 +331,8 @@ async function open(record: any, instanceId?: number) {
   k8sCluster.value = record?.targetClusters?.[0] || record?.clusterName || 'domi-test';
   k8sNamespace.value = record?.namespace || 'default';
   k8sPodName.value = record?.podName || pureServiceName;
+  k8sPodOptions.value = [];
+  k8sServiceKeyword.value = pureServiceName;
 
   // 5. 若主机列表为空调接口拉取目标主机
   const targetInstId = instanceId || record?.instanceId;
@@ -381,9 +389,73 @@ async function open(record: any, instanceId?: number) {
     selectedHost.value = lastHost || record?.hostIp || '192.168.1.20';
   }
 
+  if (runtimeType.value === 'k8s') {
+    await loadK8sPods(pureServiceName);
+  }
+
   nextTick(() => {
     connectLogStream();
   });
+}
+
+/**
+ * 拉取当前集群/命名空间下匹配服务名的 Pod 列表（支持多副本切换）
+ */
+async function loadK8sPods(keyword?: string) {
+  if (!k8sCluster.value) return;
+  const kw = (keyword ?? k8sServiceKeyword.value ?? '').trim();
+  k8sPodLoading.value = true;
+  try {
+    let res: any = await getK8sPodList({
+      clusterName: k8sCluster.value,
+      namespace: k8sNamespace.value,
+      keyword: kw,
+    });
+    let items: any[] = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+
+    // 若指定命名空间下未找到，尝试跨命名空间按服务名查找一次并自动纠正 namespace
+    if (items.length === 0 && kw) {
+      const allNsRes: any = await getK8sPodList({
+        clusterName: k8sCluster.value,
+        namespace: '',
+        keyword: kw,
+      });
+      const allNsItems: any[] = Array.isArray(allNsRes?.items)
+        ? allNsRes.items
+        : Array.isArray(allNsRes)
+          ? allNsRes
+          : [];
+      if (allNsItems.length > 0) {
+        items = allNsItems;
+        if (allNsItems[0]?.namespace) {
+          k8sNamespace.value = allNsItems[0].namespace;
+        }
+      }
+    }
+
+    k8sPodOptions.value = items
+      .filter((p) => p?.name)
+      .map((p) => ({
+        label: `${p.name} (${p.status || 'Unknown'})`,
+        value: p.name,
+      }));
+
+    if (items.length > 0) {
+      const runningPod = items.find((p) => p?.status === 'Running') || items[0];
+      if (runningPod?.name) {
+        k8sPodName.value = runningPod.name;
+      }
+    }
+  } catch (err) {
+    console.warn('拉取 K8s Pod 列表失败:', err);
+  } finally {
+    k8sPodLoading.value = false;
+  }
+}
+
+async function refreshK8sPodsAndConnect() {
+  await loadK8sPods(k8sServiceKeyword.value);
+  connectLogStream();
 }
 
 /**
