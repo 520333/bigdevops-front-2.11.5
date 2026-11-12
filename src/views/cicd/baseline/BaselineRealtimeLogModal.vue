@@ -359,9 +359,10 @@ async function open(record: any, instanceId?: number) {
               customContainerName.value = String(p.defaultValue).trim();
             }
           }
-          if (['集群', 'cluster'].some((k) => pName.includes(k)) && p?.defaultValue) {
+          const clusterVal = p?.defaultValue || (Array.isArray(p?.choices) ? p.choices[0] : '');
+          if (['集群', 'cluster'].some((k) => pName.includes(k)) && clusterVal) {
             if (!record?.clusterName) {
-              k8sCluster.value = String(p.defaultValue).trim();
+              k8sCluster.value = String(clusterVal).trim();
             }
           }
         });
